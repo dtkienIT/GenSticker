@@ -1,6 +1,12 @@
 # GenSticker 🎨✨
 
-**GenSticker** is a modern React Native & Expo mobile application designed for generative AI sticker creation from text prompts and selfie photos.
+**GenSticker** is an Expo SDK 57 application for text and canonical-first personalized sticker prototypes.
+
+> All current generation and product data use deterministic, device-local frontend mocks. Backend and real AI are not implemented by this frontend task.
+
+Keep `EXPO_PUBLIC_STICKER_SERVICE=mock`. The legacy mock flag remains supported temporarily; HTTP mode is a disabled interface skeleton. The selfie journey is consent → picker/validation → three candidates → explicit approval → versioned profile → eight-slot pack → targeted retry → exact text → export/share manifest.
+
+See [Frontend architecture](docs/FRONTEND_ARCHITECTURE.md), [mock service](docs/MOCK_SERVICE.md), [user flows](docs/MOBILE_USER_FLOWS.md), and [Android QA checklist](docs/MOBILE_QA_CHECKLIST.md).
 
 ---
 

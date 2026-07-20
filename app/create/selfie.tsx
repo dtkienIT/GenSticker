@@ -1,257 +1,84 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { ScreenContainer } from '../../src/components/common/ScreenContainer';
-import { SectionHeader } from '../../src/components/common/SectionHeader';
-import { AppTextInput } from '../../src/components/common/AppTextInput';
-import { AppButton } from '../../src/components/common/AppButton';
-import { StyleCard } from '../../src/components/sticker/StyleCard';
-import { EmotionChip } from '../../src/components/sticker/EmotionChip';
-import { STICKER_STYLES } from '../../src/constants/styles';
-import { STICKER_EMOTIONS } from '../../src/constants/emotions';
-import {
-  selfieToStickerSchema,
-  SelfieToStickerFormData,
-} from '../../src/validation/stickerSchemas';
-import { useStickerStore } from '../../src/store/useStickerStore';
-import { useAppTheme } from '../../src/theme';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ScreenContainer } from '@/components/common/ScreenContainer';
+import { SectionHeader } from '@/components/common/SectionHeader';
+import { AppButton } from '@/components/common/AppButton';
+import { SelfiePicker } from '@/components/selfie/SelfiePicker';
+import { getStickerProductService } from '@/services/factory';
+import { getApiErrorPresentation } from '@/services/errors';
+import { useSelfieDraftStore } from '@/store/useSelfieDraftStore';
+import { useProductSessionStore } from '@/store/useProductSessionStore';
+import { queryInvalidation } from '@/query';
+import { useAppTheme } from '@/theme';
 
-export default function SelfieToStickerScreen() {
+export default function SelfieScreen() {
   const router = useRouter();
-  const { colors, borderRadius, spacing, typography } = useAppTheme();
-  const setDraft = useStickerStore((state) => state.setDraft);
-
-  const {
-    control,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<SelfieToStickerFormData>({
-    resolver: zodResolver(selfieToStickerSchema),
-    defaultValues: {
-      sourceImageUri: '',
-      style: 'chibi',
-      emotion: 'happy',
-      stickerText: '',
-    },
-  });
-
-  const sourceImageUri = watch('sourceImageUri');
-
-  const pickImage = async () => {
-    try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (!permissionResult.granted) {
-        alert('Permission to access media library is required to pick a selfie photo!');
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
+  const queryClient = useQueryClient();
+  const { typography, colors, spacing } = useAppTheme();
+  const selected = useSelfieDraftStore((s) => s.selectedSelfie);
+  const setSelected = useSelfieDraftStore((s) => s.setSelectedSelfie);
+  const clear = useSelfieDraftStore((s) => s.clearSelectedSelfie);
+  const consent = useProductSessionStore((s) => s.consentState);
+  const setFlow = useProductSessionStore((s) => s.setActiveFlow);
+  const [error, setError] = useState<string | null>(null);
+  const mutation = useMutation({
+    mutationFn: async () => {
+      if (!selected) throw new Error('Chưa chọn ảnh');
+      const service = getStickerProductService();
+      const upload = await service.validateAndUploadSelfie({
+        uri: selected.uri,
+        mimeType: selected.mimeType ?? undefined,
+        fileName: selected.fileName ?? undefined,
+        width: selected.width,
+        height: selected.height,
+        byteSize: selected.byteSize ?? undefined,
       });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        setValue('sourceImageUri', result.assets[0].uri, { shouldValidate: true });
-      }
-    } catch {
-      alert('Error picking image. Please try again.');
-    }
-  };
-
-  const removeImage = () => {
-    setValue('sourceImageUri', '', { shouldValidate: true });
-  };
-
-  const onSubmit = (data: SelfieToStickerFormData) => {
-    setDraft({
-      mode: 'selfie',
-      sourceImageUri: data.sourceImageUri,
-      style: data.style,
-      emotion: data.emotion,
-      stickerText: data.stickerText,
-    });
-    router.push('/create/generating');
-  };
-
+      const character = await service.createCharacter({
+        displayName: 'Nhân vật của tôi',
+        selfieAssetId: upload.asset.id,
+      });
+      const job = await service.createCanonicalJob({
+        characterId: character.id,
+        preset: { outfit: 'casual', style: 'chibi' },
+      });
+      return { character, job };
+    },
+    onSuccess: async ({ character, job }) => {
+      setFlow({ activeCharacterId: character.id, activeJobId: job.id, activePackId: null });
+      await queryInvalidation.characterCreated(queryClient);
+      router.replace({ pathname: '/canonical/generating', params: { jobId: job.id } });
+    },
+    onError: (cause) => setError(getApiErrorPresentation(cause).message),
+  });
   return (
     <ScreenContainer scrollable>
       <SectionHeader
-        title="Selfie to Sticker"
-        subtitle="Turn your selfie photo into a stylized AI sticker"
+        title="Chọn ảnh chân dung"
+        subtitle="Ảnh chỉ được xử lý trong dịch vụ mô phỏng trên thiết bị."
       />
-
-      {/* Image Picker Section */}
-      <Text style={[typography.bodyBold, { color: colors.textPrimary, marginBottom: spacing.xs }]}>
-        Upload Selfie Photo *
-      </Text>
-
-      {sourceImageUri ? (
-        <View
-          style={[
-            styles.previewContainer,
-            {
-              backgroundColor: colors.card,
-              borderRadius: borderRadius.md,
-              borderColor: colors.border,
-              padding: spacing.md,
-            },
-          ]}
-        >
-          <Image source={{ uri: sourceImageUri }} style={styles.previewImage} />
-          <View style={styles.previewActions}>
-            <AppButton title="Reselect Photo" variant="secondary" size="sm" onPress={pickImage} />
-            <AppButton title="Remove" variant="danger" size="sm" onPress={removeImage} />
-          </View>
-        </View>
-      ) : (
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={pickImage}
-          style={[
-            styles.uploadPlaceholder,
-            {
-              backgroundColor: colors.card,
-              borderRadius: borderRadius.md,
-              borderColor: errors.sourceImageUri ? colors.error : colors.border,
-              padding: spacing.xl,
-            },
-          ]}
-        >
-          <Text style={styles.uploadIcon}>📷</Text>
-          <Text style={[typography.bodyBold, { color: colors.primary, marginTop: spacing.xs }]}>
-            Tap to choose photo from gallery
-          </Text>
-          <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 2 }]}>
-            Clear front-facing selfie recommended
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      {errors.sourceImageUri?.message ? (
-        <Text style={[typography.caption, { color: colors.error, marginTop: spacing.xs }]}>
-          {errors.sourceImageUri.message}
+      <SelfiePicker
+        value={selected?.uri ?? null}
+        onChange={(uri, metadata) => {
+          if (uri && metadata) setSelected(metadata);
+          else clear();
+          setError(null);
+        }}
+      />
+      {error ? (
+        <Text style={[typography.body, { color: colors.error, marginTop: spacing.md }]}>
+          {error}
         </Text>
       ) : null}
-
-      {/* Style Selection */}
-      <Text
-        style={[
-          typography.bodyBold,
-          { color: colors.textPrimary, marginTop: spacing.md, marginBottom: spacing.xs },
-        ]}
-      >
-        Select Style *
-      </Text>
-      <Controller
-        control={control}
-        name="style"
-        render={({ field: { value, onChange } }) => (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingVertical: spacing.xs }}
-          >
-            {STICKER_STYLES.map((styleOpt) => (
-              <StyleCard
-                key={styleOpt.id}
-                styleOption={styleOpt}
-                selected={value === styleOpt.id}
-                onSelect={() => onChange(styleOpt.id)}
-              />
-            ))}
-          </ScrollView>
-        )}
-      />
-
-      {/* Emotion Selection */}
-      <Text
-        style={[
-          typography.bodyBold,
-          { color: colors.textPrimary, marginTop: spacing.md, marginBottom: spacing.xs },
-        ]}
-      >
-        Select Emotion *
-      </Text>
-      <Controller
-        control={control}
-        name="emotion"
-        render={({ field: { value, onChange } }) => (
-          <View style={styles.emotionContainer}>
-            {STICKER_EMOTIONS.map((emotionOpt) => (
-              <EmotionChip
-                key={emotionOpt.id}
-                emotionOption={emotionOpt}
-                selected={value === emotionOpt.id}
-                onSelect={() => onChange(emotionOpt.id)}
-              />
-            ))}
-          </View>
-        )}
-      />
-
-      {/* Optional Sticker Text */}
-      <Controller
-        control={control}
-        name="stickerText"
-        render={({ field: { onChange, onBlur, value } }) => (
-          <AppTextInput
-            label="Sticker Overlay Text (Optional)"
-            placeholder="e.g. ME MOOD! (Max 40 chars)"
-            value={value || ''}
-            onChangeText={onChange}
-            onBlur={onBlur}
-            maxLength={40}
-            error={errors.stickerText?.message}
-          />
-        )}
-      />
-
-      {/* Generate Button */}
-      <AppButton
-        title="Generate Selfie Sticker"
-        variant="primary"
-        size="lg"
-        style={{ marginTop: spacing.lg, marginBottom: spacing.xl }}
-        onPress={handleSubmit(onSubmit)}
-      />
+      <View style={{ marginTop: spacing.xl }}>
+        <AppButton
+          title={consent.accepted ? 'Tiếp tục' : 'Xem và đồng ý'}
+          disabled={!selected}
+          loading={mutation.isPending}
+          onPress={() => (consent.accepted ? mutation.mutate() : router.push('/consent'))}
+        />
+      </View>
     </ScreenContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  uploadPlaceholder: {
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  uploadIcon: {
-    fontSize: 40,
-  },
-  previewContainer: {
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  previewImage: {
-    width: 140,
-    height: 140,
-    borderRadius: 16,
-    marginBottom: 12,
-  },
-  previewActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  emotionContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-});

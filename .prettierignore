@@ -1,0 +1,7 @@
+node_modules
+.expo
+.git
+backend/**
+data
+_temp_expo
+*.xlsx
