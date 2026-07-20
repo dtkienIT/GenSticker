@@ -29,7 +29,16 @@ export default function HomeScreen() {
           },
         ]}
       >
-        <Text style={styles.heroBadge}>✨ AI Powered</Text>
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <Text style={styles.heroBadge}>✨ AI Powered</Text>
+          <Text style={{ fontSize: 11, fontWeight: 'bold', color: colors.primary }}>
+            {process.env.EXPO_PUBLIC_USE_MOCK_SERVICE === 'true'
+              ? '🟢 Mock Mode'
+              : '🔵 Local API Mode'}
+          </Text>
+        </View>
         <Text style={[typography.h1, { color: colors.textPrimary, marginTop: spacing.xs }]}>
           Create stickers with AI
         </Text>

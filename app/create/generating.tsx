@@ -5,7 +5,7 @@ import { ScreenContainer } from '../../src/components/common/ScreenContainer';
 import { LoadingProgress } from '../../src/components/sticker/LoadingProgress';
 import { AppButton } from '../../src/components/common/AppButton';
 import { useStickerStore } from '../../src/store/useStickerStore';
-import { mockStickerService } from '../../src/services/mock/mockStickerService';
+import { getStickerGenerationService } from '../../src/services/api/factory';
 import { useAppTheme } from '../../src/theme';
 
 export default function GeneratingScreen() {
@@ -31,7 +31,8 @@ export default function GeneratingScreen() {
     let isMounted = true;
     startGeneration();
 
-    mockStickerService
+    const service = getStickerGenerationService();
+    service
       .generateSticker(draftRequest, (prog) => {
         if (isMounted) {
           updateProgress(prog);

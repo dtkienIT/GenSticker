@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: gensticker-api
+    command: uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - '8000:8000'
+    environment:
+      - APP_ENV=development
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - DATABASE_URL=sqlite:///./data/gensticker.db
+      - ASSET_ROOT=./data/assets
+      - DEV_AUTH_ENABLED=true
+      - GENERATION_PROVIDER=mock
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: gensticker-worker
+    command: python -m backend.app.jobs.worker
+    environment:
+      - APP_ENV=development
+      - DATABASE_URL=sqlite:///./data/gensticker.db
+      - ASSET_ROOT=./data/assets
+      - GENERATION_PROVIDER=mock
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      api:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    container_name: gensticker-redis
+    profiles:
+      - optional-redis
+    ports:
+      - '6379:6379'
