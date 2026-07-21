@@ -42,8 +42,7 @@
           "cameraPermission": "GenSticker cần quyền máy ảnh để bạn chụp ảnh chân dung tạo hình dán.",
           "microphonePermission": false
         }
-      ],
-      "expo-sharing"
+      ]
     ],
     "experiments": {
       "typedRoutes": false,
