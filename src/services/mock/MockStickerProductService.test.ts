@@ -97,6 +97,30 @@ describe('MockStickerProductService', () => {
     ).toEqual(unaffected);
   });
 
+  it('creates one pack ZIP and rejects expired export manifests', async () => {
+    const { item, profile } = await approvedCharacter();
+    let pack = await service.createStickerPack({
+      characterId: item.id,
+      profileVersion: profile.version,
+      templateId: DEFAULT_EMOTION_TEMPLATE_ID,
+    });
+    for (let index = 0; index < 17; index += 1) pack = await service.getStickerPack(pack.id);
+
+    const manifest = await service.exportStickerPack({
+      packId: pack.id,
+      formats: ['png', 'zip'],
+    });
+    expect(manifest.assets.filter((asset) => asset.format === 'png')).toHaveLength(8);
+    expect(manifest.assets.filter((asset) => asset.format === 'zip')).toHaveLength(1);
+    await expect(service.getExportManifest(manifest.id)).resolves.toEqual(manifest);
+
+    await service.setMockScenario('expired_export');
+    const expired = await service.exportStickerPack({ packId: pack.id, formats: ['zip'] });
+    await expect(service.getExportManifest(expired.id)).rejects.toMatchObject({
+      code: 'asset_url_expired',
+    });
+  });
+
   it('deletes related state idempotently and rejects base64 selfie input', async () => {
     const { item } = await approvedCharacter();
     await service.deleteCharacter(item.id);

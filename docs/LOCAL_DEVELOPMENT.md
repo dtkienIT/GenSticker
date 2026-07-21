@@ -1,6 +1,6 @@
 # Local Development Guide
 
-This guide explains how to set up, run, and test the **GenSticker** local-first stack. Member C's normal workflow is the frontend-only mock mode; Python/backend setup is optional for backend integration work.
+This guide explains how to set up, run, and test the **GenSticker** SDK 54 stack in either frontend mock mode or full HTTP mode.
 
 ---
 
@@ -54,9 +54,13 @@ chmod +x ./scripts/*.sh
 
 ## 🚀 Running the Local Stack
 
+### SDK 54 device client
+
+The store version of Expo Go only supports the current SDK. For an Android phone running this SDK 54 project, install the matching [Expo Go 54 build](https://expo.dev/go?device=true&platform=android&sdkVersion=54). A physical iPhone cannot sideload an older Expo Go build, so use an SDK 54 development build instead.
+
 ### Mobile App Modes
 
-#### Mode A: Client-Side Mock Mode (Default)
+#### Mode A: Client-Side Mock Mode
 
 In `.env` or environment:
 
@@ -65,7 +69,7 @@ EXPO_PUBLIC_STICKER_SERVICE=mock
 EXPO_PUBLIC_USE_MOCK_SERVICE=true
 ```
 
-`EXPO_PUBLIC_STICKER_SERVICE` controls the current product service. The legacy flag remains because the separate Text-to-Sticker prototype still reads it. Mock is the safe product default.
+Use this mode for deterministic UI work with no database, storage, worker, or paid provider calls.
 
 Run mobile app:
 
@@ -73,17 +77,16 @@ Run mobile app:
 npm run start
 ```
 
-#### Mode B: Local API Mode
-
-> The product-level `HttpStickerProductService` is intentionally disabled until Member B supplies a contract-compatible implementation. The settings below describe the intended integration mode, not a completed Member C flow.
+#### Mode B: Full HTTP Mode
 
 In `.env` or environment:
 
 ```env
 EXPO_PUBLIC_STICKER_SERVICE=http
 EXPO_PUBLIC_USE_MOCK_SERVICE=false
-EXPO_PUBLIC_API_URL=http://10.0.2.2:8000/api/v1  # Android Emulator
-# EXPO_PUBLIC_API_URL=http://localhost:8000/api/v1  # Web Browser
+# Optional: omit this variable on a physical device to derive the LAN host from Metro.
+# EXPO_PUBLIC_API_URL=http://10.0.2.2:8000/api/v1  # Android Emulator
+# EXPO_PUBLIC_API_URL=http://127.0.0.1:8000/api/v1  # Web / iOS Simulator
 ```
 
 1. Start API Server:
@@ -99,7 +102,9 @@ EXPO_PUBLIC_API_URL=http://10.0.2.2:8000/api/v1  # Android Emulator
    npm run start
    ```
 
-Use `10.0.2.2` from the Android emulator, `localhost` from web, and the development machine's LAN address from a physical device. CORS, firewall, authentication, multipart upload, private assets, and job recovery must be verified with the backend owner.
+Use `10.0.2.2` from the Android emulator, loopback from web/iOS Simulator, and the development machine's LAN address from a physical device. Apply Alembic migrations before starting the processes. When `.env` selects Replicate, each generation can incur provider charges; automated tests always isolate external services.
+
+The two frontend flags exist because the canonical product flow and the legacy Text-to-Sticker flow have separate service factories. Full HTTP mode therefore requires `http` plus `false`; mock mode requires `mock` plus `true`.
 
 ---
 

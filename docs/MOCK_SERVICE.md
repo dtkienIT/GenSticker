@@ -8,4 +8,4 @@ Canonical jobs advance deterministically through validating, preparing, generati
 
 Export produces a deterministic manifest for PNG, WebP, or ZIP. Mock asset URIs describe the frontend contract; they are not production archive files. Native file sharing is used only when the selected manifest asset is a local `file:` URI and the platform supports it; otherwise the app uses the React Native share sheet fallback.
 
-The development debug route exposes deterministic scenarios, safe record counts, active IDs, and local reset. Persistence and diagnostics reject image binary/base64, data URIs, raw selfie URIs, and tokens. HTTP product mode remains disabled until Member B supplies and verifies the real API contract.
+The development debug route exposes deterministic scenarios, safe record counts, active IDs, and local reset. Persistence and diagnostics reject image binary/base64, data URIs, raw selfie URIs, and tokens. In HTTP mode, scenario switching/reset are hidden and diagnostics come from the backend metadata endpoint.

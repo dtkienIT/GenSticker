@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -15,7 +16,7 @@ router = APIRouter()
 def list_cost_ledger(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> list[dict[str, Any]]:
     entries = (
         db.query(CostLedger)
         .filter(CostLedger.user_id == current_user.id)

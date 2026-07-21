@@ -104,7 +104,6 @@ export const useProductSessionStore = create<ProductSessionState>()(
           activeJobId: null,
           activePackId: null,
           isResuming: false,
-          hasAttemptedResume: false,
         }),
       setConsentState: (consentState) => set({ consentState }),
       clearConsent: () => set({ consentState: { ...EMPTY_CONSENT_STATE } }),

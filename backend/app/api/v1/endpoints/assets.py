@@ -1,12 +1,18 @@
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter, Depends, File, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
+from starlette.responses import Response
 
-from backend.app.core.errors import ResourceNotFoundException, TenantAccessDeniedException
+from backend.app.core.errors import (
+    GenStickerException,
+    ResourceNotFoundException,
+    TenantAccessDeniedException,
+)
 from backend.app.core.security import get_current_user
 from backend.app.db.models.asset import Asset
 from backend.app.db.models.user import User
@@ -17,12 +23,32 @@ from backend.app.storage.asset_store import default_asset_store
 router = APIRouter()
 
 
+def _reject_expired_asset(asset: Asset) -> None:
+    if asset.expires_at is None:
+        return
+    expires_at = asset.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at <= datetime.now(timezone.utc):
+        raise GenStickerException(
+            code="asset_url_expired",
+            message="The requested asset has expired.",
+            status_code=410,
+        )
+
+
 @router.post("/assets/selfies")
 async def upload_selfie(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> dict[str, Any]:
+    if not current_user.consent_accepted or current_user.consent_version != "1.0":
+        raise GenStickerException(
+            code="consent_required",
+            message="Version 1.0 image-processing consent is required before selfie upload.",
+            status_code=403,
+        )
     content = await file.read()
 
     # Validate selfie image
@@ -89,12 +115,13 @@ def get_asset_metadata(
     asset_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> dict[str, Any]:
     asset = db.query(Asset).filter(Asset.id == asset_id, Asset.deleted_at.is_(None)).first()
     if not asset:
         raise ResourceNotFoundException(resource_type="Asset", resource_id=asset_id)
     if asset.user_id != current_user.id:
         raise TenantAccessDeniedException()
+    _reject_expired_asset(asset)
 
     return {
         "id": asset.id,
@@ -117,12 +144,17 @@ def get_asset_content(
     asset_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> Response:
     asset = db.query(Asset).filter(Asset.id == asset_id, Asset.deleted_at.is_(None)).first()
     if not asset:
         raise ResourceNotFoundException(resource_type="Asset", resource_id=asset_id)
     if asset.user_id != current_user.id:
         raise TenantAccessDeniedException()
+    _reject_expired_asset(asset)
+
+    signed_url = default_asset_store.create_signed_url(asset.relative_path)
+    if signed_url:
+        return RedirectResponse(url=signed_url)
 
     abs_path = default_asset_store.get_absolute_path(asset.relative_path)
     if not abs_path.exists():

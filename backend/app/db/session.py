@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Generator
+from typing import Any, Generator
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
@@ -14,6 +14,7 @@ if settings.DATABASE_URL.startswith("sqlite:///"):
 
 engine = create_engine(
     settings.DATABASE_URL,
+    # connect_args is only needed for SQLite
     connect_args={"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {},
     echo=False,
 )
@@ -21,7 +22,7 @@ engine = create_engine(
 # Enable SQLite foreign key enforcement
 if settings.DATABASE_URL.startswith("sqlite"):
     @event.listens_for(engine, "connect")
-    def set_sqlite_pragma(dbapi_connection, connection_record):
+    def set_sqlite_pragma(dbapi_connection: Any, connection_record: Any) -> None:
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()

@@ -2,7 +2,7 @@
 
 ---
 
-## 📌 Phase 1: Mobile Scaffold & Mock Generation (Current)
+## 📌 Phase 1: Mobile and Full-Stack Product Path (Current)
 
 - [x] React Native & Expo project setup with Expo Router.
 - [x] TypeScript strict mode configuration.
@@ -12,23 +12,24 @@
 - [x] Offline `MockStickerGenerationService` with multi-step progress tracking.
 - [x] Light and Dark theme design system.
 - [x] Screens: Home, Create Mode Selection, Text-to-Sticker, Selfie-to-Sticker, Generating Progress, Result View, Saved Library, Settings.
-- [x] Canonical candidate comparison, recommendation, full-screen preview, explicit approval, and immutable profile editing in mock mode.
-- [x] Eight-slot mock pack gallery with partial state and targeted single-slot retry.
-- [x] Exact-text controls, transparency preview, export manifest, and native share invocation in mock mode.
+- [x] Canonical candidate comparison, private delivery, explicit approval, and immutable profile persistence in mock and HTTP modes.
+- [x] Eight-slot pack gallery backed by durable expression jobs, partial state, and targeted retry.
+- [x] Exact-text controls plus real PNG/WebP/ZIP generation and share manifests.
 - [x] Product Library navigation and cascade deletion for local Character/Pack/Job entities.
 - [x] Frontend unit regressions and a basic Maestro smoke-flow definition.
 - [ ] Execute Android device/emulator QA and retain evidence.
-- [ ] Connect the product service to Member B's real API implementation.
+- [x] Connect the complete product service contract to FastAPI.
 
 ---
 
 ## 📌 Phase 2: FastAPI Backend & Cloud Infrastructure
 
-- [ ] FastAPI service setup with JWT / Supabase Auth.
-- [ ] PostgreSQL schema for sticker jobs, user quotas, and metadata.
-- [ ] Supabase Storage bucket integration for image uploads and sticker CDN.
-- [ ] Celery / Redis job queue setup.
-- [ ] SSE (Server-Sent Events) status stream endpoint for real-time progress updates.
+- [x] FastAPI service setup with a development auth seam.
+- [ ] Replace development auth with verified Supabase JWT authentication.
+- [x] PostgreSQL schema and Alembic migrations for product/job metadata.
+- [x] Private Supabase Storage with signed asset URLs.
+- [x] Durable database-polled worker with stale recovery and row locking.
+- [ ] Consider SSE only if polling no longer meets product needs.
 
 ---
 
@@ -37,8 +38,9 @@
 - [ ] Colab Pro / Modal GPU worker integration.
 - [ ] ComfyUI pipeline setup for Text-to-Sticker (SDXL / SD1.5 + LoRA).
 - [ ] ComfyUI pipeline for Selfie-to-Sticker (InstantID / IP-Adapter + ControlNet).
+- [x] Hosted Replicate face/text sticker provider integration.
 - [ ] Background removal nodes (rembg / BiRefNet / SAM) for clean transparent PNG stickers.
-- [ ] Production API service binding in `StickerGenerationService`.
+- [x] HTTP product-service binding with validated frontend contracts.
 
 ---
 
@@ -46,7 +48,7 @@
 
 - [ ] Character consistency across sticker sets.
 - [x] Deterministic frontend eight-slot pack flow with partial completion and targeted retry.
-- [ ] Backend-connected multi-sticker generation and production asset delivery.
+- [x] Backend-connected multi-sticker generation and private asset delivery.
 - [ ] Direct export to WhatsApp Sticker Pack format (`.wasticker`).
 - [ ] Direct export to Telegram Sticker Set format.
 - [x] Frontend in-app sticker text controls and checkerboard preview.

@@ -6,7 +6,7 @@
 - [x] ESLint passes.
 - [x] Prettier check passes.
 - [x] Frontend unit suite passes (7 tests), including profile/text constraint regression coverage.
-- [x] Expo SDK 57 public configuration resolves successfully.
+- [x] Expo SDK 54 public configuration resolves successfully.
 - [x] Basic mock-mode Maestro smoke flow is defined in `.maestro/mock-smoke.yaml`.
 
 ## Device/emulator evidence still required

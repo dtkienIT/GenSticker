@@ -2,7 +2,7 @@
 
 This document maps implemented code and components to Feature Backlog IDs.
 
-This file summarizes the repository-wide technical foundation, including backend work. For Member C's current frontend percentages, completed mock-only UX, and remaining backend/device boundaries, use [Frontend Implementation Status](FRONTEND_IMPLEMENTATION_STATUS.md). A backend-complete row here does not imply that the corresponding frontend integration is complete.
+This file summarizes the repository-wide technical foundation, including the connected HTTP product path. For remaining frontend/device boundaries, use [Frontend Implementation Status](FRONTEND_IMPLEMENTATION_STATUS.md).
 
 ---
 
@@ -29,7 +29,7 @@ This file summarizes the repository-wide technical foundation, including backend
 
 | Feature ID | Description                | Status       | Details                                                                                  |
 | :--------- | :------------------------- | :----------- | :--------------------------------------------------------------------------------------- |
-| **F-017**  | Mobile selfie upload       | 🟡 Partial   | Local API client multipart upload ready; mock UI flow preserved.                         |
+| **F-017**  | Mobile selfie upload       | ✅ Completed | Product HTTP adapter uploads React Native multipart data to private storage.             |
 | **F-018**  | Basic selfie validation    | ✅ Completed | `LocalSelfieValidator` checking format, dimensions, blank image, returning reason codes. |
 | **F-019**  | Mock canonical generation  | ✅ Completed | `MockGenerationProvider` producing 3 candidate local mock PNGs with seed support.        |
 | **F-021**  | Job progress and resume    | ✅ Completed | Durable polling, stage transitions (`JobEvent`), stale job recovery.                     |
@@ -37,13 +37,12 @@ This file summarizes the repository-wide technical foundation, including backend
 
 ---
 
-## 🛑 Explicitly Deferred Non-Goals (Future Phases)
+## 🛑 Remaining production boundaries
 
 The following items are NOT implemented in this phase per design specification:
 
-- Real Stable Diffusion inference & model downloads.
-- Real InstantID / IP-Adapter inference.
 - Real ComfyUI workflow execution.
-- Cloud deployment (RunPod, AWS, Supabase, Modal, Replicate).
+- Production Supabase JWT authentication and deployment hardening.
+- Commercially licensed replacement for the current non-commercial face model.
 - Character scoring & pack-level optimizer.
 - WhatsApp / Telegram sticker pack export.

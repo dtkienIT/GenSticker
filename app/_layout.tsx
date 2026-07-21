@@ -49,18 +49,25 @@ function NavigationStack() {
 function BootstrapResume() {
   const router = useRouter();
   const pathname = usePathname();
-  const session = useProductSessionStore();
+  const hasHydrated = useProductSessionStore((state) => state.hasHydrated);
+  const hasAttemptedResume = useProductSessionStore((state) => state.hasAttemptedResume);
+  const activePackId = useProductSessionStore((state) => state.activePackId);
+  const activeJobId = useProductSessionStore((state) => state.activeJobId);
+  const beginResume = useProductSessionStore((state) => state.beginResume);
+  const finishResume = useProductSessionStore((state) => state.finishResume);
+  const clearActiveFlow = useProductSessionStore((state) => state.clearActiveFlow);
+
   useEffect(() => {
-    if (!session.hasHydrated || session.hasAttemptedResume || pathname !== '/') return;
-    session.beginResume();
+    if (!hasHydrated || hasAttemptedResume || pathname !== '/') return;
+    beginResume();
     void (async () => {
       try {
         await getStickerProductService().getCurrentUser();
-        if (session.activePackId) {
-          await getStickerProductService().getStickerPack(session.activePackId);
-          router.replace(`/pack/${session.activePackId}` as Href);
-        } else if (session.activeJobId) {
-          const job = await getStickerProductService().getGenerationJob(session.activeJobId);
+        if (activePackId) {
+          await getStickerProductService().getStickerPack(activePackId);
+          router.replace(`/pack/${activePackId}` as Href);
+        } else if (activeJobId) {
+          const job = await getStickerProductService().getGenerationJob(activeJobId);
           router.replace(
             (job.status === 'succeeded'
               ? `/canonical/candidates?characterId=${job.characterId}`
@@ -68,12 +75,22 @@ function BootstrapResume() {
           );
         }
       } catch {
-        session.clearActiveFlow();
+        clearActiveFlow();
       } finally {
-        session.finishResume();
+        finishResume();
       }
     })();
-  }, [pathname, router, session]);
+  }, [
+    activeJobId,
+    activePackId,
+    beginResume,
+    clearActiveFlow,
+    finishResume,
+    hasAttemptedResume,
+    hasHydrated,
+    pathname,
+    router,
+  ]);
   return null;
 }
 

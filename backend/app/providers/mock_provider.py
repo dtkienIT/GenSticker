@@ -2,7 +2,7 @@ import asyncio
 import random
 import uuid
 from io import BytesIO
-from typing import Callable, Optional
+from typing import Optional
 
 from PIL import Image as PILImage
 from PIL import ImageDraw
@@ -13,6 +13,8 @@ from backend.app.providers.base import (
     GenerationProvider,
     GenerationResult,
     GenerationSpec,
+    GenerationStage,
+    ProgressCallback,
 )
 from backend.app.storage.asset_store import AssetStore, default_asset_store
 
@@ -31,14 +33,14 @@ class MockGenerationProvider(GenerationProvider):
     async def generate(
         self,
         spec: GenerationSpec,
-        progress_callback: Optional[Callable[[str, int], None]] = None,
+        progress_callback: Optional[ProgressCallback] = None,
     ) -> GenerationResult:
         stages = [
-            ("validating", 10),
-            ("preparing", 30),
-            ("generating", 60),
-            ("background_removal", 85),
-            ("completed", 100),
+            (GenerationStage.VALIDATING, 10),
+            (GenerationStage.PREPARING, 30),
+            (GenerationStage.GENERATING, 60),
+            (GenerationStage.BACKGROUND_REMOVAL, 85),
+            (GenerationStage.COMPLETED, 100),
         ]
 
         step_delay = (self.delay_ms / 1000.0) / len(stages) if self.delay_ms > 0 else 0.01
@@ -55,7 +57,7 @@ class MockGenerationProvider(GenerationProvider):
                 provider="mock",
                 workflow_version=spec.workflow_version,
                 artifacts=[],
-                error_code="simulated_mock_failure",
+                error_code="generation_failed",
                 error_message="Simulated mock generation failure for testing.",
             )
 

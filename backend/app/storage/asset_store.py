@@ -10,12 +10,46 @@ from PIL import Image as PILImage
 from backend.app.core.config import settings
 from backend.app.core.errors import GenStickerException
 
+_NON_IMAGE_MIME_TYPES = {
+    ".zip": "application/zip",
+}
+
+
+def inspect_asset_bytes(
+    data: bytes,
+    extension: str,
+) -> Tuple[Optional[int], Optional[int], str]:
+    """Return dimensions and MIME type without trying to decode known archives as images."""
+    normalized_extension = extension.lower()
+    non_image_mime_type = _NON_IMAGE_MIME_TYPES.get(normalized_extension)
+    if non_image_mime_type:
+        return None, None, non_image_mime_type
+
+    try:
+        with PILImage.open(BytesIO(data)) as image:
+            image.verify()
+        with PILImage.open(BytesIO(data)) as image:
+            width, height = image.size
+            image_format = (image.format or "").lower()
+            mime_type = PILImage.MIME.get(image.format or "") or (
+                f"image/{image_format}"
+                if image_format
+                else f"image/{normalized_extension.lstrip('.')}"
+            )
+            return width, height, mime_type
+    except Exception as exc:
+        raise GenStickerException(
+            code="invalid_image",
+            message="File content could not be decoded as a valid image.",
+            status_code=400,
+        ) from exc
+
 
 class StoredAssetMetadata:
     def __init__(
         self,
         relative_path: str,
-        absolute_path: Path,
+        absolute_path: Optional[Path],
         mime_type: str,
         byte_size: int,
         sha256: str,
@@ -44,6 +78,18 @@ class AssetStore(ABC):
 
     @abstractmethod
     def get_absolute_path(self, relative_path: str) -> Path:
+        pass
+
+    @abstractmethod
+    def read_bytes(self, relative_path: str) -> bytes:
+        pass
+
+    @abstractmethod
+    def create_signed_url(self, relative_path: str, expires_in: int = 300) -> Optional[str]:
+        pass
+
+    @abstractmethod
+    def is_ready(self) -> bool:
         pass
 
     @abstractmethod
@@ -85,8 +131,7 @@ class LocalFilesystemAssetStore(AssetStore):
         # Calculate SHA256
         sha256_hash = hashlib.sha256(data).hexdigest()
 
-        # Safe Pillow image inspection
-        width, height, mime_type = self._inspect_image(data, extension)
+        width, height, mime_type = inspect_asset_bytes(data, extension)
 
         # Generate safe unique filename
         filename = f"{uuid.uuid4().hex}{extension.lower()}"
@@ -110,24 +155,25 @@ class LocalFilesystemAssetStore(AssetStore):
             height=height,
         )
 
-    def _inspect_image(self, data: bytes, extension: str) -> Tuple[Optional[int], Optional[int], str]:
-        try:
-            with PILImage.open(BytesIO(data)) as img:
-                img.verify()
-            with PILImage.open(BytesIO(data)) as img:
-                w, h = img.size
-                fmt = (img.format or "").lower()
-                mime_type = f"image/{fmt}" if fmt else f"image/{extension.lstrip('.')}"
-                return w, h, mime_type
-        except Exception:
-            raise GenStickerException(
-                code="invalid_image",
-                message="File content could not be decoded as a valid image.",
-                status_code=400,
-            )
-
     def get_absolute_path(self, relative_path: str) -> Path:
         return self._resolve_safe_path(relative_path)
+
+    def read_bytes(self, relative_path: str) -> bytes:
+        try:
+            return self._resolve_safe_path(relative_path).read_bytes()
+        except Exception as exc:
+            raise GenStickerException(
+                code="storage_read_failed",
+                message="Asset content could not be read.",
+                status_code=500,
+            ) from exc
+
+    def create_signed_url(self, relative_path: str, expires_in: int = 300) -> Optional[str]:
+        del relative_path, expires_in
+        return None
+
+    def is_ready(self) -> bool:
+        return self.root_dir.exists() and self.root_dir.is_dir()
 
     def delete_asset(self, relative_path: str) -> bool:
         try:
@@ -140,4 +186,12 @@ class LocalFilesystemAssetStore(AssetStore):
         return False
 
 
-default_asset_store = LocalFilesystemAssetStore()
+def get_default_asset_store() -> AssetStore:
+    if settings.SUPABASE_URL and settings.SUPABASE_SERVICE_ROLE_KEY:
+        from backend.app.storage.supabase_store import SupabaseAssetStore
+
+        return SupabaseAssetStore()
+    return LocalFilesystemAssetStore()
+
+
+default_asset_store = get_default_asset_store()

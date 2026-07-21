@@ -9,12 +9,12 @@ router = APIRouter()
 
 
 @router.get("/health")
-def health_check():
+def health_check() -> dict[str, str]:
     return {"status": "ok", "service": "gensticker-backend"}
 
 
 @router.get("/ready")
-def readiness_check(db: Session = Depends(get_db)):
+def readiness_check(db: Session = Depends(get_db)) -> dict[str, str | bool]:
     # Verify DB connectivity
     try:
         db.execute(text("SELECT 1"))
@@ -24,8 +24,7 @@ def readiness_check(db: Session = Depends(get_db)):
 
     # Verify asset store accessibility
     try:
-        root_path = default_asset_store.root_dir
-        asset_store_ok = root_path.exists()
+        asset_store_ok = default_asset_store.is_ready()
     except Exception:
         asset_store_ok = False
 

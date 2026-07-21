@@ -1,9 +1,11 @@
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.responses import Response
 
 from backend.app.api.v1.router import api_router
 from backend.app.core.config import settings
@@ -29,7 +31,9 @@ app.add_middleware(
 
 
 @app.middleware("http")
-async def request_middleware(request: Request, call_next):
+async def request_middleware(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
     request.state.request_id = request_id
 
@@ -49,7 +53,9 @@ async def request_middleware(request: Request, call_next):
 
 
 @app.exception_handler(GenStickerException)
-async def gensticker_exception_handler(request: Request, exc: GenStickerException):
+async def gensticker_exception_handler(
+    request: Request, exc: GenStickerException
+) -> JSONResponse:
     req_id = getattr(request.state, "request_id", None)
     return JSONResponse(
         status_code=exc.status_code,

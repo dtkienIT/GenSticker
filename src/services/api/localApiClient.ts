@@ -4,8 +4,7 @@ import {
   StickerGenerationRequest,
 } from '../../types/sticker';
 import { StickerGenerationService } from '../mock/mockStickerService';
-
-const DEFAULT_API_URL = 'http://10.0.2.2:8000/api/v1';
+import { resolveBaseUrl } from './resolveBaseUrl';
 
 export interface UploadSelfieResponse {
   asset?: {
@@ -38,7 +37,7 @@ export interface GenerationJobResponse {
 
 export class LocalApiStickerGenerationService implements StickerGenerationService {
   private get baseUrl(): string {
-    return process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL;
+    return resolveBaseUrl();
   }
 
   private get devUserId(): string {

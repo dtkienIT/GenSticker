@@ -516,18 +516,28 @@ export class MockStickerProductService implements StickerProductService {
     if (!pack) this.fail('pack_not_found');
     if (state.scenario === 'export_failed') this.fail('export_failed');
     const id = await this.id('export');
-    const assets = input.formats.flatMap((format) =>
-      pack.slots
-        .filter((s) => s.status === 'completed')
-        .map((slot) => ({
-          assetId: `${id}-${slot.id}-${format}`,
-          fileName: `${slot.emotionId}.${format}`,
-          format,
-          contentUri: slot.imageUri ?? bundledImageUri(),
-        })),
-    );
+    const completedSlots = pack.slots.filter((slot) => slot.status === 'completed');
+    const assets = input.formats.flatMap((format) => {
+      if (format === 'zip') {
+        return [
+          {
+            assetId: `${id}-pack-zip`,
+            fileName: `sticker-pack-${pack.id}.zip`,
+            format,
+            contentUri: bundledImageUri(),
+          },
+        ];
+      }
+      return completedSlots.map((slot) => ({
+        assetId: `${id}-${slot.id}-${format}`,
+        fileName: `${slot.emotionId}.${format}`,
+        format,
+        contentUri: slot.imageUri ?? bundledImageUri(),
+      }));
+    });
+    const mockNow = new Date(this.now(state)).getTime();
     const expires = new Date(
-      Date.UTC(2026, 0, state.scenario === 'expired_export' ? 1 : 8),
+      mockNow + (state.scenario === 'expired_export' ? -1_000 : 7 * 24 * 60 * 60 * 1_000),
     ).toISOString();
     const manifest: ExportManifest = {
       id,
@@ -543,8 +553,11 @@ export class MockStickerProductService implements StickerProductService {
     return clone(manifest);
   }
   async getExportManifest(id: string): Promise<ExportManifest> {
-    const found = (await this.read()).exports.find((e) => e.id === id);
+    const state = await this.read();
+    const found = state.exports.find((e) => e.id === id);
     if (!found) this.fail('asset_not_found');
+    if (new Date(found.expiresAt).getTime() <= new Date(this.now(state)).getTime())
+      this.fail('asset_url_expired');
     return clone(found);
   }
   async getConsentState(): Promise<ConsentState> {

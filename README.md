@@ -1,22 +1,22 @@
 # GenSticker 🎨✨
 
-**GenSticker** is an Expo SDK 57 application for text and canonical-first personalized sticker prototypes.
+**GenSticker** is an Expo SDK 54 application for text and canonical-first personalized stickers.
 
-> All current personalized-product data use deterministic, device-local frontend mocks. Backend and real AI are not implemented by this frontend task.
+The app supports both a deterministic device-local mock and a real HTTP path backed by FastAPI, PostgreSQL/Supabase Storage, a durable worker, and Replicate.
 
-Keep `EXPO_PUBLIC_STICKER_SERVICE=mock`. The legacy mock flag remains supported temporarily; HTTP product mode is a disabled interface skeleton. The selfie journey is consent → picker/validation → three candidates with full-screen preview → explicit approval → versioned profile → eight-slot pack → targeted retry → exact text → export/share manifest → native share invocation.
+For the full stack, set `EXPO_PUBLIC_STICKER_SERVICE=http` and `EXPO_PUBLIC_USE_MOCK_SERVICE=false`. The selfie journey is consent → upload/validation → canonical generation → explicit approval → versioned profile → eight-slot pack → targeted retry → exact text → export/share manifest.
 
 See [Frontend architecture](docs/FRONTEND_ARCHITECTURE.md), [mock service](docs/MOCK_SERVICE.md), [user flows](docs/MOBILE_USER_FLOWS.md), and [Android QA checklist](docs/MOBILE_QA_CHECKLIST.md).
 
 ---
 
-## 🚀 Key Features (Scaffold Phase)
+## 🚀 Key Features
 
 - ✍️ **Text-to-Sticker**: Generate expressive stickers from text prompts.
 - 🤳 **Selfie-to-Sticker**: Pick photos from gallery and customize styles and emotions.
 - 🎨 **Multiple AI Styles**: Chibi, Cartoon, 3D Pixar, and Meme.
 - 😄 **Expressive Emotions**: Happy, Angry, Sad, Love, Confused.
-- ⏳ **Simulated Progress**: Multi-step AI generation progress indicator with step descriptions.
+- ⏳ **Durable Progress**: Multi-step generation jobs processed by a separately restartable worker.
 - 📚 **Product Library**: Resume local Character, Pack, and Job records; retain legacy text-sticker saves.
 - 🧑‍🎨 **Canonical Profile Flow**: Compare three candidates, approve explicitly, and save immutable profile versions.
 - 📦 **Eight-Slot Packs**: Track independent emotion slots, partial completion, and targeted retry.
@@ -27,7 +27,7 @@ See [Frontend architecture](docs/FRONTEND_ARCHITECTURE.md), [mock service](docs/
 
 ## 🛠️ Technology Stack
 
-- **Framework**: React Native + Expo (v57)
+- **Framework**: React Native + Expo (SDK 54)
 - **Routing**: Expo Router (File-based navigation)
 - **Language**: TypeScript (Strict Mode)
 - **State Management**: Zustand
@@ -113,7 +113,7 @@ GenSticker/
 │   ├── sticker/              # Text, preview, export, and share screen
 │   ├── _layout.tsx           # Navigation root and providers
 │   ├── consent.tsx           # Versioned selfie consent
-│   ├── debug.tsx             # Safe local mock diagnostics
+│   ├── debug.tsx             # Safe mock/HTTP diagnostics
 │   └── index.tsx             # Home and resume entry point
 ├── assets/                   # Static Expo and bundled mock assets
 ├── backend/                  # FastAPI local backend scaffold
@@ -124,8 +124,8 @@ GenSticker/
 │   │   ├── domain/           # Selfie validation domain logic
 │   │   ├── jobs/             # Durable job runner and worker
 │   │   ├── observability/    # Cost ledger and budget policy
-│   │   ├── providers/        # Mock provider and ComfyUI seam
-│   │   └── storage/          # Local private asset storage
+│   │   ├── providers/        # Mock, Replicate, and ComfyUI provider seam
+│   │   └── storage/          # Local or private Supabase asset storage
 │   ├── migrations/           # Alembic migration environment and versions
 │   ├── tests/                # Backend API and lifecycle tests
 │   ├── Dockerfile
@@ -148,7 +148,7 @@ GenSticker/
 │   ├── types/                # Legacy sticker types
 │   └── validation/           # Legacy Text-to-Sticker validation
 ├── .env.example              # Backend and mobile environment template
-├── app.json                  # Expo SDK 57 application configuration
+├── app.json                  # Expo SDK 54 application configuration
 ├── docker-compose.yml        # Local API/worker stack
 ├── eslint.config.js          # ESLint flat configuration
 ├── package.json              # Mobile scripts and dependencies
@@ -160,6 +160,6 @@ Generated directories such as `node_modules/`, `.expo/`, Python caches, and loca
 
 ---
 
-## 🔮 Future Integration Plan
+## 🔐 Deployment Boundary
 
-In future phases, Member B's real API implementation will replace the current disabled `HttpStickerProductService` skeleton and connect the frontend contract to FastAPI, private asset delivery, job recovery, and GPU inference workers. Mock mode remains available for deterministic frontend development. See [ARCHITECTURE.md](docs/ARCHITECTURE.md), [FRONTEND_IMPLEMENTATION_STATUS.md](docs/FRONTEND_IMPLEMENTATION_STATUS.md), and [ROADMAP.md](docs/ROADMAP.md) for details.
+HTTP mode currently uses the development `X-Dev-User-Id` seam. Replace it with verified Supabase JWT authentication before exposing the API publicly. Mock mode remains available for deterministic, free frontend development. See [Local development](docs/LOCAL_DEVELOPMENT.md) and [Architecture](docs/ARCHITECTURE.md).

@@ -15,8 +15,8 @@ class JSONFormatter(logging.Formatter):
         }
 
         # Add structured fields attached to extra
-        if hasattr(record, "extra") and isinstance(record.extra, dict):  # type: ignore[attr-defined]
-            for key, val in record.extra.items():  # type: ignore[attr-defined]
+        if hasattr(record, "extra") and isinstance(record.extra, dict):
+            for key, val in record.extra.items():
                 log_data[key] = val
 
         for attr in ["request_id", "user_id", "job_id", "stage", "duration_ms", "provider", "error_code"]:

@@ -13,4 +13,4 @@
 11. Product Library lists Character, Pack, and Job records, resumes each entity at its latest valid route, and still shows legacy Text-to-Sticker saves.
 12. Character deletion requires confirmation, cascades related local mock records, invalidates related queries, and removes stale session IDs.
 
-All flows above are deterministic frontend behavior in mock mode. Real upload, generation, private asset delivery, archive creation, and persistence require the backend contract.
+All flows above are available deterministically in mock mode and through the FastAPI adapter in HTTP mode. HTTP mode persists consent/product state, uploads private assets, and queues generation in the durable worker.

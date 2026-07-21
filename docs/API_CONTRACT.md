@@ -78,7 +78,7 @@ Idempotent local deletion cascade for Character and associated local assets.
 
 ### 9. `POST /api/v1/generation-jobs`
 
-Submits a mock canonical-generation job.
+Submits a durable canonical-generation job to the configured backend provider.
 
 - Body: `{"character_id": "UUID", "kind": "canonical_generation", "seed": 42, "style": "chibi", "emotion": "happy"}`
 

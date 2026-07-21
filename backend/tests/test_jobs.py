@@ -1,11 +1,42 @@
+from io import BytesIO
+
 import pytest
 from backend.app.jobs.runner import process_one_job
+from PIL import Image as PILImage
+from PIL import ImageDraw
 
 
 @pytest.mark.asyncio
 async def test_job_execution_vertical_slice(client, test_db_session):
+    consent_res = client.put(
+        "/api/v1/consent",
+        json={
+            "consent_version": "1.0",
+            "accepted": True,
+            "reuse_opt_in": False,
+            "accepted_at": None,
+        },
+    )
+    assert consent_res.status_code == 200
+
+    selfie_buffer = BytesIO()
+    selfie_image = PILImage.new("RGB", (512, 512), color="blue")
+    ImageDraw.Draw(selfie_image).rectangle([64, 64, 256, 256], fill="yellow")
+    selfie_image.save(selfie_buffer, format="PNG")
+    selfie_res = client.post(
+        "/api/v1/assets/selfies",
+        files={"file": ("selfie.png", selfie_buffer.getvalue(), "image/png")},
+    )
+    assert selfie_res.status_code == 200
+
     # 1. Create character
-    char_res = client.post("/api/v1/characters", json={"display_name": "Test Character"})
+    char_res = client.post(
+        "/api/v1/characters",
+        json={
+            "display_name": "Test Character",
+            "selfie_asset_id": selfie_res.json()["asset"]["id"],
+        },
+    )
     char_id = char_res.json()["id"]
 
     # 2. Create job

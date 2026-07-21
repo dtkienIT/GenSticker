@@ -1,13 +1,14 @@
 # Frontend Architecture
 
-GenSticker Mobile uses Expo SDK 57, Expo Router, strict TypeScript, Zustand, TanStack Query, React Hook Form, Zod, `expo-image-picker`, and `expo-sharing`.
+GenSticker Mobile uses Expo SDK 54, Expo Router, strict TypeScript, Zustand, TanStack Query, React Hook Form, Zod, `expo-image-picker`, and `expo-sharing`.
 
-The selfie product path is provider-neutral: `screens → query/hooks → StickerProductService → MockStickerProductService`. `HttpStickerProductService` is an intentionally disabled contract skeleton for later backend work. Screens pass stable entity IDs through routes and never import mock fixtures. Durable product-like records live in AsyncStorage; transient picker data remains in memory. The original `useStickerStore` remains only for the legacy Text-to-Sticker prototype.
+The selfie product path is provider-neutral: `screens → query/hooks → StickerProductService → mock or HTTP adapter`. Screens pass stable entity IDs through routes and never import mock fixtures. Mock records live in AsyncStorage; HTTP records live behind FastAPI/PostgreSQL. Transient picker data remains in memory. The original `useStickerStore` remains only for the legacy Text-to-Sticker prototype.
 
 - `services/contracts`: canonical types, errors, service interface, and boundary schemas.
 - `services/mock`: deterministic character/job/profile/pack/export lifecycle simulation.
 - `services/http`: disabled product-service seam for Member B's real API implementation.
-- `services/factory.ts`: explicit mode selection; mock is the safe default.
+- `services/http`: contract-validating FastAPI adapter with multipart upload and LAN URL resolution.
+- `services/factory.ts`: explicit mock/HTTP mode selection.
 - `services/sharing`: platform-aware export sharing with local-file support and fallback.
 - `query` and `hooks`: keys, invalidation, terminal-state polling.
 - `store`: persisted product-session IDs, consent migration, transient selfie draft, and legacy text saves.

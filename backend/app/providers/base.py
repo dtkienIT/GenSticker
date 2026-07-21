@@ -1,7 +1,21 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 from pydantic import BaseModel, Field
+
+
+class GenerationStage(str, Enum):
+    VALIDATING = "validating"
+    PREPARING = "preparing"
+    GENERATING = "generating"
+    BACKGROUND_REMOVAL = "background_removal"
+    POSTPROCESSING = "postprocessing"
+    EXPORTING = "exporting"
+    COMPLETED = "completed"
+
+
+ProgressCallback = Callable[[GenerationStage, int], None]
 
 
 class GenerationSpec(BaseModel):
@@ -15,6 +29,7 @@ class GenerationSpec(BaseModel):
     style: str = "chibi"
     emotion: str = "happy"
     source_asset_id: Optional[str] = None
+    source_uri: Optional[str] = None
     extra_params: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -44,6 +59,6 @@ class GenerationProvider(ABC):
     async def generate(
         self,
         spec: GenerationSpec,
-        progress_callback: Optional[Callable[[str, int], None]] = None,
+        progress_callback: Optional[ProgressCallback] = None,
     ) -> GenerationResult:
         pass

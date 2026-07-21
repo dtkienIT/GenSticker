@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Optional
 
 from backend.app.core.config import settings
 from backend.app.core.errors import ProviderNotConfiguredException
@@ -6,6 +6,7 @@ from backend.app.providers.base import (
     GenerationProvider,
     GenerationResult,
     GenerationSpec,
+    ProgressCallback,
 )
 
 
@@ -17,7 +18,7 @@ class ComfyUIGenerationProvider(GenerationProvider):
     async def generate(
         self,
         spec: GenerationSpec,
-        progress_callback: Optional[Callable[[str, int], None]] = None,
+        progress_callback: Optional[ProgressCallback] = None,
     ) -> GenerationResult:
         if not self.enabled:
             raise ProviderNotConfiguredException(provider="comfyui")
