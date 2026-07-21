@@ -1,5 +1,9 @@
 # Documentation Realignment Implementation Plan
 
+**Status:** Complete; superseded for future execution.
+
+> **Do not re-run this plan.** The PRD and active top-level documents under `docs/` govern future implementation. Named Expo/TypeScript target steps below are historical and were superseded by the Kotlin, Jetpack Compose, Room, and WorkManager target architecture.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the superseded cloud/selfie/backend documentation with a coherent, team-oriented documentation set for the PRD-defined Android-first on-device text-to-sticker release.

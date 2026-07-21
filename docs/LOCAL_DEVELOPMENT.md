@@ -2,22 +2,20 @@
 
 ## Document Control
 
-**Status:** Reproducible contributor workflow for the Android-first target release.
-
 **Authority:** The [PRD](./PRD_AI_Sticker_Generator.md) is authoritative. This guide implements
 the [Android release constraints](./PRD_AI_Sticker_Generator.md#constraints), the
 [on-device architecture](./PRD_AI_Sticker_Generator.md#8-system-design--architecture), and the
 [Week 1 feasibility workflow](./PRD_AI_Sticker_Generator.md#week-1--feasibility-spike--gono-go).
-Native behavior and fixture vocabulary come from the
+On-device runtime behavior and fixture vocabulary come from the
 [Integration Contracts](./INTEGRATION_CONTRACTS.md).
 
-**Current versus target:** The repository currently contains an Expo/TypeScript mock UI scaffold.
-Its start scripts are useful for UI work, but the custom on-device inference bridge, selected
-Plan A/B/C runtime, release Android application ID, and production build configuration have not
-yet been implemented. Those scaffold commands are not evidence that native inference works. The
-target workflow below becomes executable as the native bridge and build configuration land.
+**Current versus target:** The checked-in tree contains an Expo/TypeScript mock UI scaffold; the PRD
+target is a Kotlin and Jetpack Compose application. Expo commands are current-scaffold maintenance
+only and are not target application or on-device inference evidence. Implementation status belongs
+only in the [Roadmap](./ROADMAP.md); `W1-07` owns the target Android project and Gradle workflow,
+while `XC-RESET` owns the production application ID and reset evidence.
 
-Expo version claims in this guide are bound to the official
+The current-scaffold Expo version claims in this guide are bound to the official
 [Expo SDK 57 reference](https://docs.expo.dev/versions/v57.0.0/),
 [SDK 57 DevClient reference](https://docs.expo.dev/versions/v57.0.0/sdk/dev-client/),
 [SDK 57 Expo Go library boundary](https://docs.expo.dev/versions/v57.0.0/sdk/third-party-overview/),
@@ -28,10 +26,10 @@ and [Expo CLI reference](https://docs.expo.dev/more/expo-cli/).
 Use Windows, Linux, or macOS with:
 
 - Git;
-- Android Studio, an Android SDK, and a Java toolchain compatible with the checked-in Android
-  project once that project exists;
+- Android Studio, an Android SDK, and the Java/Kotlin toolchain selected by the checked-in target
+  Android project once that project exists;
 - `adb` available from the Android SDK Platform Tools;
-- npm and the Node.js version listed below; and
+- npm and the Node.js version listed below when maintaining the current scaffold; and
 - a USB-debuggable physical Android device for native, performance, thermal, recovery, and release
   evidence.
 
@@ -40,7 +38,7 @@ not replace the representative physical-device evidence required by the
 [PRD device floor](./PRD_AI_Sticker_Generator.md#constraints) or the
 [feasibility device matrix](./FEASIBILITY_SPIKE.md#device-test-matrix).
 
-## Required Versions
+## Current Scaffold Versions
 
 | Tool or framework | Required version                    | Source of truth                                                      |
 | ----------------- | ----------------------------------- | -------------------------------------------------------------------- |
@@ -52,13 +50,15 @@ not replace the representative physical-device evidence required by the
 | Contract          | `1.0`                               | [Integration Contracts](./INTEGRATION_CONTRACTS.md#document-control) |
 
 Expo SDK 57 targets React Native 0.86 and React 19.2.3 and requires Node.js 22.13.x at minimum.
-The checked-in patch versions remain authoritative for this repository.
+These versions describe the checked-in scaffold only; they do not redefine the PRD's Kotlin and
+Jetpack Compose target stack. The checked-in patch versions remain authoritative for scaffold
+maintenance.
 
 Do not replace the checked-in dependency versions with a generic latest version. Expo documents
 that React Native packages must match the installed React Native/Expo combination; validate the
 lockfile installation with `npx expo install --check`.
 
-## Repository Setup
+## Current Scaffold Setup
 
 From the repository root:
 
@@ -73,12 +73,12 @@ npx expo install --check
 it consumes the committed lockfile and must not rewrite it. If the Expo compatibility check fails,
 stop and reconcile the dependency change in a reviewed commit; do not hide or bypass the mismatch.
 
-No environment variable or local service is required for the target core generation flow. After
-installation, capability evaluation, prompt moderation, generation, Segmentation, persistence,
-gallery access, and OS sharing are local as required by the
+No environment variable or local service is required for the target core generation flow. Once
+implemented and installed, capability evaluation, prompt moderation, generation, Segmentation,
+persistence, gallery access, and OS sharing are local as required by the
 [offline guarantee](./USER_FLOWS.md#offline-guarantees).
 
-## Expo Application Workflow
+## Current Expo Scaffold Workflow
 
 For the **current mock scaffold**, start Metro with:
 
@@ -86,58 +86,41 @@ For the **current mock scaffold**, start Metro with:
 npm run start
 ```
 
-The current `npm run android` script asks Expo CLI to open the scaffold on Android. Until the native
-bridge and development-client configuration are committed, this is only a mock/UI loop and cannot
-prove the target inference path.
+The current `npm run android` script asks Expo CLI to open the scaffold on Android. This is only a
+mock/UI loop and cannot prove the target inference path. Never substitute a scaffold, web, Expo Go,
+or emulator result for target Kotlin application, model, Segmentation, persistence, or physical-
+device evidence.
 
-For JavaScript/TypeScript changes after a development build has been installed, start Metro for the
-development client with:
+## Target Native Android Workflow
 
-```powershell
-npx expo start --dev-client
-```
+Roadmap item `W1-07` creates the basic Kotlin and Jetpack Compose project. That change must check in
+the Gradle wrapper and pin the Android Gradle Plugin, Kotlin, Compose, Java, compile SDK, and target
+SDK versions used by the target application. Until those files exist, this guide does not invent a
+Gradle project path or commands that cannot run.
 
-Use the same release-plan configuration, contract version, and model fixture identity as the work
-being verified. Never substitute a web build or an Expo Go session for native bridge, model,
-Segmentation, persistence, or device evidence.
-
-## Android Development Build
-
-The selected inference runtime requires a custom native module. Expo Go contains a fixed set of
-native code and therefore cannot host that module. Once the bridge and development-client
-configuration exist, install an Android development build on a connected device:
-
-```powershell
-adb devices
-npx expo run:android --device
-```
-
-Expo CLI may generate the Android native directory when it is absent. Treat any generated native
-changes as reviewable source: inspect them, do not commit secrets, and follow the repository's
-chosen Continuous Native Generation policy. The first native build requires Android Studio and
-Java to be installed and configured.
-
-Rebuild the development binary after any change to native module code, config plugins, native
-dependencies, Android configuration, bundled models, or the model/runtime adapter. A Metro reload
-is sufficient only for code and assets that do not alter the native runtime.
+After `W1-07`, contributors use the checked-in Gradle wrapper to build, test, and install the target
+application on a device listed by `adb devices`. Rebuild the binary after changes to Kotlin or
+runtime-native code, Gradle dependencies, Android configuration, bundled models, or the
+model/runtime adapter.
 
 Development builds are debugging tools, not release evidence by themselves. Performance, thermal,
 install-size, offline cold-start, crash recovery, and Play acceptance tests use the exact
 release-like or release-candidate binary named by the evidence package.
 
-## Native Module Workflow
+## On-Device Runtime Workflow
 
 1. Read the [Application Generation Port](./INTEGRATION_CONTRACTS.md#application-generation-port),
-   [Native Bridge Contract](./INTEGRATION_CONTRACTS.md#native-bridge-contract), and
+   [On-Device Runtime Wire Contract](./INTEGRATION_CONTRACTS.md#on-device-runtime-wire-contract), and
    [Progress and Cancellation](./INTEGRATION_CONTRACTS.md#progress-and-cancellation) before
-   changing the bridge.
+   changing the runtime adapter.
 2. Add or update a contract fixture before changing observable behavior. Run each affected fixture
    against every producer and every consumer; implementation-local tests do not replace consumer
    conformance.
-3. Build and install a new Android development build. Record the source commit, build identifier,
-   contract version, device, Android build, native runtime version, and selected delegate.
+3. Build and install a new target Android development build with its checked-in Gradle workflow.
+   Record the source commit, build identifier, contract version, device, Android build, runtime
+   version, and selected delegate.
 4. Verify one admitted request produces one correlated terminal result; invalid pre-admission
-   requests produce the defined bridge error and no work.
+   requests produce the defined wire error and no work.
 5. Exercise ordered progress, duplicate/late events, cancellation idempotency, cleanup, relaunch,
    and a successful new request after recovery.
 6. Run the physical-device gates in [Testing and Release](./TESTING_AND_RELEASE.md) before treating
@@ -161,10 +144,10 @@ or remote artifact.
 
 Use versioned synthetic or approved safe golden prompts, fixed seeds, dimensions, style preset IDs,
 and fixture digests. Blocked raw prompts and production user prompts must not be placed in fixtures,
-logs, bridge captures, generated-asset records, screenshots, or evidence packages. Preserve only a
+logs, wire captures, generated-asset records, screenshots, or evidence packages. Preserve only a
 one-way prompt digest where the contract requires provenance.
 
-## Verification Commands
+## Current Scaffold Verification Commands
 
 Run from the repository root before requesting review:
 
@@ -176,17 +159,18 @@ npm test
 npm run format:check
 ```
 
-These are the commands exposed by the current scaffold. Record each command, UTC time, source
-commit, tool versions, exit code, and complete output in CI or the evidence package. As native and
-device harnesses are added, run their documented contract, Android, golden, failure-recovery, and
-device suites in addition to these commands; do not imply they are covered by the TypeScript suite.
+These commands preserve the current repository while the scaffold remains checked in. Record each
+command, UTC time, source commit, tool versions, exit code, and complete output in CI. They are not
+target release evidence. Once the Kotlin project exists, its checked-in Gradle build, static
+analysis, unit, instrumentation, contract, golden, failure-recovery, and device tasks are required
+in addition; do not imply they are covered by the scaffold TypeScript suite.
 
 ## Local Data Reset
 
-The target production reset is **not implemented yet**, and the repository has no production
-Android application ID. Consequently, there is currently no reproducible target in-app reset
-route/action and no valid target `adb` reset command. Target reset acceptance remains blocked until
-both are implemented and documented.
+The [Roadmap `XC-RESET` item](./ROADMAP.md#cross-cutting-workstreams) is the sole status source for
+the production application ID, exact in-app reset route/action, literal ADB reset command, and
+their acceptance evidence. This guide defines how contributors use that evidence; it does not
+declare implementation status.
 
 The current mock scaffold exposes a `/debug` **Clear Local Data** action (currently rendered as
 `Xóa dữ liệu mô phỏng`) that calls the mock service's local-data clear operation and resets the mock
@@ -194,20 +178,24 @@ session/query cache. It is scaffold-only behavior: it does not implement the tar
 generated-asset, prompt-history, telemetry, safety-baseline, or rollback-protection lifecycle and
 is not acceptance evidence.
 
-Before target reset tests can pass, the implementation change must:
+The `XC-RESET` acceptance evidence must:
 
 1. provide and test the exact production in-app reset route and action against
    [Safety and Privacy](./SAFETY_AND_PRIVACY.md#deletion-and-reset);
 2. commit the production Android application ID; and
-3. update this section with that exact UI route/action and an executable command in place of the
+3. prove the in-app reset preserves `maximumAcceptedRevision` and both verified ruleset slots,
+   rejects a bundled baseline below the floor, and remains fail closed until the unique connected
+   refresh installs a qualifying signed package; and
+4. update this section with that exact UI route/action and an executable command in place of the
    unresolved placeholder `adb shell pm clear <resolved.production.applicationId>`.
 
-Do not run that placeholder and do not invent an application ID. The final documented `adb` command
-must name the resolved production ID literally. Android app-storage clear or uninstall/reinstall is
-used only when a test explicitly requires a clean install; record the exact operation because it
-also removes application state and may require model or Segmentation asset delivery again. A
-clean-install run and an offline-after-install cold start are different cases and must not be
-conflated.
+Do not run that placeholder and do not invent an application ID. Use only the literal command from
+reviewed `XC-RESET` evidence; it must name the resolved production ID. Android app-storage clear or
+uninstall/reinstall is used only when a test explicitly requires a destructive new install; it is
+not evidence that the prior installation's app-private revision floor survived. Record the exact
+operation because it also removes application state and may require model or Segmentation asset
+delivery again. A clean-install run and an offline-after-install cold start are different cases and
+must not be conflated.
 
 Do not use the obsolete repository reset scripts for target application evidence; they address the
 historical scaffold rather than the Android local-data contract.
@@ -216,9 +204,9 @@ historical scaffold rather than the Android local-data contract.
 
 | Symptom                                                       | Required response                                                                                                                                                      |
 | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Native inference module is unavailable in Expo Go             | Install and launch the Android development build; do not add a JavaScript fallback that bypasses the bridge.                                                           |
-| Expo reports incompatible package versions                    | Restore the lockfile installation with `npm ci`, run `npx expo install --check`, and review any intentional dependency update.                                         |
-| Metro runs but native changes are absent                      | Rebuild and reinstall the development binary; native changes are not delivered by a Metro reload.                                                                      |
+| Current scaffold fails Expo dependency validation             | Restore the lockfile installation with `npm ci`, run `npx expo install --check`, and review any intentional scaffold dependency update.                                |
+| Current scaffold runs but target behavior is absent           | Use the target Kotlin/Compose project after `W1-07`; the Expo scaffold cannot validate target application or on-device behavior.                                       |
+| Target Kotlin or runtime-native changes are absent on device  | Rebuild and reinstall with the target project's checked-in Gradle workflow.                                                                                            |
 | Device is not listed by `adb devices`                         | Reconnect the device, authorize USB debugging, and verify Android Platform Tools before rebuilding.                                                                    |
 | Device fails the capability gate                              | Confirm `DeviceCapabilities`; below-floor or runtime-incompatible devices are negative fixtures, not supported test devices.                                           |
 | Model preparation reports an integrity or compatibility error | Compare the exact `ModelManifest`, checksum, runtime, memory, and delegate evidence. Do not retry with an unnamed artifact.                                            |

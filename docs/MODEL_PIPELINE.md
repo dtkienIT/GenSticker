@@ -2,8 +2,9 @@
 
 ## Document Control
 
-**Status:** Delivery protocol; production model, runtime, quantization, delegate support, and
-packaging strategy remain undecided pending the Week 1 physical-device spike.
+**Document role:** Delivery protocol. Production selection status for the model, runtime,
+quantization, delegate support, and packaging strategy is recorded only in
+[Roadmap `W1-06`](./ROADMAP.md#week-1-feasibility-and-gono-go).
 
 **Owner:** Native/ML lead. QA approves validation and reproducibility evidence; the Product owner
 approves the selected Plan A/B/C consequence; the Safety owner approves safety-impacting inputs.
@@ -27,11 +28,11 @@ source model -> pinned conversion environment -> converted artifact -> quantized
 
 Two environments are deliberately separate:
 
-| Workstation preparation tooling                                                                                                                                            | Shipped Android runtime                                                                                                                                                                               |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Python, source-model libraries, conversion/export tools, quantization/calibration tools, validation scripts, license/provenance records, and optional LoRA training tools. | Exactly one selected-plan runtime and exact validated artifact(s), manifest reader, integrity checks, delegate adapter, on-device generation sequence, Segmentation integration, and contract bridge. |
-| May use a workstation GPU and source checkpoints to prepare and compare artifacts.                                                                                         | Must run on representative physical devices at the PRD floor, locally after installation, with no cloud inference fallback.                                                                           |
-| Produces immutable artifacts and reproducibility evidence; it is not an app feature.                                                                                       | Consumes only approved release artifacts and exposes the versioned `StickerGenerationEngine` behavior.                                                                                                |
+| Workstation preparation tooling                                                                                                                                            | Shipped Android runtime                                                                                                                                                                                |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Python, source-model libraries, conversion/export tools, quantization/calibration tools, validation scripts, license/provenance records, and optional LoRA training tools. | Exactly one selected-plan runtime and exact validated artifact(s), manifest reader, integrity checks, delegate adapter, on-device generation sequence, Segmentation integration, and contract adapter. |
+| May use a workstation GPU and source checkpoints to prepare and compare artifacts.                                                                                         | Must run on representative physical devices at the PRD floor, locally after installation, with no cloud inference fallback.                                                                            |
+| Produces immutable artifacts and reproducibility evidence; it is not an app feature.                                                                                       | Consumes only approved release artifacts and exposes the versioned `StickerGenerationEngine` behavior.                                                                                                 |
 
 Python, TensorFlow Lite/ONNX conversion tools, Hugging Face `diffusers`, source checkpoints,
 calibration data, training data, and workstation GPU dependencies do not run on-device and do not
@@ -145,8 +146,10 @@ choice to be tuned empirically across chip vendors
 
 ## Validation Against Source Outputs
 
-Use the same versioned safe case ID, normalized prompt, fixed safety negative prompt, style preset,
-seed, scheduler/step settings, and dimensions for source, converted, and quantized variants. Retain:
+Use the same versioned safe case ID, normalized prompt, bundled internal fixed safety negative
+prompt, style preset, seed, scheduler/step settings, and dimensions for source, converted, and
+quantized variants. The negative prompt is pipeline configuration, not a generation-request or wire
+field. Retain:
 
 - source, converted, and quantized output references plus SHA-256 and generation metadata;
 - component-level numeric comparison data where deterministic comparison is meaningful;
@@ -254,14 +257,16 @@ validating -> preparing_model -> generating -> removing_background -> encoding -
 ```
 
 1. The Capability gate obtains `DeviceCapabilities`; unsupported devices do not start generation.
-2. The Safety filter normalizes and evaluates the prompt before the native bridge. Only an allowed
-   normalized prompt enters a generation request; a blocked prompt yields `PROMPT_BLOCKED` and no
-   native work.
+2. The Safety filter normalizes and evaluates the prompt before the on-device runtime boundary. Only
+   `SafetyEvaluationResult.Evaluated(SafetyDecision.Allowed)` can supply the normalized prompt for
+   a generation request. An evaluated block has `SafetyBlockReasonCode.PROMPT_BLOCKED`; an
+   operational `SafetyEvaluationResult.Failed` follows its retry/baseline-recovery path. Neither
+   starts native work.
 3. `prepareModel` verifies the exact `ModelManifest`, artifact integrity, runtime, memory, dimensions,
    and usable delegate.
 4. The Generation orchestrator admits one contract-valid request. The Model runtime applies the
-   fixed safety negative prompt and executes locally with the request's style preset, seed, and
-   square dimensions.
+   bundled fixed safety negative prompt internally and executes locally with the request's style
+   preset, seed, and square dimensions; the request does not carry the negative prompt.
 5. Segmentation converts the raw output to a transparent subject cutout. Encoding produces PNG
    bytes; the Asset repository durably persists them and then creates one immutable
    `GeneratedAsset`.

@@ -24,9 +24,9 @@ The current repository contains an Expo/TypeScript mock application with simulat
 
 ## Target System Context
 
-The release is an Android-first application with an Expo/TypeScript app shell and a native on-device inference boundary. The app invokes on-device safety, generation, segmentation, local asset, and platform-sharing capabilities through versioned observable behavior defined in [`INTEGRATION_CONTRACTS.md`](./INTEGRATION_CONTRACTS.md).
+The release is an Android-first Kotlin application with a Jetpack Compose app shell, Room-backed gallery metadata, WorkManager-owned best-effort safety configuration sync, and an explicit on-device runtime boundary. The app invokes on-device safety, generation, segmentation, local asset, and platform-sharing capabilities through versioned observable behavior defined in [`INTEGRATION_CONTRACTS.md`](./INTEGRATION_CONTRACTS.md).
 
-The TypeScript application depends on the abstract contract in `INTEGRATION_CONTRACTS.md`; it does not select a concrete inference implementation. The Week 1 feasibility spike chooses the native runtime implementation based on evidence from representative supported devices. The architecture deliberately does not lock MediaPipe Image Generator, or any other candidate runtime, as the production path.
+The Kotlin application depends on the abstract contract in `INTEGRATION_CONTRACTS.md`; it does not select a concrete inference implementation. The Week 1 feasibility spike chooses the runtime implementation based on evidence from representative supported devices. The architecture deliberately does not lock MediaPipe Image Generator, or any other candidate runtime, as the production path.
 
 ## Component Responsibilities
 
@@ -40,7 +40,7 @@ The Capability gate evaluates whether the device meets the supported floor and w
 
 ### Safety filter
 
-The Safety filter evaluates the prompt on-device before generation compute starts. It returns an allow or block decision with a safe user-facing outcome and supports the PRD's fixed safety negative prompting through the generation request. It does not perform output-image classification in this release.
+The Safety filter implements `PromptSafetyEvaluator` and evaluates the normalized prompt on-device before a `GenerationRequest` can exist. `SafetyEvaluationResult.Evaluated` wraps an allow or block policy decision. `SafetyEvaluationResult.Failed` represents unavailable/invalid rules or evaluator failure, fails closed without constructing a generation request, and exposes only safe retry after eligible-package recovery at or above `maximumAcceptedRevision`. An operational failure is never represented as a policy block and never logs the raw prompt. The fixed safety negative prompt is separate bundled runtime/model configuration applied internally after an allowed decision; it is never a request field or user-controlled. The filter does not perform output-image classification in this release.
 
 ### Generation orchestrator
 
@@ -56,11 +56,15 @@ Segmentation converts raw model output into a subject cutout with transparent ba
 
 ### Asset repository
 
-The Asset repository owns local generated-asset files and gallery metadata. It creates durable transparent PNG records, makes gallery items available without regeneration, and provides local identifiers to preview, save, and share operations.
+The Asset repository implements `GalleryRepository`, owns local generated-asset files plus Room prompt-history/favorite metadata, and confines every resolved path to the app-owned asset root. It creates durable transparent PNG records, lists and retrieves gallery items without regeneration, and is the only component allowed to delete the asset, metadata, and prompt history together.
 
 ### Platform sharing
 
-Platform sharing exposes Android-native save and OS share-sheet operations for a generated asset. It receives only a local asset reference from the contract and leaves asset lifecycle ownership with the asset repository.
+Platform sharing implements `PlatformAssetExporter` and exposes Android photo-library save and OS share-sheet operations for a resolved gallery asset. It distinguishes success, permission denial, cancellation, unavailable capability, and failure while leaving gallery ownership and contents intact for every outcome.
+
+### Safety configuration sync worker
+
+WorkManager owns the best-effort signed blocklist/config update path required by the [PRD patch channel](./PRD_AI_Sticker_Generator.md#patch-channel-for-post-launch-gaps). Periodic work uses the unique name `gensticker.safety-config.periodic`, `ExistingPeriodicWorkPolicy.UPDATE`, and `NetworkType.CONNECTED`. User/admin-triggered immediate checks use `gensticker.safety-config.immediate`, `ExistingWorkPolicy.KEEP`, and the same network constraint. The approved interval and backoff values remain configuration decisions; no exact run time is promised. Work persists across application process restarts and device reboots under WorkManager semantics. It requests only signed compatible revisions at or above `maximumAcceptedRevision`, verifies two next-generation app-private copies, and atomically commits the active/redundant pair plus the monotonic floor. If no qualifying local package remains, the unique connected request may restore safety later but generation stays failed closed until then.
 
 ## End-to-End Data Flow
 
@@ -74,19 +78,20 @@ flowchart TD
     SEG --> PNG[Transparent PNG]
     PNG --> LG[Local gallery]
     LG --> SS[Save/share]
+    WM[WorkManager safety-config sync] -. verified dual-slot rules at revision floor .-> SF
 ```
 
 The Safety filter may stop a blocked prompt before the Generation orchestrator starts. For an allowed generation request, the orchestrator maps contract-defined progress stages and errors through generation and segmentation, then records the final transparent PNG generated asset in the local gallery for preview and platform sharing.
 
-## Native Boundary
+## Application-to-Runtime Boundary
 
-The App shell communicates with the native capabilities through the abstract, versioned contract in [`INTEGRATION_CONTRACTS.md`](./INTEGRATION_CONTRACTS.md). The contract defines generation-request, progress-stage, cancellation, success, failure, model-manifest, generated-asset, and safety-decision behavior without exposing a runtime implementation.
+The App shell communicates with the on-device capabilities through the abstract, versioned contract in [`INTEGRATION_CONTRACTS.md`](./INTEGRATION_CONTRACTS.md). The contract defines generation, progress, cancellation, safety evaluation, gallery list/get/delete, save/share, model-manifest, and generated-asset behavior without exposing a runtime implementation.
 
-Native code contains platform-specific model execution, segmentation integration, local file handling needed by native APIs, and save/share adapters. The boundary allows the Week 1 spike to evaluate candidate runtimes without forcing UI consumers to depend on a selected runtime's internal API.
+The Kotlin application and any runtime-native libraries contain platform-specific model execution, segmentation integration, local file handling needed by Android APIs, and save/share adapters. The boundary allows the Week 1 spike to evaluate candidate runtimes without forcing UI consumers to depend on a selected runtime's internal API.
 
 ## Storage and Asset Lifecycle
 
-Generated assets remain on the device. After segmentation succeeds, the Asset repository persists a transparent PNG and its local metadata as a gallery item. Preview reads that local record; save and share receive a local reference; regeneration creates a distinct asset rather than mutating a prior successful result.
+Generated assets remain on the device. After segmentation succeeds, the Asset repository persists a transparent PNG and its Room metadata as a gallery item. The metadata references, rather than duplicates, the generated-asset record and adds only item-local prompt history and favorite state. Preview reads that local record; save and share resolve its local reference through the repository; regeneration creates a distinct asset rather than mutating a prior successful result.
 
 Deletion removes the local gallery metadata and associated local asset according to the privacy and lifecycle rules in [`SAFETY_AND_PRIVACY.md`](./SAFETY_AND_PRIVACY.md). No custom production backend owns generation history, image files, or gallery records.
 
@@ -98,9 +103,12 @@ Each pipeline stage reports contract-defined failures independently:
 - Safety blocks show a friendly rejection that does not reveal filter internals.
 - Model-runtime failures expose retry, prompt-edit, cancellation, or contingency behavior as defined by the user flow.
 - Segmentation failures prevent an incomplete asset from entering the gallery and offer the applicable recovery action.
-- Asset persistence and platform-sharing failures preserve an existing successful asset where possible and report a retryable outcome.
+- Gallery path violations fail closed without reading or deleting external paths; deletion reports success only after owned bytes, metadata, and prompt history are removed.
+- Every photo-library save/share outcome preserves the existing gallery asset and reports its distinct contract subtype.
+- Safety-evaluation operational failure enters the application failure path, starts no generation work, and recovers only through explicit retry after verification of a package at or above `maximumAcceptedRevision`; an older bundle cannot recover it.
+- WorkManager sync retries transient failures with the approved backoff, never lowers the revision floor, and atomically replaces both verified slots only with a qualifying signed package; invalid candidates never replace them.
 
-Best-effort non-core services must never block the offline generation flow. Failure evidence, recovery behavior, and test coverage are specified in [`TESTING_AND_RELEASE.md`](./TESTING_AND_RELEASE.md).
+Best-effort non-core service failure does not block offline generation while an eligible verified safety package remains local. If every package at or above the floor is unreadable or corrupt, generation intentionally fails closed until recovery. Failure evidence, recovery behavior, and test coverage are specified in [`TESTING_AND_RELEASE.md`](./TESTING_AND_RELEASE.md).
 
 ## Capability Gate
 
@@ -123,7 +131,7 @@ The v1 exclusions below implement the [PRD's explicitly out-of-scope release bou
 ## Related Documents
 
 - [`PRD_AI_Sticker_Generator.md`](./PRD_AI_Sticker_Generator.md) — authoritative scope, constraints, and contingency policy.
-- [`INTEGRATION_CONTRACTS.md`](./INTEGRATION_CONTRACTS.md) — versioned application-to-native observable behavior.
+- [`INTEGRATION_CONTRACTS.md`](./INTEGRATION_CONTRACTS.md) — versioned application-to-runtime observable behavior.
 - [`FEASIBILITY_SPIKE.md`](./FEASIBILITY_SPIKE.md) — runtime selection evidence and contingency decision.
 - [`MODEL_PIPELINE.md`](./MODEL_PIPELINE.md) — offline model preparation and runtime artifact provenance.
 - [`SAFETY_AND_PRIVACY.md`](./SAFETY_AND_PRIVACY.md) — safety, local-data, deletion, and telemetry constraints.

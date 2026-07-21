@@ -2,7 +2,8 @@
 
 ## Document Control
 
-**Status:** Experiment protocol; no on-device feasibility decision has been recorded.
+**Document role:** Experiment protocol. The current feasibility-decision status is recorded only in
+[Roadmap `W1-06`](./ROADMAP.md#week-1-feasibility-and-gono-go).
 
 **Owners:** Native/ML lead (execution), QA lead (evidence), Product owner (exit-threshold and
 plan approval), and Safety owner (safety evidence).
@@ -12,7 +13,7 @@ plan approval), and Safety owner (safety evidence).
 **Authority:** The [PRD](./PRD_AI_Sticker_Generator.md) is authoritative. The spike implements
 the [Week 1 feasibility milestone](./PRD_AI_Sticker_Generator.md#week-1--feasibility-spike--gono-go)
 and the [formal contingency ladder](./PRD_AI_Sticker_Generator.md#contingency-ladder-formalized).
-Observable application/native behavior and evidence vocabulary come from the
+Observable application/runtime behavior and evidence vocabulary come from the
 [Integration Contracts](./INTEGRATION_CONTRACTS.md).
 
 The repository currently has PRD, roadmap, contract, model-license-registry example, and mock
@@ -49,7 +50,7 @@ implements the PRD's empirical model selection and contingency requirements
 | `H4` | Artifact size, install impact, memory, battery, and thermal behavior permit the selected path to ship without a cloud inference fallback.                                | Approved thresholds and measured median/worst values from the exact release-like artifact and build.                                 |
 | `H5` | Every source model, converted/quantized artifact, fine-tune input, and template asset used by a selectable plan has compatible licensing and traceable provenance.       | Signed license/provenance decision linked by `ModelManifest.licenseId` and `artifactSha256`.                                         |
 | `H6` | The generation path preserves the contract's progress, terminal-result, cancellation, persistence, and recovery semantics when successful and when deliberately faulted. | Contract fixture results, terminal `GenerationResult`, generated-asset provenance, crash/fault logs, and clean subsequent retry.     |
-| `H7` | The selected path preserves the input-side Safety filter boundary and applies the fixed safety negative prompt without introducing output moderation.                    | Safety decision fixture results and bridge-capture evidence; no raw blocked prompt in the package.                                   |
+| `H7` | The selected path preserves the input-side Safety filter boundary and applies the fixed safety negative prompt without introducing output moderation.                    | Safety decision fixture results and wire-capture evidence; no raw blocked prompt in the package.                                     |
 
 The hypotheses bind to the PRD's on-device architecture and full-pipeline latency definition
 ([PRD § 8 — System Design & Architecture](./PRD_AI_Sticker_Generator.md#8-system-design--architecture))
@@ -76,7 +77,8 @@ choice remains empirical and every variant receives a distinct artifact identity
 
 The support floor is **Snapdragon 7-series / Google Tensor G2-equivalent and above**. A device is
 eligible only when its contract-defined `DeviceCapabilities` also reports `supported: true`,
-`reasonCode: SUPPORTED`, a usable `availableDelegates` entry, and the tested `runtimeVersion`.
+the exact explicit wire token `reasonCode: "SUPPORTED"`, a usable `availableDelegates` entry, and
+the tested `runtimeVersion`.
 Below-floor devices are negative capability-gate fixtures, not evidence that a candidate meets the
 floor ([PRD § 5 — Deployable Release Scope](./PRD_AI_Sticker_Generator.md#deployable-release-scope-5-weeks--fixed-deadline),
 [Integration Contracts — Application Generation Port](./INTEGRATION_CONTRACTS.md#application-generation-port)).
@@ -107,7 +109,7 @@ Version a safe golden-prompt set and store its file digest in the evidence packa
 Each measured request records golden-set version, prompt case ID, `stylePresetId`, fixed `seed`,
 requested square dimensions within `ModelManifest.inputWidth` and `inputHeight`, candidate ID, and
 device ID. Store only approved safe prompt text. Safety smoke cases use versioned fixture IDs and
-digests; blocked raw prompts and production user prompts must not appear in evidence, logs, bridge
+digests; blocked raw prompts and production user prompts must not appear in evidence, logs, wire
 captures, or generated-asset records
 ([Integration Contracts — Contract Test Fixtures](./INTEGRATION_CONTRACTS.md#contract-test-fixtures)).
 
@@ -315,16 +317,21 @@ This spike is not the dedicated adversarial red-team pass. It verifies only that
 path preserves the V1 safety boundary defined by the PRD
 ([PRD § 10 — Layered Defense](./PRD_AI_Sticker_Generator.md#layered-defense-v1-scope-input-side-only-no-outputimage-classification)):
 
-- an approved allowed fixture yields `decision: allowed`, and only its normalized prompt crosses
-  the native bridge;
-- a blocked fixture yields `PROMPT_BLOCKED`, creates no generation request, progress stage,
+- an approved allowed fixture yields
+  `SafetyEvaluationResult.Evaluated(SafetyDecision.Allowed)`, and only its normalized prompt
+  crosses the on-device runtime adapter;
+- a blocked fixture yields `SafetyEvaluationResult.Evaluated(SafetyDecision.Blocked)` with
+  `SafetyBlockReasonCode.PROMPT_BLOCKED`, creates no generation request, progress stage,
   `GenerationResult`, generated asset, or gallery item, and reveals neither raw prompt nor matched
   rule in logs or UI;
-- the fixed safety negative prompt is applied inside every Plan A/Plan B generation call without
-  being exposed as user input; and
+- each operational failure fixture yields the exact `SafetyEvaluationResult.Failed` code, enters
+  failure rather than blocked state, starts no generation/model-runtime work, logs no raw prompt,
+  and proves floor-preserving eligible-package recovery;
+- the bundled fixed safety negative prompt is applied internally inside every Plan A/Plan B
+  generation call without appearing in `GenerationRequest`, a wire payload, or user input; and
 - no output/image moderation claim is added to V1.
 
-Record fixture-set version and digest, app/contract/model versions, result, bridge-capture path,
+Record fixture-set version and digest, app/contract/model versions, result, wire-capture path,
 log-scan result, owner, and date. Any failed boundary behavior blocks selection until corrected and
 retested.
 

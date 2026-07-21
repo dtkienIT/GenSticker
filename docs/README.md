@@ -20,7 +20,7 @@ An unused FastAPI scaffold also remains in the repository from the earlier proto
 
 ## Target Release State
 
-The target release is an [Android-first text-to-sticker experience](./PRD_AI_Sticker_Generator.md#deployable-release-scope-5-weeks--fixed-deadline) that runs fully locally after installation ([PRD assumptions](./PRD_AI_Sticker_Generator.md#assumptions)). The application accepts a prompt, applies on-device input filtering, submits a generation request through a native runtime selected by the feasibility spike, segments the result into a transparent PNG generated asset, and stores it locally for preview, save, and OS sharing.
+The target release is an [Android-first Kotlin and Jetpack Compose text-to-sticker experience](./PRD_AI_Sticker_Generator.md#application-stack-client) that runs fully locally after installation ([PRD assumptions](./PRD_AI_Sticker_Generator.md#assumptions)). The application accepts a prompt, applies on-device input filtering, submits a generation request through a runtime selected by the feasibility spike, segments the result into a transparent PNG generated asset, and stores it locally for preview, save, and OS sharing.
 
 The release has [no custom production backend](./PRD_AI_Sticker_Generator.md#constraints). It uses a [capability gate for the supported device floor](./PRD_AI_Sticker_Generator.md#constraints), preserves a usable local gallery, and follows the [Week 1 Plan A/B/C contingency decision](./PRD_AI_Sticker_Generator.md#contingency-ladder-formalized).
 
@@ -31,14 +31,14 @@ The target documentation set is:
 - [`README.md`](./README.md) — documentation index and branch orientation.
 - [`PRD_AI_Sticker_Generator.md`](./PRD_AI_Sticker_Generator.md) — authoritative product requirements and contingency policy.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — target system boundaries and component responsibilities.
-- [`INTEGRATION_CONTRACTS.md`](./INTEGRATION_CONTRACTS.md) — planned; versioned observable interfaces between application and native components.
+- [`INTEGRATION_CONTRACTS.md`](./INTEGRATION_CONTRACTS.md) — active versioned observable interfaces between application and on-device components.
 - [`ROADMAP.md`](./ROADMAP.md) — implementation status, ownership, dependencies, blockers, and evidence.
-- [`FEASIBILITY_SPIKE.md`](./FEASIBILITY_SPIKE.md) — planned; Week 1 runtime and model evaluation protocol and go/no-go record.
-- [`MODEL_PIPELINE.md`](./MODEL_PIPELINE.md) — planned; offline model preparation and shipped-runtime responsibilities.
-- [`SAFETY_AND_PRIVACY.md`](./SAFETY_AND_PRIVACY.md) — planned; input safety, local data handling, and accepted residual risk.
-- [`USER_FLOWS.md`](./USER_FLOWS.md) — planned; user-visible states, transitions, and recovery behavior.
-- [`TESTING_AND_RELEASE.md`](./TESTING_AND_RELEASE.md) — planned; quality, safety, device, and release evidence.
-- [`LOCAL_DEVELOPMENT.md`](./LOCAL_DEVELOPMENT.md) — reproducible Android and Expo development setup.
+- [`FEASIBILITY_SPIKE.md`](./FEASIBILITY_SPIKE.md) — active Week 1 runtime and model evaluation protocol and go/no-go record.
+- [`MODEL_PIPELINE.md`](./MODEL_PIPELINE.md) — active offline model preparation and shipped-runtime responsibilities.
+- [`SAFETY_AND_PRIVACY.md`](./SAFETY_AND_PRIVACY.md) — active input safety, local data handling, and accepted residual risk guide.
+- [`USER_FLOWS.md`](./USER_FLOWS.md) — active user-visible states, transitions, and recovery behavior.
+- [`TESTING_AND_RELEASE.md`](./TESTING_AND_RELEASE.md) — active quality, safety, device, and release-evidence procedure.
+- [`LOCAL_DEVELOPMENT.md`](./LOCAL_DEVELOPMENT.md) — active current-scaffold and target-native contributor workflow.
 
 ## Reading Paths by Role
 

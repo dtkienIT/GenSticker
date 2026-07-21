@@ -1,8 +1,10 @@
 # Documentation Realignment Design
 
 **Date:** July 21, 2026  
-**Status:** Approved  
+**Status:** Superseded historical process record
 **Authority:** `docs/PRD_AI_Sticker_Generator.md`
+
+> **Do not use this record for implementation.** The PRD and active top-level documents under `docs/` govern. This record's Expo/TypeScript target assumptions were superseded by the Kotlin, Jetpack Compose, Room, and WorkManager target architecture.
 
 ## Objective
 
