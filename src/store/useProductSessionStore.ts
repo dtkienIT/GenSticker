@@ -6,7 +6,7 @@ import type { ConsentState } from '@/services/contracts';
 export type StickerServiceMode = 'mock' | 'http';
 
 export const PRODUCT_SESSION_STORAGE_KEY = '@gensticker/product-session/v1';
-export const CURRENT_CONSENT_VERSION = '1';
+export const CURRENT_CONSENT_VERSION = '1.0';
 
 export const EMPTY_CONSENT_STATE: ConsentState = {
   consentVersion: CURRENT_CONSENT_VERSION,
@@ -130,8 +130,21 @@ export const useProductSessionStore = create<ProductSessionState>()(
     }),
     {
       name: PRODUCT_SESSION_STORAGE_KEY,
-      version: 1,
+      version: 2,
       storage: sessionStorage,
+      migrate: (persistedState) => {
+        const state = persistedState as Partial<ProductSessionData>;
+        const consentState = state.consentState;
+
+        return {
+          ...initialSessionData,
+          ...state,
+          consentState:
+            consentState?.consentVersion === CURRENT_CONSENT_VERSION
+              ? consentState
+              : { ...EMPTY_CONSENT_STATE },
+        };
+      },
       partialize: (state) => ({
         activeCharacterId: state.activeCharacterId,
         activeJobId: state.activeJobId,

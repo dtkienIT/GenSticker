@@ -5,24 +5,36 @@ import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { SectionHeader } from '@/components/common/SectionHeader';
 import { AppButton } from '@/components/common/AppButton';
 import { getStickerProductService } from '@/services/factory';
+import { getApiErrorPresentation } from '@/services/errors';
 import { useProductSessionStore } from '@/store/useProductSessionStore';
+import { CURRENT_CONSENT_VERSION } from '@/store/useProductSessionStore';
 import { useAppTheme } from '@/theme';
 
 export default function ConsentScreen() {
   const router = useRouter();
   const { colors, typography, spacing } = useAppTheme();
   const [reuse, setReuse] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const setConsent = useProductSessionStore((s) => s.setConsentState);
   const accept = async () => {
     const state = {
-      consentVersion: '1.0',
+      consentVersion: CURRENT_CONSENT_VERSION,
       accepted: true,
       reuseOptIn: reuse,
       acceptedAt: new Date().toISOString(),
     };
-    await getStickerProductService().updateConsent(state);
-    setConsent(state);
-    router.replace('/create/selfie');
+    setSaving(true);
+    setError(null);
+    try {
+      await getStickerProductService().updateConsent(state);
+      setConsent(state);
+      router.replace('/create/selfie');
+    } catch (cause) {
+      setError(getApiErrorPresentation(cause).message);
+    } finally {
+      setSaving(false);
+    }
   };
   return (
     <ScreenContainer scrollable>
@@ -42,7 +54,12 @@ export default function ConsentScreen() {
           Ghi nhớ lựa chọn cho các phiên cục bộ sau
         </Text>
       </View>
-      <AppButton title="Đồng ý và tiếp tục" onPress={accept} />
+      {error ? (
+        <Text accessibilityLiveRegion="polite" style={[typography.body, { color: colors.error }]}>
+          {error}
+        </Text>
+      ) : null}
+      <AppButton title="Đồng ý và tiếp tục" loading={saving} onPress={accept} />
       <View style={{ marginTop: spacing.sm }}>
         <AppButton title="Từ chối" variant="outline" onPress={() => router.back()} />
       </View>

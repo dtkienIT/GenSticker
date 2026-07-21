@@ -137,7 +137,13 @@ export const characterProfileConfigSchema = z.object({
     style: z.enum(HAIR_STYLE_PRESETS),
     color: z.enum(HAIR_COLOR_PRESETS),
   }),
-  faceAccessories: z.array(z.enum(FACE_ACCESSORY_PRESETS)).min(1),
+  faceAccessories: z
+    .array(z.enum(FACE_ACCESSORY_PRESETS))
+    .min(1)
+    .max(2)
+    .refine((items) => !items.includes('none') || items.length === 1, {
+      message: 'The none accessory preset cannot be combined with another accessory.',
+    }),
   outfit: z.enum(OUTFIT_PRESETS),
   style: z.enum(PRODUCT_STYLE_PRESETS),
 });

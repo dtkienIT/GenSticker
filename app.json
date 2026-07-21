@@ -1,16 +1,18 @@
 {
   "expo": {
-    "name": "_temp_expo",
-    "slug": "_temp_expo",
+    "name": "GenSticker",
+    "slug": "gen-sticker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "tempexpo",
+    "scheme": "gensticker",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.gensticker.app"
     },
     "android": {
+      "package": "com.gensticker.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -32,7 +34,16 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "GenSticker cần quyền truy cập thư viện để bạn chọn ảnh chân dung tạo hình dán.",
+          "cameraPermission": "GenSticker cần quyền máy ảnh để bạn chụp ảnh chân dung tạo hình dán.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": false,

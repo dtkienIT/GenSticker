@@ -2,9 +2,9 @@
 
 **GenSticker** is an Expo SDK 57 application for text and canonical-first personalized sticker prototypes.
 
-> All current generation and product data use deterministic, device-local frontend mocks. Backend and real AI are not implemented by this frontend task.
+> All current personalized-product data use deterministic, device-local frontend mocks. Backend and real AI are not implemented by this frontend task.
 
-Keep `EXPO_PUBLIC_STICKER_SERVICE=mock`. The legacy mock flag remains supported temporarily; HTTP mode is a disabled interface skeleton. The selfie journey is consent → picker/validation → three candidates → explicit approval → versioned profile → eight-slot pack → targeted retry → exact text → export/share manifest.
+Keep `EXPO_PUBLIC_STICKER_SERVICE=mock`. The legacy mock flag remains supported temporarily; HTTP product mode is a disabled interface skeleton. The selfie journey is consent → picker/validation → three candidates with full-screen preview → explicit approval → versioned profile → eight-slot pack → targeted retry → exact text → export/share manifest → native share invocation.
 
 See [Frontend architecture](docs/FRONTEND_ARCHITECTURE.md), [mock service](docs/MOCK_SERVICE.md), [user flows](docs/MOBILE_USER_FLOWS.md), and [Android QA checklist](docs/MOBILE_QA_CHECKLIST.md).
 
@@ -17,7 +17,10 @@ See [Frontend architecture](docs/FRONTEND_ARCHITECTURE.md), [mock service](docs/
 - 🎨 **Multiple AI Styles**: Chibi, Cartoon, 3D Pixar, and Meme.
 - 😄 **Expressive Emotions**: Happy, Angry, Sad, Love, Confused.
 - ⏳ **Simulated Progress**: Multi-step AI generation progress indicator with step descriptions.
-- 📚 **Sticker Library**: Save generated stickers to local Zustand state.
+- 📚 **Product Library**: Resume local Character, Pack, and Job records; retain legacy text-sticker saves.
+- 🧑‍🎨 **Canonical Profile Flow**: Compare three candidates, approve explicitly, and save immutable profile versions.
+- 📦 **Eight-Slot Packs**: Track independent emotion slots, partial completion, and targeted retry.
+- 📤 **Export & Share UX**: Exact-text controls, transparency preview, format selection, and platform sharing.
 - 🌓 **Design System**: Full light & dark theme support with custom component tokens.
 
 ---
@@ -32,6 +35,8 @@ See [Frontend architecture](docs/FRONTEND_ARCHITECTURE.md), [mock service](docs/
 - **Form Management**: React Hook Form
 - **Validation**: Zod
 - **Media Picker**: `expo-image-picker`
+- **Native Sharing**: `expo-sharing` with React Native fallback
+- **Testing**: Vitest and Maestro smoke-flow definition
 - **Linting & Formatting**: ESLint + Prettier
 
 ---
@@ -79,6 +84,9 @@ npm run typecheck
 
 # Code linting with ESLint
 npm run lint
+
+# Frontend unit tests
+npm test
 
 # Format code with Prettier
 npm run format
@@ -131,4 +139,4 @@ GenSticker/
 
 ## 🔮 Future Integration Plan
 
-In future phases, the mock service layer (`MockStickerGenerationService`) will be replaced by an API implementation connecting to a Python FastAPI backend and GPU inference workers running Stable Diffusion / ComfyUI pipeline. See [ARCHITECTURE.md](docs/ARCHITECTURE.md) and [ROADMAP.md](docs/ROADMAP.md) for details.
+In future phases, Member B's real API implementation will replace the current disabled `HttpStickerProductService` skeleton and connect the frontend contract to FastAPI, private asset delivery, job recovery, and GPU inference workers. Mock mode remains available for deterministic frontend development. See [ARCHITECTURE.md](docs/ARCHITECTURE.md), [FRONTEND_IMPLEMENTATION_STATUS.md](docs/FRONTEND_IMPLEMENTATION_STATUS.md), and [ROADMAP.md](docs/ROADMAP.md) for details.

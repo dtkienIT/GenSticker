@@ -9,6 +9,7 @@ import { AppButton } from '@/components/common/AppButton';
 import { useStickerPack } from '@/hooks';
 import { queryInvalidation } from '@/query';
 import { getStickerProductService } from '@/services/factory';
+import { getApiErrorPresentation } from '@/services/errors';
 import type { StickerSlot } from '@/services/contracts';
 import { useAppTheme } from '@/theme';
 
@@ -20,11 +21,18 @@ export default function Pack() {
   const { colors, typography, spacing } = useAppTheme();
   const pack = useStickerPack(id);
   const [retrying, setRetrying] = useState<string | null>(null);
+  const [retryError, setRetryError] = useState<unknown>(null);
   const retry = async (slot: StickerSlot) => {
     setRetrying(slot.id);
-    await getStickerProductService().regenerateStickerSlot({ packId: id, slotId: slot.id });
-    await queryInvalidation.stickerSlotRetried(qc, id);
-    setRetrying(null);
+    setRetryError(null);
+    try {
+      await getStickerProductService().regenerateStickerSlot({ packId: id, slotId: slot.id });
+      await queryInvalidation.stickerSlotRetried(qc, id);
+    } catch (cause) {
+      setRetryError(cause);
+    } finally {
+      setRetrying(null);
+    }
   };
   if (!id || pack.isError)
     return (
@@ -36,6 +44,14 @@ export default function Pack() {
   return (
     <ScreenContainer scrollable>
       {pack.data?.status === 'PARTIAL' ? <PartialPackBanner pack={pack.data} /> : null}
+      {retryError ? (
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[typography.body, { color: colors.error, marginBottom: spacing.md }]}
+        >
+          {getApiErrorPresentation(retryError).message}
+        </Text>
+      ) : null}
       {pack.data ? (
         <PackProgressGrid
           pack={pack.data}

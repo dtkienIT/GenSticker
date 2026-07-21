@@ -1,6 +1,6 @@
 # Local Development Guide
 
-This guide explains how to set up, run, and test the **GenSticker** local-first stack on your local environment.
+This guide explains how to set up, run, and test the **GenSticker** local-first stack. Member C's normal workflow is the frontend-only mock mode; Python/backend setup is optional for backend integration work.
 
 ---
 
@@ -61,8 +61,11 @@ chmod +x ./scripts/*.sh
 In `.env` or environment:
 
 ```env
+EXPO_PUBLIC_STICKER_SERVICE=mock
 EXPO_PUBLIC_USE_MOCK_SERVICE=true
 ```
+
+`EXPO_PUBLIC_STICKER_SERVICE` controls the current product service. The legacy flag remains because the separate Text-to-Sticker prototype still reads it. Mock is the safe product default.
 
 Run mobile app:
 
@@ -72,9 +75,12 @@ npm run start
 
 #### Mode B: Local API Mode
 
+> The product-level `HttpStickerProductService` is intentionally disabled until Member B supplies a contract-compatible implementation. The settings below describe the intended integration mode, not a completed Member C flow.
+
 In `.env` or environment:
 
 ```env
+EXPO_PUBLIC_STICKER_SERVICE=http
 EXPO_PUBLIC_USE_MOCK_SERVICE=false
 EXPO_PUBLIC_API_URL=http://10.0.2.2:8000/api/v1  # Android Emulator
 # EXPO_PUBLIC_API_URL=http://localhost:8000/api/v1  # Web Browser
@@ -92,6 +98,22 @@ EXPO_PUBLIC_API_URL=http://10.0.2.2:8000/api/v1  # Android Emulator
    ```bash
    npm run start
    ```
+
+Use `10.0.2.2` from the Android emulator, `localhost` from web, and the development machine's LAN address from a physical device. CORS, firewall, authentication, multipart upload, private assets, and job recovery must be verified with the backend owner.
+
+---
+
+## ✅ Frontend Verification
+
+```bash
+npm run typecheck
+npm test
+npm run lint
+npm run format:check
+npx expo config --type public
+```
+
+The basic device smoke definition is `.maestro/mock-smoke.yaml`; it still needs execution on an emulator/device before it counts as E2E evidence.
 
 ---
 

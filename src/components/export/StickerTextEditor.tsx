@@ -30,8 +30,8 @@ export const StickerTextEditor: React.FC<StickerTextEditorProps> = ({
   onValidityChange,
   disabled = false,
   maxLength = 40,
-  minFontSize = 18,
-  maxFontSize = 56,
+  minFontSize = 16,
+  maxFontSize = 48,
   fontSizeStep = 2,
   title = 'Thêm chữ vào hình dán',
 }) => {

@@ -9,6 +9,8 @@ import { StickerCard } from '../src/components/sticker/StickerCard';
 import { STICKER_STYLES } from '../src/constants/styles';
 import { useStickerStore } from '../src/store/useStickerStore';
 import { useAppTheme } from '../src/theme';
+import { ServiceModeBadge } from '../src/components/common/ServiceModeBadge';
+import { getStickerServiceMode } from '../src/services/factory';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -33,11 +35,7 @@ export default function HomeScreen() {
           style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
         >
           <Text style={styles.heroBadge}>✨ AI Powered</Text>
-          <Text style={{ fontSize: 11, fontWeight: 'bold', color: colors.primary }}>
-            {process.env.EXPO_PUBLIC_USE_MOCK_SERVICE === 'true'
-              ? '🟢 Mock Mode'
-              : '🔵 Local API Mode'}
-          </Text>
+          <ServiceModeBadge mode={getStickerServiceMode()} testID="service-mode-badge" />
         </View>
         <Text style={[typography.h1, { color: colors.textPrimary, marginTop: spacing.xs }]}>
           Create stickers with AI
@@ -116,8 +114,11 @@ export default function HomeScreen() {
       <SectionHeader title="Popular Styles" subtitle="Explore AI aesthetics for your stickers" />
       <ScrollView
         horizontal
+        nestedScrollEnabled
+        directionalLockEnabled
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingRight: spacing.md, marginBottom: spacing.lg }}
+        style={styles.styleList}
+        contentContainerStyle={{ paddingRight: spacing.md, paddingBottom: spacing.lg }}
       >
         {STICKER_STYLES.map((styleOpt) => (
           <StyleCard
@@ -203,6 +204,10 @@ const styles = StyleSheet.create({
   navChip: {
     paddingHorizontal: 16,
     paddingVertical: 10,
+  },
+  styleList: {
+    width: '100%',
+    flexGrow: 0,
   },
   emptyRecent: {
     alignItems: 'center',

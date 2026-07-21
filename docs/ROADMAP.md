@@ -12,6 +12,13 @@
 - [x] Offline `MockStickerGenerationService` with multi-step progress tracking.
 - [x] Light and Dark theme design system.
 - [x] Screens: Home, Create Mode Selection, Text-to-Sticker, Selfie-to-Sticker, Generating Progress, Result View, Saved Library, Settings.
+- [x] Canonical candidate comparison, recommendation, full-screen preview, explicit approval, and immutable profile editing in mock mode.
+- [x] Eight-slot mock pack gallery with partial state and targeted single-slot retry.
+- [x] Exact-text controls, transparency preview, export manifest, and native share invocation in mock mode.
+- [x] Product Library navigation and cascade deletion for local Character/Pack/Job entities.
+- [x] Frontend unit regressions and a basic Maestro smoke-flow definition.
+- [ ] Execute Android device/emulator QA and retain evidence.
+- [ ] Connect the product service to Member B's real API implementation.
 
 ---
 
@@ -35,10 +42,12 @@
 
 ---
 
-## 📌 Phase 4: Pack Generation & Messenger Export
+## 📌 Phase 4: Production Pack Generation & Messenger Export
 
 - [ ] Character consistency across sticker sets.
-- [ ] Multi-sticker pack creation flow (e.g. 6-pack expression sets).
+- [x] Deterministic frontend eight-slot pack flow with partial completion and targeted retry.
+- [ ] Backend-connected multi-sticker generation and production asset delivery.
 - [ ] Direct export to WhatsApp Sticker Pack format (`.wasticker`).
 - [ ] Direct export to Telegram Sticker Set format.
-- [ ] In-app sticker text customization and font overlay editor.
+- [x] Frontend in-app sticker text controls and checkerboard preview.
+- [ ] Production text rendering into downloadable sticker assets.

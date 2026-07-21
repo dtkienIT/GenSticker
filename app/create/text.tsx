@@ -97,7 +97,10 @@ export default function TextToStickerScreen() {
         render={({ field: { value, onChange } }) => (
           <ScrollView
             horizontal
+            nestedScrollEnabled
+            directionalLockEnabled
             showsHorizontalScrollIndicator={false}
+            style={styles.styleList}
             contentContainerStyle={{ paddingVertical: spacing.xs }}
           >
             {STICKER_STYLES.map((styleOpt) => (
@@ -178,6 +181,10 @@ export default function TextToStickerScreen() {
 }
 
 const styles = StyleSheet.create({
+  styleList: {
+    width: '100%',
+    flexGrow: 0,
+  },
   emotionContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',

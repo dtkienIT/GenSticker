@@ -7,6 +7,10 @@ import { DEFAULT_CHARACTER_PROFILE_CONFIG } from '@/constants/profilePresets';
 import { getApiErrorPresentation } from '@/services/errors';
 import { MemoryMockStateStorage } from '@/services/storage/mockStateStorage';
 import { queryKeys } from '@/query';
+import {
+  characterProfileConfigSchema,
+  updateStickerTextInputSchema,
+} from '@/services/contracts/schemas';
 import { MockStickerProductService, type MockState } from './MockStickerProductService';
 
 describe('MockStickerProductService', () => {
@@ -114,5 +118,29 @@ describe('frontend policies', () => {
     });
     expect(presentation.field).toBe('consent');
     expect(presentation.retryAllowed).toBe(false);
+  });
+
+  it('enforces product profile and sticker text constraints at the service boundary', () => {
+    expect(
+      characterProfileConfigSchema.safeParse({
+        ...DEFAULT_CHARACTER_PROFILE_CONFIG,
+        faceAccessories: ['none', 'round_glasses'],
+      }).success,
+    ).toBe(false);
+    expect(
+      characterProfileConfigSchema.safeParse({
+        ...DEFAULT_CHARACTER_PROFILE_CONFIG,
+        faceAccessories: ['round_glasses', 'square_glasses', 'hair_clip'],
+      }).success,
+    ).toBe(false);
+    expect(
+      updateStickerTextInputSchema.safeParse({
+        packId: 'pack-1',
+        slotId: 'slot-1',
+        text: 'Xin chào',
+        placement: 'bottom',
+        fontSize: 50,
+      }).success,
+    ).toBe(false);
   });
 });

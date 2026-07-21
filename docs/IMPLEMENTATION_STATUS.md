@@ -2,6 +2,8 @@
 
 This document maps implemented code and components to Feature Backlog IDs.
 
+This file summarizes the repository-wide technical foundation, including backend work. For Member C's current frontend percentages, completed mock-only UX, and remaining backend/device boundaries, use [Frontend Implementation Status](FRONTEND_IMPLEMENTATION_STATUS.md). A backend-complete row here does not imply that the corresponding frontend integration is complete.
+
 ---
 
 ## ✅ Completed Technical Foundations (Phase 1)

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Share, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
@@ -9,6 +9,8 @@ import { ExportFormatSelector } from '@/components/export/ExportFormatSelector';
 import { AppButton } from '@/components/common/AppButton';
 import { queryKeys } from '@/query';
 import { getStickerProductService } from '@/services/factory';
+import { getApiErrorPresentation } from '@/services/errors';
+import { shareExportManifest } from '@/services/sharing/shareExportManifest';
 import type { ExportFormat, TextPlacement } from '@/services/contracts';
 import { useAppTheme } from '@/theme';
 
@@ -21,6 +23,7 @@ export default function StickerEditor() {
   const [placement, setPlacement] = useState<TextPlacement>('bottom');
   const [fontSize, setFontSize] = useState(28);
   const [formats, setFormats] = useState<ExportFormat[]>(['png']);
+  const [textValid, setTextValid] = useState(true);
   const pack = useQuery({
     queryKey: queryKeys.packs.detail(packId),
     queryFn: () => getStickerProductService().getStickerPack(packId),
@@ -38,11 +41,7 @@ export default function StickerEditor() {
       });
       return getStickerProductService().exportStickerPack({ packId, formats });
     },
-    onSuccess: async (manifest) => {
-      await Share.share({
-        message: `GenSticker: ${manifest.assets.length} tệp sẵn sàng (${manifest.formats.join(', ')})`,
-      });
-    },
+    onSuccess: shareExportManifest,
   });
   if (!slot)
     return (
@@ -61,6 +60,7 @@ export default function StickerEditor() {
       <View style={{ marginTop: spacing.lg }}>
         <StickerTextEditor
           value={{ text, placement, fontSize }}
+          onValidityChange={setTextValid}
           onChange={(value) => {
             setText(value.text);
             setPlacement(value.placement);
@@ -74,10 +74,19 @@ export default function StickerEditor() {
       <View style={{ marginTop: spacing.xl }}>
         <AppButton
           title="Xuất và chia sẻ"
+          disabled={!textValid || formats.length === 0}
           loading={exportAction.isPending}
           onPress={() => exportAction.mutate()}
         />
       </View>
+      {exportAction.isError ? (
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[typography.body, { color: colors.error, marginTop: spacing.md }]}
+        >
+          {getApiErrorPresentation(exportAction.error).message}
+        </Text>
+      ) : null}
       {exportAction.data ? (
         <Text style={[typography.caption, { color: colors.success, marginTop: spacing.md }]}>
           Đã tạo manifest {exportAction.data.id}. Hết hạn: {exportAction.data.expiresAt}
