@@ -1,5 +1,6 @@
-from backend.app.api.v1.endpoints import assets, characters, cost, health, jobs, me
 from fastapi import APIRouter
+
+from backend.app.api.v1.endpoints import assets, characters, cost, health, jobs, me
 
 api_router = APIRouter()
 

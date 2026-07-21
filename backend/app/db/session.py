@@ -1,9 +1,10 @@
 from pathlib import Path
 from typing import Generator
 
-from backend.app.core.config import settings
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
+
+from backend.app.core.config import settings
 
 # Ensure data directory exists
 if settings.DATABASE_URL.startswith("sqlite:///"):

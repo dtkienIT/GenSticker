@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
 
-from backend.app.db.base import Base
 from sqlalchemy import DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from backend.app.db.base import Base
 
 
 class Pack(Base):

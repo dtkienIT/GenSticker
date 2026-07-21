@@ -2,6 +2,10 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi.responses import FileResponse
+from sqlalchemy.orm import Session
+
 from backend.app.core.errors import ResourceNotFoundException, TenantAccessDeniedException
 from backend.app.core.security import get_current_user
 from backend.app.db.models.asset import Asset
@@ -9,9 +13,6 @@ from backend.app.db.models.user import User
 from backend.app.db.session import get_db
 from backend.app.domain.validation import default_selfie_validator
 from backend.app.storage.asset_store import default_asset_store
-from fastapi import APIRouter, Depends, File, UploadFile
-from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
 
 router = APIRouter()
 

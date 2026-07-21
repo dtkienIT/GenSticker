@@ -1,13 +1,14 @@
 import time
 import uuid
 
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
 from backend.app.api.v1.router import api_router
 from backend.app.core.config import settings
 from backend.app.core.errors import GenStickerException
 from backend.app.core.logging import log_event
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 app = FastAPI(
     title="GenSticker Local API",

@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from backend.app.db.base import Base
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from backend.app.db.base import Base
 
 
 class GenerationJob(Base):

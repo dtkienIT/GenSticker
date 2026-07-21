@@ -1,10 +1,11 @@
 import sys
 from datetime import datetime, timezone
 
+from sqlalchemy import select
+
 from backend.app.db.models.asset import Asset
 from backend.app.db.session import SessionLocal
 from backend.app.storage.asset_store import default_asset_store
-from sqlalchemy import select
 
 
 def cleanup_expired_assets() -> int:

@@ -101,39 +101,62 @@ npm run format:check
 
 ```text
 GenSticker/
+├── .github/workflows/        # Mobile, backend, migration, and Docker CI
+├── .maestro/                 # Android mock-flow smoke definition
 ├── app/                      # Expo Router screens
-│   ├── _layout.tsx           # Navigation root layout & providers
-│   ├── index.tsx             # Home Screen
-│   ├── create/               # Generation flow screens
-│   │   ├── index.tsx         # Generation mode selection
-│   │   ├── text.tsx          # Text-to-Sticker form
-│   │   ├── selfie.tsx        # Selfie-to-Sticker form
-│   │   ├── generating.tsx    # Progress & status screen
-│   │   └── result.tsx        # Result & save screen
-│   ├── library/              # Saved sticker gallery
-│   └── settings/             # Settings & theme toggle
-│
-├── src/
-│   ├── components/           # Reusable UI components
-│   │   ├── common/           # AppButton, AppTextInput, ScreenContainer, etc.
-│   │   ├── sticker/          # StyleCard, EmotionChip, StickerCard, LoadingProgress
-│   │   └── layout/           # Custom layout components
-│   ├── constants/            # Sticker styles, emotions & offline mock assets
-│   ├── services/
-│   │   ├── api/              # API Client skeleton reading EXPO_PUBLIC_API_URL
-│   │   └── mock/             # MockStickerGenerationService implementation
-│   ├── store/                # Zustand store (state management)
-│   ├── theme/                # Design tokens, palettes & ThemeProvider
-│   ├── types/                # TypeScript type definitions
-│   └── validation/           # Zod validation schemas
-│
-├── assets/                   # Static app assets
-├── docs/                     # Architectural documentation & roadmap
-├── .env.example              # Environment variables template
-├── .eslintrc.js              # ESLint configuration
-├── .prettierrc               # Prettier configuration
-└── package.json
+│   ├── canonical/            # Canonical generation and candidate selection
+│   ├── create/               # Text/Selfie creation and legacy result flow
+│   ├── library/              # Product and legacy sticker library
+│   ├── pack/                 # Eight-slot pack progress and targeted retry
+│   ├── profile/              # Immutable CharacterProfile editor
+│   ├── settings/             # Theme and application settings
+│   ├── sticker/              # Text, preview, export, and share screen
+│   ├── _layout.tsx           # Navigation root and providers
+│   ├── consent.tsx           # Versioned selfie consent
+│   ├── debug.tsx             # Safe local mock diagnostics
+│   └── index.tsx             # Home and resume entry point
+├── assets/                   # Static Expo and bundled mock assets
+├── backend/                  # FastAPI local backend scaffold
+│   ├── app/
+│   │   ├── api/v1/           # Health, user, asset, character, job, and cost API
+│   │   ├── core/             # Configuration, errors, logging, and dev auth
+│   │   ├── db/models/        # SQLAlchemy domain models
+│   │   ├── domain/           # Selfie validation domain logic
+│   │   ├── jobs/             # Durable job runner and worker
+│   │   ├── observability/    # Cost ledger and budget policy
+│   │   ├── providers/        # Mock provider and ComfyUI seam
+│   │   └── storage/          # Local private asset storage
+│   ├── migrations/           # Alembic migration environment and versions
+│   ├── tests/                # Backend API and lifecycle tests
+│   ├── Dockerfile
+│   └── pyproject.toml
+├── data/                     # Local SQLite/runtime assets; not production data
+├── docs/                     # Architecture, contracts, status, QA, and runbooks
+├── experiments/              # Benchmark harness, configs, manifests, golden data
+├── governance/               # Model-license registry and governance notes
+├── scripts/                  # Cross-platform setup, start, and reset helpers
+├── src/                      # Mobile application modules
+│   ├── components/           # Character, common, export, feedback, pack, selfie UI
+│   ├── constants/            # Styles, emotion templates, presets, and mock assets
+│   ├── hooks/                # Generation-job and sticker-pack polling hooks
+│   ├── i18n/                 # Vietnamese/English UI and error strings
+│   ├── query/                # Query keys, invalidation, and terminal-state policy
+│   ├── services/             # API, contracts, mock/http, diagnostics, sharing, storage
+│   ├── store/                # Persisted product session and transient draft state
+│   ├── testing/              # Frontend test mocks
+│   ├── theme/                # Design tokens and ThemeProvider
+│   ├── types/                # Legacy sticker types
+│   └── validation/           # Legacy Text-to-Sticker validation
+├── .env.example              # Backend and mobile environment template
+├── app.json                  # Expo SDK 57 application configuration
+├── docker-compose.yml        # Local API/worker stack
+├── eslint.config.js          # ESLint flat configuration
+├── package.json              # Mobile scripts and dependencies
+├── tsconfig.json             # Strict TypeScript configuration
+└── vitest.config.ts          # Frontend unit-test configuration
 ```
+
+Generated directories such as `node_modules/`, `.expo/`, Python caches, and local planning workbooks are intentionally omitted. `data/` contains local development state only; never commit user selfies, private exports, or production credentials.
 
 ---
 

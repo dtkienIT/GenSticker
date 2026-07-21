@@ -4,6 +4,9 @@ import uuid
 from io import BytesIO
 from typing import Callable, Optional
 
+from PIL import Image as PILImage
+from PIL import ImageDraw
+
 from backend.app.core.config import settings
 from backend.app.providers.base import (
     GenerationArtifact,
@@ -12,8 +15,6 @@ from backend.app.providers.base import (
     GenerationSpec,
 )
 from backend.app.storage.asset_store import AssetStore, default_asset_store
-from PIL import Image as PILImage
-from PIL import ImageDraw
 
 
 class MockGenerationProvider(GenerationProvider):

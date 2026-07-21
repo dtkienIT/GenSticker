@@ -36,9 +36,25 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# Python generated files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Local runtime data
+data/assets/
+data/*.db-journal
+
+# Local planning workbooks
+sticker_project_plan_PRD_aligned_full.xlsx
+sticker_project_plan_PRD_aligned_full.backup.xlsx
+~$*.xlsx
+
 example
 
 # generated native folders
 /ios
 /android
-

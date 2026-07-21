@@ -5,9 +5,10 @@ from io import BytesIO
 from pathlib import Path
 from typing import Optional, Tuple
 
+from PIL import Image as PILImage
+
 from backend.app.core.config import settings
 from backend.app.core.errors import GenStickerException
-from PIL import Image as PILImage
 
 
 class StoredAssetMetadata:

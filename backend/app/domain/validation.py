@@ -2,10 +2,11 @@ from abc import ABC, abstractmethod
 from io import BytesIO
 from typing import List, Optional
 
-from backend.app.core.config import settings
 from PIL import Image as PILImage
 from PIL import ImageStat
 from pydantic import BaseModel
+
+from backend.app.core.config import settings
 
 
 class ValidationResult(BaseModel):

@@ -3,6 +3,9 @@ import time
 import uuid
 from datetime import datetime, timedelta, timezone
 
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from backend.app.core.config import settings
 from backend.app.core.logging import log_event
 from backend.app.db.models.asset import Asset
@@ -10,8 +13,6 @@ from backend.app.db.models.job import GenerationJob, JobEvent
 from backend.app.observability.cost_ledger import default_budget_policy, default_cost_ledger_service
 from backend.app.providers.base import GenerationSpec
 from backend.app.providers.mock_provider import MockGenerationProvider
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 
 async def recover_stale_jobs(db: Session) -> int:

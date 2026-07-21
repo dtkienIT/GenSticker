@@ -1,11 +1,12 @@
 import uuid
 from typing import Optional
 
+from fastapi import Depends, Header, HTTPException, status
+from sqlalchemy.orm import Session
+
 from backend.app.core.config import settings
 from backend.app.db.models.user import User
 from backend.app.db.session import get_db
-from fastapi import Depends, Header, HTTPException, status
-from sqlalchemy.orm import Session
 
 
 def get_current_user_id(
