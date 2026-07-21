@@ -1,165 +1,145 @@
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, Share, Alert } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ScreenContainer } from '../../src/components/common/ScreenContainer';
-import { AppButton } from '../../src/components/common/AppButton';
-import { SectionHeader } from '../../src/components/common/SectionHeader';
-import { useStickerStore } from '../../src/store/useStickerStore';
-import { useAppTheme } from '../../src/theme';
+import { AppButton } from '@/components/common/AppButton';
+import { ScreenContainer } from '@/components/common/ScreenContainer';
+import { CheckerboardPreview } from '@/components/export/CheckerboardPreview';
+import { useStickerStore } from '@/store/useStickerStore';
+import { useAppTheme } from '@/theme';
 
 export default function ResultScreen() {
   const router = useRouter();
   const { colors, borderRadius, spacing, typography } = useAppTheme();
-  const [isSaved, setIsSaved] = useState(false);
+  const currentAsset = useStickerStore((state) => state.currentAsset);
+  const retryCount = useStickerStore((state) => state.retryCount);
+  const editPrompt = useStickerStore((state) => state.editPrompt);
+  const saveCurrentToPhotos = useStickerStore((state) => state.saveCurrentToPhotos);
+  const shareCurrent = useStickerStore((state) => state.shareCurrent);
+  const [saving, setSaving] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
-  const currentResult = useStickerStore((state) => state.currentResult);
-  const saveSticker = useStickerStore((state) => state.saveSticker);
-  const resetGeneration = useStickerStore((state) => state.resetGeneration);
-
-  if (!currentResult) {
+  if (!currentAsset) {
     return (
-      <ScreenContainer scrollable={false} style={styles.emptyContainer}>
-        <Text style={styles.emojiIcon}>🤔</Text>
-        <Text style={[typography.h3, { color: colors.textPrimary, marginTop: spacing.sm }]}>
-          No Sticker Result Found
-        </Text>
-        <Text
-          style={[
-            typography.body,
-            {
-              color: colors.textSecondary,
-              textAlign: 'center',
-              marginTop: spacing.xs,
-              marginBottom: spacing.lg,
-            },
-          ]}
-        >
-          Please generate a sticker first before viewing this screen.
-        </Text>
-        <AppButton title="Go to Create" onPress={() => router.replace('/create')} />
+      <ScreenContainer scrollable={false} style={styles.centered}>
+        <Text style={styles.emptyIcon}>🫥</Text>
+        <Text style={[typography.h3, { color: colors.textPrimary }]}>No sticker selected</Text>
+        <AppButton title="Back to prompt" onPress={() => router.replace('/')} />
       </ScreenContainer>
     );
   }
 
-  const handleSave = () => {
-    saveSticker(currentResult);
-    setIsSaved(true);
-    Alert.alert('Saved!', 'Sticker has been added to your library.');
+  const save = async () => {
+    setSaving(true);
+    const result = await saveCurrentToPhotos();
+    setSaving(false);
+    if (result.status === 'succeeded')
+      Alert.alert('Saved to Photos', 'The PNG was copied to your device photo library.');
+    else if (result.status === 'permission_denied')
+      Alert.alert(
+        'Photos permission needed',
+        'Allow write access to save an external copy. Your in-app sticker is still safe.',
+      );
+    else
+      Alert.alert(
+        'Could not save',
+        'The in-app sticker is still available. Try exporting it again.',
+      );
   };
 
-  const handleShare = async () => {
-    try {
-      await Share.share({
-        message: `Check out my new AI Sticker generated with GenSticker! Style: ${currentResult.style}`,
-      });
-    } catch {
-      // Ignored
-    }
+  const share = async () => {
+    setSharing(true);
+    const result = await shareCurrent();
+    setSharing(false);
+    if (result.status === 'unavailable')
+      Alert.alert(
+        'Sharing unavailable',
+        'No compatible share surface is available on this device.',
+      );
+    else if (result.status === 'failed')
+      Alert.alert('Could not share', 'The sticker remains in your local gallery.');
   };
 
-  const handleCreateAnother = () => {
-    resetGeneration();
-    router.replace('/create');
+  const regenerate = () => {
+    editPrompt();
+    router.push('/create/generating');
+  };
+
+  const returnToPrompt = () => {
+    editPrompt();
+    router.replace('/');
   };
 
   return (
     <ScreenContainer scrollable>
-      <SectionHeader
-        title="Your AI Sticker"
-        subtitle="Here is your newly generated expressive sticker!"
-      />
-
-      {/* Main Sticker Preview Box */}
+      <View style={styles.headerCopy}>
+        <Text style={[typography.h2, { color: colors.textPrimary }]}>Transparent PNG ready</Text>
+        <Text style={[typography.body, { color: colors.textSecondary }]}>
+          Saved automatically to My Stickers before this preview opened.
+        </Text>
+      </View>
+      <CheckerboardPreview imageUri={currentAsset.localUri} />
       <View
         style={[
-          styles.stickerDisplay,
-          {
-            backgroundColor: colors.card,
-            borderRadius: borderRadius.lg,
-            borderColor: colors.border,
-            padding: spacing.xl,
-          },
+          styles.details,
+          { backgroundColor: colors.card, borderRadius: borderRadius.md, padding: spacing.md },
         ]}
       >
-        <Image
-          source={{ uri: currentResult.imageUri }}
-          style={styles.stickerImage}
-          resizeMode="contain"
-        />
-
-        {/* Info Tags */}
-        <View style={styles.tagRow}>
-          <View style={[styles.tag, { backgroundColor: colors.primaryLight }]}>
-            <Text style={[styles.tagText, { color: colors.primary }]}>
-              {currentResult.style.toUpperCase()}
-            </Text>
-          </View>
-          <View style={[styles.tag, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.tagText, { color: colors.textPrimary }]}>
-              {currentResult.emotion.toUpperCase()}
-            </Text>
-          </View>
-          <View style={[styles.tag, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.tagText, { color: colors.textPrimary }]}>
-              {currentResult.mode.toUpperCase()} MODE
-            </Text>
-          </View>
-        </View>
-
-        {currentResult.prompt ? (
-          <Text
-            style={[
-              typography.caption,
-              { color: colors.textSecondary, marginTop: spacing.sm, textAlign: 'center' },
-            ]}
-          >
-            "{currentResult.prompt}"
-          </Text>
-        ) : null}
-
-        {currentResult.stickerText ? (
-          <Text
-            style={[
-              typography.bodyBold,
-              { color: colors.primary, marginTop: spacing.xs, textAlign: 'center' },
-            ]}
-          >
-            Overlay: "{currentResult.stickerText}"
-          </Text>
-        ) : null}
+        <Text selectable style={[typography.bodyBold, { color: colors.textPrimary }]}>
+          {currentAsset.prompt}
+        </Text>
+        <Text style={[typography.caption, { color: colors.textSecondary }]}>
+          {currentAsset.stylePresetId.toUpperCase()} · 1024 × 1024 · PNG
+        </Text>
       </View>
 
-      {/* Actions */}
-      <View style={styles.actionsContainer}>
-        <AppButton
-          title={isSaved ? 'Saved in Library ✓' : 'Save to Library'}
-          variant={isSaved ? 'secondary' : 'primary'}
-          size="lg"
-          disabled={isSaved}
-          onPress={handleSave}
-          style={styles.actionButton}
-        />
+      {retryCount >= 3 ? (
+        <View
+          style={[
+            styles.nudge,
+            {
+              backgroundColor: colors.primaryLight,
+              borderRadius: borderRadius.md,
+              padding: spacing.md,
+            },
+          ]}
+        >
+          <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>
+            Not quite landing?
+          </Text>
+          <Text style={[typography.caption, { color: colors.textSecondary }]}>
+            You have tried this prompt {retryCount} times. Editing the description may produce a
+            more useful result.
+          </Text>
+        </View>
+      ) : null}
 
-        <View style={styles.rowButtons}>
+      <View style={styles.actions}>
+        <AppButton title="Save to Photos" size="lg" loading={saving} onPress={() => void save()} />
+        <AppButton
+          title="Share PNG"
+          size="lg"
+          variant="secondary"
+          loading={sharing}
+          onPress={() => void share()}
+        />
+        <View style={styles.row}>
           <AppButton
             title="Regenerate"
             variant="outline"
-            style={styles.halfButton}
-            onPress={() => router.push('/create/generating')}
+            style={styles.flex}
+            onPress={regenerate}
           />
           <AppButton
-            title="Share Sticker"
+            title="Edit prompt"
             variant="outline"
-            style={styles.halfButton}
-            onPress={handleShare}
+            style={styles.flex}
+            onPress={returnToPrompt}
           />
         </View>
-
         <AppButton
-          title="Create Another Sticker"
+          title="Open My Stickers"
           variant="secondary"
-          onPress={handleCreateAnother}
-          style={styles.actionButton}
+          onPress={() => router.push('/library')}
         />
       </View>
     </ScreenContainer>
@@ -167,51 +147,12 @@ export default function ResultScreen() {
 }
 
 const styles = StyleSheet.create({
-  emptyContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emojiIcon: {
-    fontSize: 54,
-  },
-  stickerDisplay: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    marginBottom: 20,
-  },
-  stickerImage: {
-    width: 220,
-    height: 220,
-    marginBottom: 16,
-  },
-  tagRow: {
-    flexDirection: 'row',
-    gap: 6,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  tag: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  tagText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  actionsContainer: {
-    gap: 12,
-    marginBottom: 32,
-  },
-  actionButton: {
-    width: '100%',
-  },
-  rowButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  halfButton: {
-    flex: 1,
-  },
+  centered: { alignItems: 'center', justifyContent: 'center', gap: 12 },
+  emptyIcon: { fontSize: 48 },
+  headerCopy: { gap: 4, marginBottom: 14 },
+  details: { gap: 4, marginTop: 14 },
+  nudge: { gap: 4, marginTop: 14 },
+  actions: { gap: 10, marginTop: 16, marginBottom: 24 },
+  row: { flexDirection: 'row', gap: 10 },
+  flex: { flex: 1 },
 });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
-import { StickerStyleOption } from '../../types/sticker';
+import type { StickerStyleOption } from '../../constants/styles';
 import { useAppTheme } from '../../theme';
 
 export interface StyleCardProps {

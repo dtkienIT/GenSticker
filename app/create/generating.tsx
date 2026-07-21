@@ -1,109 +1,101 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ScreenContainer } from '../../src/components/common/ScreenContainer';
-import { LoadingProgress } from '../../src/components/sticker/LoadingProgress';
-import { AppButton } from '../../src/components/common/AppButton';
-import { useStickerStore } from '../../src/store/useStickerStore';
-import { getStickerGenerationService } from '../../src/services/api/factory';
-import { useAppTheme } from '../../src/theme';
+import { AppButton } from '@/components/common/AppButton';
+import { ScreenContainer } from '@/components/common/ScreenContainer';
+import { RetryAction } from '@/components/feedback/RetryAction';
+import { LoadingProgress } from '@/components/sticker/LoadingProgress';
+import { useStickerStore } from '@/store/useStickerStore';
+import { useAppTheme } from '@/theme';
 
 export default function GeneratingScreen() {
   const router = useRouter();
+  const started = useRef(false);
   const { colors, borderRadius, spacing, typography } = useAppTheme();
-
-  const draftRequest = useStickerStore((state) => state.draftRequest);
-  const progress = useStickerStore((state) => state.progress);
+  const draft = useStickerStore((state) => state.draft);
   const jobStatus = useStickerStore((state) => state.jobStatus);
-  const errorMessage = useStickerStore((state) => state.errorMessage);
+  const progress = useStickerStore((state) => state.progress);
+  const error = useStickerStore((state) => state.error);
+  const runGeneration = useStickerStore((state) => state.runGeneration);
+  const cancelGeneration = useStickerStore((state) => state.cancelGeneration);
+  const editPrompt = useStickerStore((state) => state.editPrompt);
 
-  const startGeneration = useStickerStore((state) => state.startGeneration);
-  const updateProgress = useStickerStore((state) => state.updateProgress);
-  const completeGeneration = useStickerStore((state) => state.completeGeneration);
-  const failGeneration = useStickerStore((state) => state.failGeneration);
+  const run = async () => {
+    const result = await runGeneration();
+    if (result) router.replace('/create/result');
+  };
 
   useEffect(() => {
-    if (!draftRequest) {
-      router.replace('/create');
+    if (!draft.prompt.trim()) {
+      router.replace('/');
       return;
     }
+    if (!started.current) {
+      started.current = true;
+      void run();
+    }
+  }, [draft.prompt]);
 
-    let isMounted = true;
-    startGeneration();
-
-    const service = getStickerGenerationService();
-    service
-      .generateSticker(draftRequest, (prog) => {
-        if (isMounted) {
-          updateProgress(prog);
-        }
-      })
-      .then((result) => {
-        if (isMounted) {
-          completeGeneration(result);
-          router.replace('/create/result');
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          failGeneration(err instanceof Error ? err.message : 'Generation failed');
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [draftRequest]);
+  const returnToPrompt = () => {
+    editPrompt();
+    router.replace('/');
+  };
 
   return (
-    <ScreenContainer scrollable={false} style={styles.centerContainer}>
-      {jobStatus === 'failed' ? (
+    <ScreenContainer scrollable={false} style={styles.centered}>
+      {jobStatus === 'processing' ? (
         <View
           style={[
-            styles.errorCard,
+            styles.card,
             {
               backgroundColor: colors.card,
+              borderColor: colors.border,
               borderRadius: borderRadius.lg,
-              padding: spacing.xl,
-              borderColor: colors.error,
+              padding: spacing.lg,
             },
           ]}
         >
-          <Text style={styles.errorIcon}>⚠️</Text>
-          <Text style={[typography.h3, { color: colors.error, marginTop: spacing.sm }]}>
-            Generation Error
-          </Text>
-          <Text
-            style={[
-              typography.body,
-              {
-                color: colors.textSecondary,
-                textAlign: 'center',
-                marginTop: spacing.xs,
-                marginBottom: spacing.lg,
-              },
-            ]}
-          >
-            {errorMessage || 'Something went wrong during generation.'}
-          </Text>
-          <AppButton
-            title="Try Again"
-            variant="primary"
-            onPress={() => router.replace('/create/text')}
+          <LoadingProgress
+            progress={
+              progress ?? {
+                requestId: 'pending',
+                stage: 'preparing_model',
+                progressPercent: 5,
+              }
+            }
           />
+          <Text style={[typography.caption, { color: colors.textMuted, textAlign: 'center' }]}>
+            Keep GenSticker open while the local pipeline runs.
+          </Text>
+          <AppButton title="Cancel" variant="outline" onPress={() => void cancelGeneration()} />
         </View>
       ) : (
         <View
           style={[
-            styles.loadingCard,
+            styles.card,
             {
               backgroundColor: colors.card,
+              borderColor: colors.error,
               borderRadius: borderRadius.lg,
-              borderColor: colors.border,
+              padding: spacing.xl,
             },
           ]}
         >
-          <LoadingProgress progress={progress} />
+          <Text style={styles.errorIcon}>{jobStatus === 'cancelled' ? '⏹️' : '⚠️'}</Text>
+          <Text
+            selectable
+            style={[typography.h3, { color: colors.textPrimary, textAlign: 'center' }]}
+          >
+            {error?.title ?? 'Generation stopped'}
+          </Text>
+          <Text
+            selectable
+            style={[typography.body, { color: colors.textSecondary, textAlign: 'center' }]}
+          >
+            {error?.message ?? 'No sticker was saved.'}
+          </Text>
+          {error?.retryable ? <RetryAction onRetry={() => void run()} /> : null}
+          <AppButton title="Edit prompt" variant="secondary" onPress={returnToPrompt} />
         </View>
       )}
     </ScreenContainer>
@@ -111,20 +103,7 @@ export default function GeneratingScreen() {
 }
 
 const styles = StyleSheet.create({
-  centerContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingCard: {
-    width: '100%',
-    borderWidth: 1,
-  },
-  errorCard: {
-    width: '100%',
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  errorIcon: {
-    fontSize: 48,
-  },
+  centered: { alignItems: 'center', justifyContent: 'center' },
+  card: { width: '100%', borderWidth: 1, gap: 16 },
+  errorIcon: { fontSize: 46, textAlign: 'center' },
 });

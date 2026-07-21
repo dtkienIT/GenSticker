@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "_temp_expo",
-    "slug": "_temp_expo",
+    "name": "GenSticker",
+    "slug": "gensticker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "tempexpo",
+    "scheme": "gensticker",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
@@ -31,6 +31,16 @@
           "backgroundColor": "#208AEF",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
+        }
+      ],
+      "expo-asset",
+      "expo-sharing",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": false,
+          "savePhotosPermission": false,
+          "granularPermissions": []
         }
       ]
     ],

@@ -1,142 +1,84 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
-import { ScreenContainer } from '../../src/components/common/ScreenContainer';
-import { SectionHeader } from '../../src/components/common/SectionHeader';
-import { useAppTheme } from '../../src/theme';
+import { StyleSheet, Switch, Text, View } from 'react-native';
+import { ScreenContainer } from '@/components/common/ScreenContainer';
+import { SectionHeader } from '@/components/common/SectionHeader';
+import { getStickerRuntimeMode } from '@/services/appServices';
+import { useAppTheme } from '@/theme';
 
 export default function SettingsScreen() {
   const { colors, isDark, setMode, borderRadius, spacing, typography } = useAppTheme();
-
-  const toggleDarkMode = (value: boolean) => {
-    setMode(value ? 'dark' : 'light');
-  };
-
   return (
     <ScreenContainer scrollable>
-      <SectionHeader title="Settings" subtitle="Manage your app preferences and configuration" />
-
-      {/* Appearance Section */}
+      <SectionHeader
+        title="Settings"
+        subtitle="Local appearance and feasibility-build information"
+      />
       <View
         style={[
-          styles.sectionCard,
+          styles.card,
           {
             backgroundColor: colors.card,
-            borderRadius: borderRadius.lg,
             borderColor: colors.border,
+            borderRadius: borderRadius.lg,
             padding: spacing.md,
-            marginBottom: spacing.md,
           },
         ]}
       >
-        <Text
-          style={[typography.bodyBold, { color: colors.textPrimary, marginBottom: spacing.xs }]}
-        >
-          Appearance
-        </Text>
         <View style={styles.row}>
-          <Text style={[typography.body, { color: colors.textPrimary }]}>Dark Mode</Text>
-          <Switch
-            value={isDark}
-            onValueChange={toggleDarkMode}
-            trackColor={{ false: colors.border, true: colors.primary }}
-          />
+          <View style={styles.copy}>
+            <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>Dark mode</Text>
+            <Text style={[typography.caption, { color: colors.textSecondary }]}>
+              Override the current system appearance.
+            </Text>
+          </View>
+          <Switch value={isDark} onValueChange={(value) => setMode(value ? 'dark' : 'light')} />
         </View>
       </View>
-
-      {/* Preferences Placeholders */}
       <View
         style={[
-          styles.sectionCard,
+          styles.card,
           {
             backgroundColor: colors.card,
-            borderRadius: borderRadius.lg,
             borderColor: colors.border,
+            borderRadius: borderRadius.lg,
             padding: spacing.md,
-            marginBottom: spacing.md,
           },
         ]}
       >
-        <Text
-          style={[typography.bodyBold, { color: colors.textPrimary, marginBottom: spacing.sm }]}
-        >
-          Preferences
+        <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>Runtime</Text>
+        <Text selectable style={[typography.body, { color: colors.textSecondary }]}>
+          {getStickerRuntimeMode() === 'mock'
+            ? 'Deterministic local mock adapter'
+            : 'Android native adapter requested'}
         </Text>
-
-        <TouchableOpacity style={styles.itemRow} activeOpacity={0.7}>
-          <Text style={[typography.body, { color: colors.textPrimary }]}>
-            Default Sticker Style
-          </Text>
-          <Text style={[typography.body, { color: colors.textSecondary }]}>Chibi ›</Text>
-        </TouchableOpacity>
-
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        <TouchableOpacity style={styles.itemRow} activeOpacity={0.7}>
-          <Text style={[typography.body, { color: colors.textPrimary }]}>Language</Text>
-          <Text style={[typography.body, { color: colors.textSecondary }]}>English ›</Text>
-        </TouchableOpacity>
+        <Text style={[typography.caption, { color: colors.textMuted }]}>
+          Mock output verifies the app flow only. It is not production inference or model
+          feasibility evidence.
+        </Text>
       </View>
-
-      {/* Privacy & About Placeholders */}
       <View
         style={[
-          styles.sectionCard,
+          styles.card,
           {
             backgroundColor: colors.card,
-            borderRadius: borderRadius.lg,
             borderColor: colors.border,
+            borderRadius: borderRadius.lg,
             padding: spacing.md,
-            marginBottom: spacing.md,
           },
         ]}
       >
-        <Text
-          style={[typography.bodyBold, { color: colors.textPrimary, marginBottom: spacing.sm }]}
-        >
-          About & Privacy
+        <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>Data handling</Text>
+        <Text style={[typography.body, { color: colors.textSecondary }]}>
+          Prompts and generated mock PNGs remain local to the app. Save and Share create or send an
+          external copy without removing the gallery original.
         </Text>
-
-        <TouchableOpacity style={styles.itemRow} activeOpacity={0.7}>
-          <Text style={[typography.body, { color: colors.textPrimary }]}>Privacy Policy</Text>
-          <Text style={[typography.body, { color: colors.textSecondary }]}>›</Text>
-        </TouchableOpacity>
-
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        <TouchableOpacity style={styles.itemRow} activeOpacity={0.7}>
-          <Text style={[typography.body, { color: colors.textPrimary }]}>Terms of Service</Text>
-          <Text style={[typography.body, { color: colors.textSecondary }]}>›</Text>
-        </TouchableOpacity>
-
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        <View style={styles.itemRow}>
-          <Text style={[typography.body, { color: colors.textPrimary }]}>About GenSticker</Text>
-          <Text style={[typography.body, { color: colors.textMuted }]}>v1.0.0 (Scaffold)</Text>
-        </View>
       </View>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionCard: {
-    borderWidth: 1,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-  },
-  divider: {
-    height: 1,
-    width: '100%',
-  },
+  card: { borderWidth: 1, gap: 8, marginBottom: 14 },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 },
+  copy: { flex: 1, gap: 2 },
 });

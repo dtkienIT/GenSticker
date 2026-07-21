@@ -9,7 +9,6 @@ export interface RetryActionProps {
   disabled?: boolean;
   title?: string;
   message?: string;
-  remainingAttempts?: number;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -17,37 +16,25 @@ export const RetryAction: React.FC<RetryActionProps> = ({
   onRetry,
   loading = false,
   disabled = false,
-  title = 'Thử lại',
+  title = 'Try again',
   message,
-  remainingAttempts,
   style,
 }) => {
   const { colors, spacing, typography } = useAppTheme();
-  const noAttemptsLeft = remainingAttempts !== undefined && remainingAttempts <= 0;
-
   return (
     <View style={[styles.container, style]}>
       {message ? (
         <Text
           accessibilityLiveRegion="polite"
+          selectable
           style={[typography.body, { color: colors.textSecondary, marginBottom: spacing.sm }]}
         >
           {message}
         </Text>
       ) : null}
-      {remainingAttempts !== undefined ? (
-        <Text
-          style={[
-            typography.caption,
-            { color: noAttemptsLeft ? colors.error : colors.textMuted, marginBottom: spacing.sm },
-          ]}
-        >
-          {noAttemptsLeft ? 'Đã hết lượt thử lại.' : `Còn ${remainingAttempts} lượt thử lại.`}
-        </Text>
-      ) : null}
       <AppButton
         accessibilityLabel={title}
-        disabled={disabled || noAttemptsLeft}
+        disabled={disabled}
         loading={loading}
         onPress={onRetry}
         style={styles.button}
@@ -59,10 +46,6 @@ export const RetryAction: React.FC<RetryActionProps> = ({
 };
 
 const styles = StyleSheet.create({
-  button: {
-    minHeight: 48,
-  },
-  container: {
-    width: '100%',
-  },
+  button: { minHeight: 48 },
+  container: { width: '100%' },
 });

@@ -1,134 +1,52 @@
-# GenSticker 🎨✨
+# GenSticker
 
-**GenSticker** is an Expo SDK 57 application for text and canonical-first personalized sticker prototypes.
+GenSticker is an Expo SDK 57 feasibility shell for an Android-first, fully on-device text-to-sticker product.
 
-> All current generation and product data use deterministic, device-local frontend mocks. Backend and real AI are not implemented by this frontend task.
-
-Keep `EXPO_PUBLIC_STICKER_SERVICE=mock`. The legacy mock flag remains supported temporarily; HTTP mode is a disabled interface skeleton. The selfie journey is consent → picker/validation → three candidates → explicit approval → versioned profile → eight-slot pack → targeted retry → exact text → export/share manifest.
-
-See [Frontend architecture](docs/FRONTEND_ARCHITECTURE.md), [mock service](docs/MOCK_SERVICE.md), [user flows](docs/MOBILE_USER_FLOWS.md), and [Android QA checklist](docs/MOBILE_QA_CHECKLIST.md).
-
----
-
-## 🚀 Key Features (Scaffold Phase)
-
-- ✍️ **Text-to-Sticker**: Generate expressive stickers from text prompts.
-- 🤳 **Selfie-to-Sticker**: Pick photos from gallery and customize styles and emotions.
-- 🎨 **Multiple AI Styles**: Chibi, Cartoon, 3D Pixar, and Meme.
-- 😄 **Expressive Emotions**: Happy, Angry, Sad, Love, Confused.
-- ⏳ **Simulated Progress**: Multi-step AI generation progress indicator with step descriptions.
-- 📚 **Sticker Library**: Save generated stickers to local Zustand state.
-- 🌓 **Design System**: Full light & dark theme support with custom component tokens.
-
----
-
-## 🛠️ Technology Stack
-
-- **Framework**: React Native + Expo (v57)
-- **Routing**: Expo Router (File-based navigation)
-- **Language**: TypeScript (Strict Mode)
-- **State Management**: Zustand
-- **Data Fetching**: TanStack Query (React Query)
-- **Form Management**: React Hook Form
-- **Validation**: Zod
-- **Media Picker**: `expo-image-picker`
-- **Linting & Formatting**: ESLint + Prettier
-
----
-
-## 💻 Installation & Setup
-
-1. **Clone the repository**:
-
-   ```bash
-   git clone https://github.com/dtkienIT/GenSticker.git
-   cd GenSticker
-   ```
-
-2. **Install dependencies**:
-
-   ```bash
-   npm install
-   ```
-
-3. **Environment Setup**:
-   Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-
----
-
-## 🚀 Available Scripts
-
-```bash
-# Start Expo development server
-npm run start
-
-# Run on Android emulator / device
-npm run android
-
-# Run on iOS simulator / device
-npm run ios
-
-# Run on web browser
-npm run web
-
-# TypeScript strict type checking
-npm run typecheck
-
-# Code linting with ESLint
-npm run lint
-
-# Format code with Prettier
-npm run format
-
-# Verify formatting without editing
-npm run format:check
-```
-
----
-
-## 📁 Project Directory Structure
+The active app flow is:
 
 ```text
-GenSticker/
-├── app/                      # Expo Router screens
-│   ├── _layout.tsx           # Navigation root layout & providers
-│   ├── index.tsx             # Home Screen
-│   ├── create/               # Generation flow screens
-│   │   ├── index.tsx         # Generation mode selection
-│   │   ├── text.tsx          # Text-to-Sticker form
-│   │   ├── selfie.tsx        # Selfie-to-Sticker form
-│   │   ├── generating.tsx    # Progress & status screen
-│   │   └── result.tsx        # Result & save screen
-│   ├── library/              # Saved sticker gallery
-│   └── settings/             # Settings & theme toggle
-│
-├── src/
-│   ├── components/           # Reusable UI components
-│   │   ├── common/           # AppButton, AppTextInput, ScreenContainer, etc.
-│   │   ├── sticker/          # StyleCard, EmotionChip, StickerCard, LoadingProgress
-│   │   └── layout/           # Custom layout components
-│   ├── constants/            # Sticker styles, emotions & offline mock assets
-│   ├── services/
-│   │   ├── api/              # API Client skeleton reading EXPO_PUBLIC_API_URL
-│   │   └── mock/             # MockStickerGenerationService implementation
-│   ├── store/                # Zustand store (state management)
-│   ├── theme/                # Design tokens, palettes & ThemeProvider
-│   ├── types/                # TypeScript type definitions
-│   └── validation/           # Zod validation schemas
-│
-├── assets/                   # Static app assets
-├── docs/                     # Architectural documentation & roadmap
-├── .env.example              # Environment variables template
-├── .eslintrc.js              # ESLint configuration
-├── .prettierrc               # Prettier configuration
-└── package.json
+prompt → local safety gate → mockable on-device adapter → transparent PNG → preview → save/share
 ```
 
----
+The checked-in adapter is a deterministic local mock. Its progress, failures, transparent PNGs, save flow, and sharing flow exercise the application contract only; they are not production inference or device-feasibility evidence.
 
-## 🔮 Future Integration Plan
+## Run the app
 
-In future phases, the mock service layer (`MockStickerGenerationService`) will be replaced by an API implementation connecting to a Python FastAPI backend and GPU inference workers running Stable Diffusion / ComfyUI pipeline. See [ARCHITECTURE.md](docs/ARCHITECTURE.md) and [ROADMAP.md](docs/ROADMAP.md) for details.
+```powershell
+npm.cmd install
+npm.cmd start
+```
+
+Open the project in Expo Go on Android first. The mock capability gate intentionally reports iOS and web as unsupported.
+
+The default runtime is `mock`. Set `EXPO_PUBLIC_STICKER_RUNTIME=native` only when testing the unavailable-runtime UI; a real Android inference module has not been connected yet.
+
+## Product routes
+
+- `/` — capability-gated prompt workspace
+- `/create/generating` — local progress, cancellation, error, and retry
+- `/create/result` — transparent preview, Photos export, sharing, regeneration, and prompt editing
+- `/library` — durable app-owned sticker gallery
+- `/settings` — local appearance and build disclosure
+- `/debug` — development-only deterministic fault injection
+
+The retired selfie, consent, canonical-character, profile, sticker-pack, and cloud-service journeys are not part of this app.
+
+## Verification
+
+```powershell
+npm.cmd test
+npm.cmd run typecheck
+npm.cmd run lint
+npm.cmd run format:check
+npx.cmd expo install --check
+npx.cmd expo export --platform android --output-dir dist/android-smoke
+```
+
+Physical Android verification is still required for Photos permission behavior, the operating-system share sheet, offline operation, process restart, and visual alpha-channel inspection.
+
+## Architecture boundary
+
+Screens depend on the `OnDeviceStickerGenerator`, `PromptSafetyEvaluator`, `StickerAssetRepository`, and `PlatformAssetExporter` ports. The future Android runtime must implement those contracts without moving inference logic into routes or stores.
+
+The authoritative product and target-release documentation lives under [`docs/`](./docs/). This Expo shell must not be represented as the Kotlin/Compose production application or as evidence that a model/runtime has passed the Week 1 feasibility gate.

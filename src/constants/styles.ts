@@ -1,32 +1,40 @@
-import { StickerStyleOption } from '../types/sticker';
+import type { StylePresetId } from '@/services/generation/types';
+
+export interface StickerStyleOption {
+  id: StylePresetId;
+  name: string;
+  description: string;
+  emoji: string;
+  previewColor: string;
+}
 
 export const STICKER_STYLES: StickerStyleOption[] = [
   {
     id: 'chibi',
     name: 'Chibi',
-    description: 'Cute big head & tiny body style',
-    emoji: '👶',
+    description: 'Cute, expressive proportions',
+    emoji: '🌟',
     previewColor: '#FF6B6B',
   },
   {
     id: 'cartoon',
     name: 'Cartoon',
-    description: 'Vibrant classic animated style',
+    description: 'Bold classic animation',
     emoji: '🎨',
     previewColor: '#4D96FF',
   },
   {
     id: 'three-d',
-    name: '3D Pixar',
-    description: 'Soft 3D rendered character style',
-    emoji: '🧸',
-    previewColor: '#6BCB77',
+    name: '3D Toy',
+    description: 'Soft, rounded toy rendering',
+    emoji: '🤖',
+    previewColor: '#8B5CF6',
   },
   {
     id: 'meme',
     name: 'Meme',
-    description: 'Funny internet culture pop style',
+    description: 'Big reaction energy',
     emoji: '😎',
-    previewColor: '#FFD93D',
+    previewColor: '#F59E0B',
   },
 ];

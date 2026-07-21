@@ -20,6 +20,7 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
         <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={[styles.scrollContent, { padding: spacing.md }, style]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
