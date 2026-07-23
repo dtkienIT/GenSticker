@@ -123,6 +123,55 @@ describe('HttpStickerProductService', () => {
     expect(options.headers).not.toHaveProperty('Content-Type');
   });
 
+  it('converts a browser blob URI into a real multipart file', async () => {
+    vi.stubGlobal('window', {});
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(new Blob(['image-bytes'], { type: 'image/jpeg' }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(
+        response({
+          asset: {
+            id: 'asset-web',
+            asset_type: 'selfie',
+            mime_type: 'image/jpeg',
+            width: 800,
+            height: 1000,
+            byte_size: 11,
+            sha256: 'web123',
+          },
+          validation: {
+            valid: true,
+            reason_codes: [],
+            warnings: [],
+            width: 800,
+            height: 1000,
+            mime_type: 'image/jpeg',
+            byte_size: 11,
+          },
+        }),
+      );
+
+    try {
+      await service.validateAndUploadSelfie({
+        uri: 'blob:http://localhost/selfie',
+        fileName: 'selfie.jpg',
+        mimeType: 'image/jpeg',
+        width: 800,
+        height: 1000,
+        byteSize: 11,
+      });
+
+      expect(fetchMock).toHaveBeenNthCalledWith(1, 'blob:http://localhost/selfie');
+      const options = fetchMock.mock.calls[1][1] as RequestInit;
+      expect(options.body).toBeInstanceOf(FormData);
+      expect((options.body as FormData).get('file')).toBeInstanceOf(Blob);
+      expect(options.headers).not.toHaveProperty('Content-Type');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('turns a 200 validation rejection into a ProductServiceError', async () => {
     fetchMock.mockResolvedValueOnce(
       response({
@@ -190,6 +239,33 @@ describe('HttpStickerProductService', () => {
       message: 'Character missing',
       requestId: 'request-404',
     });
+  });
+
+  it('preserves a known consent error returned with HTTP 403', async () => {
+    fetchMock.mockResolvedValueOnce(
+      response(
+        {
+          error: {
+            code: 'consent_required',
+            message: 'Version 1.0 consent is required.',
+            request_id: 'request-consent',
+          },
+        },
+        403,
+      ),
+    );
+
+    await expect(service.getConsentState()).rejects.toMatchObject({
+      code: 'consent_required',
+      message: 'Version 1.0 consent is required.',
+      requestId: 'request-consent',
+    });
+  });
+
+  it('maps an unspecified HTTP 403 to forbidden', async () => {
+    fetchMock.mockResolvedValueOnce(response({ detail: 'Access denied' }, 403));
+
+    await expect(service.getConsentState()).rejects.toMatchObject({ code: 'forbidden' });
   });
 
   it('maps profile and sticker-pack DTOs through the contract schemas', async () => {

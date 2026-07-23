@@ -2,8 +2,10 @@ import json
 from collections.abc import Callable
 from datetime import datetime, timezone
 from io import BytesIO
+from pathlib import Path
 
 import pytest
+from backend.app.core.errors import GenStickerException
 from backend.app.db.models.asset import Asset
 from backend.app.db.models.character import Character
 from backend.app.db.models.job import GenerationJob, JobEvent
@@ -189,6 +191,63 @@ def _create_job(
 def _install_fakes(monkeypatch, store, provider: FakeProvider) -> None:
     monkeypatch.setattr(runner, "default_asset_store", store)
     monkeypatch.setattr(runner, "get_generation_provider", lambda: provider)
+
+
+def test_cut_source_resolution_stays_inside_private_asset_store(
+    test_db_session, isolated_external_services, monkeypatch
+):
+    db = test_db_session
+    store = isolated_external_services
+    user, character = _create_user_and_character(db)
+    source = _create_source_asset(db, store, user, character, "selfie")
+    job = _create_job(
+        db,
+        user,
+        character,
+        kind="canonical_generation",
+        source_asset_id=source.id,
+    )
+    monkeypatch.setattr(runner, "default_asset_store", store)
+    monkeypatch.setattr(runner.settings, "GENERATION_PROVIDER", "cut")
+
+    resolved = runner._resolve_source_uri(db, job, source.id)
+
+    assert resolved == str(store.get_absolute_path(source.relative_path))
+
+
+def test_cut_source_resolution_materializes_cloud_asset(
+    test_db_session, isolated_external_services, monkeypatch, tmp_path
+):
+    db = test_db_session
+    store = isolated_external_services
+    user, character = _create_user_and_character(db)
+    source = _create_source_asset(db, store, user, character, "selfie")
+    job = _create_job(
+        db,
+        user,
+        character,
+        kind="canonical_generation",
+        source_asset_id=source.id,
+    )
+
+    def no_local_path(relative_path: str) -> Path:
+        del relative_path
+        raise GenStickerException(
+            code="storage_read_failed",
+            message="Cloud assets do not have a local filesystem path.",
+            status_code=500,
+        )
+
+    monkeypatch.setattr(store, "get_absolute_path", no_local_path)
+    monkeypatch.setattr(runner, "default_asset_store", store)
+    monkeypatch.setattr(runner.settings, "GENERATION_PROVIDER", "cut")
+    monkeypatch.setattr(runner.settings, "ASSET_ROOT", str(tmp_path / "worker-assets"))
+
+    resolved = Path(runner._resolve_source_uri(db, job, source.id))
+
+    assert resolved.is_file()
+    assert resolved.read_bytes() == store.read_bytes(source.relative_path)
+    assert resolved.parent.name == "_worker_inputs"
 
 
 @pytest.mark.asyncio

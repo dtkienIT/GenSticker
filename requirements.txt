@@ -1,0 +1,6 @@
+# GenSticker runtime environment (backend + CUT inference)
+# Recommended runtime: Python 3.12 on Windows.
+# CUDA 12.6 keeps compatibility with the NVIDIA GeForce MX330 (Pascal).
+--extra-index-url https://download.pytorch.org/whl/cu126
+
+-e ./backend[cut]

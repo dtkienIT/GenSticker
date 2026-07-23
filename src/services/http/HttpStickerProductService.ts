@@ -277,8 +277,10 @@ export class HttpStickerProductService implements StickerProductService {
     const rawCode = stringValue(error.code);
     let code = rawCode ?? `http_${response.status}`;
     if (response.status === 401) code = 'unauthorized';
-    else if (response.status === 403 || code === 'tenant_access_denied') code = 'forbidden';
-    else if (response.status === 404 && (code === 'resource_not_found' || !rawCode)) {
+    else if (code === 'tenant_access_denied') code = 'forbidden';
+    else if (response.status === 403 && (!rawCode || !KNOWN_ERROR_CODES.has(rawCode))) {
+      code = 'forbidden';
+    } else if (response.status === 404 && (code === 'resource_not_found' || !rawCode)) {
       code = notFoundCode ?? 'asset_not_found';
     } else if (response.status === 413) code = 'file_too_large';
     else if (response.status === 415) code = 'unsupported_type';
@@ -551,7 +553,27 @@ export class HttpStickerProductService implements StickerProductService {
       input.fileName ?? input.uri.split('/').pop()?.split('?')[0] ?? 'gensticker-selfie.jpg';
     const mimeType = input.mimeType ?? 'image/jpeg';
     const form = new FormData();
-    form.append('file', { uri: input.uri, name: fileName, type: mimeType } as unknown as Blob);
+    if (typeof window !== 'undefined') {
+      let imageResponse: Response;
+      try {
+        imageResponse = await fetch(input.uri);
+      } catch {
+        throw new ProductServiceError(
+          'invalid_image',
+          'Không thể đọc ảnh đã chọn trên trình duyệt.',
+        );
+      }
+      if (!imageResponse.ok) {
+        throw new ProductServiceError(
+          'invalid_image',
+          'Không thể đọc ảnh đã chọn trên trình duyệt.',
+        );
+      }
+      const imageBlob = await imageResponse.blob();
+      form.append('file', imageBlob, fileName);
+    } else {
+      form.append('file', { uri: input.uri, name: fileName, type: mimeType } as unknown as Blob);
+    }
     const payload = entityPayload(
       await this.request('/assets/selfies', { method: 'POST', body: form }),
       'upload',

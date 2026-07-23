@@ -2,6 +2,7 @@ import json
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy import select
@@ -101,6 +102,24 @@ def _resolve_source_uri(
             status_code=404,
         )
 
+    if settings.GENERATION_PROVIDER.lower() == "cut":
+        try:
+            local_path = default_asset_store.get_absolute_path(asset.relative_path)
+            if local_path.is_file():
+                return str(local_path)
+        except GenStickerException:
+            pass
+
+        source_bytes = default_asset_store.read_bytes(asset.relative_path)
+        extension = Path(asset.relative_path).suffix or ".img"
+        worker_input_dir = settings.asset_root_path / "_worker_inputs"
+        worker_input_dir.mkdir(parents=True, exist_ok=True)
+        worker_input_path = worker_input_dir / f"{asset.id}{extension}"
+        temp_path = worker_input_path.with_suffix(f"{extension}.tmp")
+        temp_path.write_bytes(source_bytes)
+        temp_path.replace(worker_input_path)
+        return str(worker_input_path)
+
     signed_url = default_asset_store.create_signed_url(asset.relative_path, expires_in=900)
     if signed_url:
         return signed_url
@@ -120,6 +139,8 @@ def _provider_model_name(provider: str, has_source_image: bool) -> str:
         return "fofr/face-to-sticker" if has_source_image else "fofr/sticker-maker"
     if provider == "comfyui":
         return "comfyui-workflow"
+    if provider == "cut":
+        return "cut-resnet9-epoch8"
     return "mock-diffusion-v1"
 
 

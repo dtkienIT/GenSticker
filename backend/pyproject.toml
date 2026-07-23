@@ -32,6 +32,11 @@ dev = [
     "mypy>=1.9.0",
     "types-PyYAML>=6.0.12"
 ]
+cut = [
+    "numpy>=1.26.0",
+    "torch>=2.2.0",
+    "torchvision>=0.17.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]

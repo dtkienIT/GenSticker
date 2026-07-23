@@ -7,6 +7,7 @@ export type StickerServiceMode = 'mock' | 'http';
 
 export const PRODUCT_SESSION_STORAGE_KEY = '@gensticker/product-session/v1';
 export const CURRENT_CONSENT_VERSION = '1.0';
+const PRODUCT_SESSION_STORAGE_VERSION = 3;
 
 export const EMPTY_CONSENT_STATE: ConsentState = {
   consentVersion: CURRENT_CONSENT_VERSION,
@@ -77,6 +78,10 @@ const initialSessionData: ProductSessionData = {
   selectedServiceMode: defaultServiceMode,
 };
 
+function consentForPersistence(consentState: ConsentState): ConsentState {
+  return defaultServiceMode === 'http' ? { ...EMPTY_CONSENT_STATE } : consentState;
+}
+
 const initialRuntimeState: ProductSessionRuntimeState = {
   hasHydrated: false,
   isHydrating: true,
@@ -129,7 +134,7 @@ export const useProductSessionStore = create<ProductSessionState>()(
     }),
     {
       name: PRODUCT_SESSION_STORAGE_KEY,
-      version: 2,
+      version: PRODUCT_SESSION_STORAGE_VERSION,
       storage: sessionStorage,
       migrate: (persistedState) => {
         const state = persistedState as Partial<ProductSessionData>;
@@ -139,6 +144,7 @@ export const useProductSessionStore = create<ProductSessionState>()(
           ...initialSessionData,
           ...state,
           consentState:
+            defaultServiceMode !== 'http' &&
             consentState?.consentVersion === CURRENT_CONSENT_VERSION
               ? consentState
               : { ...EMPTY_CONSENT_STATE },
@@ -148,7 +154,7 @@ export const useProductSessionStore = create<ProductSessionState>()(
         activeCharacterId: state.activeCharacterId,
         activeJobId: state.activeJobId,
         activePackId: state.activePackId,
-        consentState: state.consentState,
+        consentState: consentForPersistence(state.consentState),
         selectedServiceMode: state.selectedServiceMode,
       }),
       onRehydrateStorage: (state) => {

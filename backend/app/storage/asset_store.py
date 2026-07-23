@@ -187,7 +187,16 @@ class LocalFilesystemAssetStore(AssetStore):
 
 
 def get_default_asset_store() -> AssetStore:
-    if settings.SUPABASE_URL and settings.SUPABASE_SERVICE_ROLE_KEY:
+    backend = settings.ASSET_STORE.strip().lower()
+    if backend not in {"auto", "local", "supabase"}:
+        raise GenStickerException(
+            code="storage_not_configured",
+            message=f"Unsupported asset store backend '{settings.ASSET_STORE}'.",
+            status_code=500,
+        )
+    if backend == "supabase" or (
+        backend == "auto" and settings.SUPABASE_URL and settings.SUPABASE_SERVICE_ROLE_KEY
+    ):
         from backend.app.storage.supabase_store import SupabaseAssetStore
 
         return SupabaseAssetStore()

@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     API_PORT: int = 8000
     DATABASE_URL: str = "sqlite:///./data/gensticker.db"
     ASSET_ROOT: str = "./data/assets"
+    ASSET_STORE: str = "auto"  # "auto" | "local" | "supabase"
 
     # Supabase Configuration
     SUPABASE_URL: str = ""
@@ -33,9 +34,14 @@ class Settings(BaseSettings):
     DEFAULT_DEV_USER_ID: str = "local-dev-user"
 
     # Generation Providers
-    GENERATION_PROVIDER: str = "mock"  # "mock" | "comfyui"
+    GENERATION_PROVIDER: str = "mock"  # "mock" | "cut" | "comfyui" | "replicate"
     COMFYUI_ENABLED: bool = False
     COMFYUI_BASE_URL: str = "http://host.docker.internal:8188"
+    CUT_ENABLED: bool = False
+    CUT_CHECKPOINT_PATH: str = ""
+    CUT_DEVICE: str = "auto"
+    CUT_BACKGROUND_THRESHOLD: int = 240
+    CUT_OUTLINE_KERNEL_SIZE: int = 14
 
     # Job Runner & Budgeting
     JOB_POLL_INTERVAL_MS: int = 500
