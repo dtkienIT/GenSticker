@@ -15,6 +15,7 @@ import {
   type CreateCanonicalJobInput,
   type CreateCharacterInput,
   type CreateStickerPackInput,
+  type ExportAsset,
   type ExportManifest,
   type ExportStickerPackInput,
   type GenerationJob,
@@ -164,8 +165,8 @@ export class MockStickerProductService implements StickerProductService {
     const mimeType = input.mimeType ?? 'image/jpeg';
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(mimeType))
       this.fail('unsupported_type');
-    if ((input.byteSize ?? 0) > 10 * 1024 * 1024) this.fail('file_too_large');
-    if ((input.width ?? 1024) < 256 || (input.height ?? 1024) < 256)
+    if ((input.byteSize ?? 0) > 50 * 1024 * 1024) this.fail('file_too_large');
+    if ((input.width ?? 1024) < 160 || (input.height ?? 1024) < 160)
       this.fail('resolution_too_low');
     const asset: Asset = {
       id: await this.id('asset'),
@@ -517,7 +518,7 @@ export class MockStickerProductService implements StickerProductService {
     if (state.scenario === 'export_failed') this.fail('export_failed');
     const id = await this.id('export');
     const completedSlots = pack.slots.filter((slot) => slot.status === 'completed');
-    const assets = input.formats.flatMap((format) => {
+    const assets = input.formats.flatMap<ExportAsset>((format) => {
       if (format === 'zip') {
         return [
           {

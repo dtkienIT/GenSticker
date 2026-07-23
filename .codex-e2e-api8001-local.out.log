@@ -1,6 +1,0 @@
-{"timestamp": "2026-07-23T04:06:25.123191+00:00", "level": "INFO", "message": "GET /health HTTP/200", "logger": "gensticker", "request_id": "2552a405-4f94-4f37-b238-2d3ea6c8a16f", "user_id": null, "job_id": null, "stage": null, "duration_ms": 2.01, "provider": null, "error_code": null}
-INFO:     127.0.0.1:50116 - "GET /health HTTP/1.1" 200 OK
-{"timestamp": "2026-07-23T04:06:25.420218+00:00", "level": "INFO", "message": "PUT /api/v1/consent HTTP/200", "logger": "gensticker", "request_id": "2191ab4a-ede2-4100-ae69-78d51f060a1d", "user_id": null, "job_id": null, "stage": null, "duration_ms": 227.15, "provider": null, "error_code": null}
-INFO:     127.0.0.1:50116 - "PUT /api/v1/consent HTTP/1.1" 200 OK
-{"timestamp": "2026-07-23T04:06:25.692714+00:00", "level": "INFO", "message": "POST /api/v1/assets/selfies HTTP/500", "logger": "gensticker", "request_id": "99ca337d-7662-4516-bfde-134c30c2ba19", "user_id": null, "job_id": null, "stage": null, "duration_ms": 209.03, "provider": null, "error_code": null}
-INFO:     127.0.0.1:50121 - "POST /api/v1/assets/selfies HTTP/1.1" 500 Internal Server Error

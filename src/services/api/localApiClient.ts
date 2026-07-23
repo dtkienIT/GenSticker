@@ -206,9 +206,9 @@ export class LocalApiStickerGenerationService implements StickerGenerationServic
   private mapReasonCodeToMessage(reasonCode: string): string {
     const map: Record<string, string> = {
       unsupported_type: 'Unsupported image format. Please use JPEG, PNG, or WebP.',
-      file_too_large: 'Image size exceeds maximum limit of 10MB.',
+      file_too_large: 'Image size exceeds maximum limit of 50MB.',
       invalid_image: 'Corrupt or unreadable image file.',
-      resolution_too_low: 'Image resolution is too small (Minimum 256x256 required).',
+      resolution_too_low: 'Image resolution is too small (Minimum 160x160 required).',
       resolution_too_high: 'Image resolution exceeds maximum limit.',
       invalid_aspect_ratio: 'Image aspect ratio is too distorted.',
       blank_image: 'Uploaded photo appears blank or empty.',

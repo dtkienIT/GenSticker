@@ -79,7 +79,7 @@ const initialSessionData: ProductSessionData = {
 };
 
 function consentForPersistence(consentState: ConsentState): ConsentState {
-  return defaultServiceMode === 'http' ? { ...EMPTY_CONSENT_STATE } : consentState;
+  return consentState;
 }
 
 const initialRuntimeState: ProductSessionRuntimeState = {
@@ -144,7 +144,6 @@ export const useProductSessionStore = create<ProductSessionState>()(
           ...initialSessionData,
           ...state,
           consentState:
-            defaultServiceMode !== 'http' &&
             consentState?.consentVersion === CURRENT_CONSENT_VERSION
               ? consentState
               : { ...EMPTY_CONSENT_STATE },

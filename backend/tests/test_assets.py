@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta, timezone
-from io import BytesIO
+from pathlib import Path
 
 from backend.app.db.models.asset import Asset
-from PIL import Image as PILImage
-from PIL import ImageDraw
+
+
+OPEN_SOURCE_FIXTURES = Path(__file__).parents[2] / "test_images" / "open_source"
 
 
 def accept_consent(client, user_id="local-dev-user"):
@@ -20,13 +21,8 @@ def accept_consent(client, user_id="local-dev-user"):
     assert response.status_code == 200
 
 
-def create_test_image_bytes(width=512, height=512, color="blue"):
-    img = PILImage.new("RGB", (width, height), color=color)
-    draw = ImageDraw.Draw(img)
-    draw.rectangle([50, 50, 200, 200], fill="yellow")
-    buf = BytesIO()
-    img.save(buf, format="PNG")
-    return buf.getvalue()
+def create_test_image_bytes():
+    return (OPEN_SOURCE_FIXTURES / "public-domain-barack-obama.jpg").read_bytes()
 
 
 def test_upload_selfie_success(client):
@@ -34,14 +30,27 @@ def test_upload_selfie_success(client):
     img_bytes = create_test_image_bytes()
     response = client.post(
         "/api/v1/assets/selfies",
-        files={"file": ("selfie.png", img_bytes, "image/png")},
+        files={"file": ("selfie.jpg", img_bytes, "image/jpeg")},
     )
     assert response.status_code == 200
     data = response.json()
     assert data["validation"]["valid"] is True
     assert data["asset"]["asset_type"] == "selfie"
-    assert data["asset"]["width"] == 512
-    assert data["asset"]["height"] == 512
+    assert data["asset"]["width"] == 444
+    assert data["asset"]["height"] == 600
+
+
+def test_upload_photo_without_face_is_rejected(client):
+    accept_consent(client)
+    img_bytes = (OPEN_SOURCE_FIXTURES / "cc0-mug.jpg").read_bytes()
+    response = client.post(
+        "/api/v1/assets/selfies",
+        files={"file": ("mug.jpg", img_bytes, "image/jpeg")},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["validation"]["valid"] is False
+    assert data["validation"]["reason_codes"] == ["face_count_invalid"]
 
 
 def test_upload_invalid_image(client):
@@ -63,7 +72,7 @@ def test_tenant_asset_isolation(client):
     accept_consent(client, "user-1")
     res1 = client.post(
         "/api/v1/assets/selfies",
-        files={"file": ("selfie.png", img_bytes, "image/png")},
+        files={"file": ("selfie.jpg", img_bytes, "image/jpeg")},
         headers={"X-Dev-User-Id": "user-1"},
     )
     asset_id = res1.json()["asset"]["id"]
@@ -94,7 +103,7 @@ def test_asset_expiration_guards_metadata_and_content(client, test_db_session):
     accept_consent(client)
     uploaded = client.post(
         "/api/v1/assets/selfies",
-        files={"file": ("selfie.png", create_test_image_bytes(), "image/png")},
+        files={"file": ("selfie.jpg", create_test_image_bytes(), "image/jpeg")},
     )
     assert uploaded.status_code == 200
     asset_id = uploaded.json()["asset"]["id"]

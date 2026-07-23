@@ -1,4 +1,5 @@
 import { z, type ZodType } from 'zod';
+import { Platform } from 'react-native';
 import {
   API_ERROR_CODES,
   MOCK_SCENARIOS,
@@ -553,7 +554,7 @@ export class HttpStickerProductService implements StickerProductService {
       input.fileName ?? input.uri.split('/').pop()?.split('?')[0] ?? 'gensticker-selfie.jpg';
     const mimeType = input.mimeType ?? 'image/jpeg';
     const form = new FormData();
-    if (typeof window !== 'undefined') {
+    if (Platform.OS === 'web') {
       let imageResponse: Response;
       try {
         imageResponse = await fetch(input.uri);

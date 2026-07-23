@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Platform } from 'react-native';
 import { DEFAULT_CHARACTER_PROFILE_CONFIG } from '@/constants/profilePresets';
 import { ProductServiceError } from '@/services/contracts';
 import { HttpStickerProductService } from './HttpStickerProductService';
@@ -53,6 +54,7 @@ describe('HttpStickerProductService', () => {
   beforeEach(() => {
     fetchMock.mockReset();
     vi.stubGlobal('fetch', fetchMock);
+    Platform.OS = 'android';
     process.env.EXPO_PUBLIC_DEV_USER_ID = 'phone-user';
     service = new HttpStickerProductService();
   });
@@ -124,7 +126,7 @@ describe('HttpStickerProductService', () => {
   });
 
   it('converts a browser blob URI into a real multipart file', async () => {
-    vi.stubGlobal('window', {});
+    Platform.OS = 'web';
     fetchMock
       .mockResolvedValueOnce(
         new Response(new Blob(['image-bytes'], { type: 'image/jpeg' }), { status: 200 }),

@@ -22,9 +22,9 @@ class Settings(BaseSettings):
     REPLICATE_API_TOKEN: str = ""
 
     # Storage & Image constraints
-    MAX_UPLOAD_BYTES: int = 10 * 1024 * 1024  # 10 MB
-    MIN_IMAGE_WIDTH: int = 256
-    MIN_IMAGE_HEIGHT: int = 256
+    MAX_UPLOAD_BYTES: int = 50 * 1024 * 1024  # 50 MB
+    MIN_IMAGE_WIDTH: int = 160
+    MIN_IMAGE_HEIGHT: int = 160
     MAX_IMAGE_WIDTH: int = 8192
     MAX_IMAGE_HEIGHT: int = 8192
     ASSET_TTL_HOURS: int = 168  # 7 days

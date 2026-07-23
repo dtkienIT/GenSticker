@@ -1,4 +1,5 @@
 from io import BytesIO
+from pathlib import Path
 from typing import Any, List
 
 from backend.app.api.v1.endpoints import assets as assets_endpoint
@@ -114,9 +115,15 @@ def test_cloud_asset_content_redirects_to_signed_url(client, monkeypatch):
     )
     assert consent.status_code == 200
 
+    selfie_bytes = (
+        Path(__file__).parents[2]
+        / "test_images"
+        / "open_source"
+        / "public-domain-barack-obama.jpg"
+    ).read_bytes()
     uploaded = client.post(
         "/api/v1/assets/selfies",
-        files={"file": ("selfie.png", create_png_bytes(512, 512), "image/png")},
+        files={"file": ("selfie.jpg", selfie_bytes, "image/jpeg")},
     )
     asset_id = uploaded.json()["asset"]["id"]
 
