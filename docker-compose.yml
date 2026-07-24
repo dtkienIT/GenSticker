@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   api:
     build:
@@ -16,12 +14,9 @@ services:
       - DATABASE_URL=sqlite:///./data/gensticker.db
       - ASSET_ROOT=./data/assets
       - DEV_AUTH_ENABLED=true
-      - STICKER_PROVIDER=universal
-      - STICKER_DEVICE=cpu
-      - BIREFNET_MODEL_PATH=/models/birefnet
+      - STICKER_PROVIDER=instantid
     volumes:
       - ./data:/app/data
-      - "${BIREFNET_MODEL_PATH:-./models/birefnet}:/models/birefnet:ro"
     healthcheck:
       test:
         [
@@ -44,12 +39,26 @@ services:
       - APP_ENV=development
       - DATABASE_URL=sqlite:///./data/gensticker.db
       - ASSET_ROOT=./data/assets
-      - STICKER_PROVIDER=universal
-      - STICKER_DEVICE=cpu
+      - STICKER_PROVIDER=instantid
+      - STICKER_DEVICE=cuda
+      - STICKER_SEGMENTER_DEVICE=auto
+      - INSTANTID_REPO_PATH=/models/InstantID
+      - SDXL_MODEL_PATH=/models/sdxl-base
+      - INSTANTID_MODEL_PATH=/models/instantid
+      - CANNY_CONTROLNET_MODEL_PATH=/models/controlnet-canny-sdxl
+      - INSIGHTFACE_MODEL_ROOT=/models/insightface
+      - CHIBI_LORA_PATH=/models/lora/StickersRedmond.safetensors
       - BIREFNET_MODEL_PATH=/models/birefnet
     volumes:
       - ./data:/app/data
-      - "${BIREFNET_MODEL_PATH:-./models/birefnet}:/models/birefnet:ro"
+      - "${GENSTICKER_MODEL_ROOT:-./models}:/models:ro"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     depends_on:
       api:
         condition: service_healthy

@@ -35,8 +35,9 @@
 
 ## 📌 Phase 3: AI Model Pipeline
 
-- [x] Local arbitrary-image sticker pipeline (BiRefNet + cartoon + transparent PNG).
-- [x] Local BiRefNet foreground removal and white-outline rendering.
+- [x] One-person identity-preserving pipeline (SDXL + InstantID + hair Canny ControlNet).
+- [x] BiRefNet foreground removal, hard chin cutoff, adaptive tone, and white outline.
+- [ ] Multi-person detection, identity assignment, and composition.
 - [x] HTTP product-service binding with validated frontend contracts.
 
 ---

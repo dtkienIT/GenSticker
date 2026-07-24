@@ -43,8 +43,8 @@ The future production environment will connect the mobile app to an asynchronous
        │                                  ┌──────────────┐
        │   Download Sticker               │ Local AI     │
        └──────────────────────────────────┤ Worker       │
-              (Supabase CDN / S3)         │ (BiRefNet /  │
-                                          │  OpenCV)     │
+              (Supabase CDN / S3)         │ (InstantID / │
+                                          │  SDXL)       │
                                           └──────────────┘
 ```
 
@@ -68,11 +68,16 @@ The future production environment will connect the mobile app to an asynchronous
 - PostgreSQL database storing user profiles, generation requests, and sticker metadata.
 - Object storage bucket hosting raw uploads and generated transparent sticker PNGs.
 
-### D. Local AI Worker (`UniversalStickerProvider`)
+### D. Local AI Worker (`InstantIDStickerProvider`)
 
 - Asynchronous durable worker listening for queued generation jobs.
 - Materializes the private uploaded image to a worker-readable local path.
-- Runs local BiRefNet foreground segmentation, centers the complete subject, applies
-  deterministic cartoon rendering, and creates a white outline.
-- Stores one normalized 512x512 RGBA PNG and marks the job as completed.
-- Uses CPU by default and does not require a paid API or a persistent Colab runtime.
+- Requires exactly one InsightFace detection and extracts identity/landmarks.
+- Normalizes a face-and-hair reference crop, then runs SDXL with InstantID
+  IdentityNet and a second hair-only Canny ControlNet.
+- Applies the generic chibi LoRA/prompt, BiRefNet segmentation, adaptive tone,
+  a hard generated-chin boundary, and a white sticker outline.
+- Stores one normalized 1024x1024 RGBA PNG and marks the job as completed.
+- Loads pinned local checkpoints lazily and reuses them in the CUDA worker.
+- Rejects zero-face and multi-face inputs; multi-person composition is out of
+  scope for this pipeline version.

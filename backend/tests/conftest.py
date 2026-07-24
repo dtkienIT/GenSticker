@@ -12,8 +12,8 @@ os.environ.update(
         "APP_ENV": "test",
         "ASSET_ROOT": str(_TEST_RUNTIME_PATH / "assets"),
         "DATABASE_URL": f"sqlite:///{(_TEST_RUNTIME_PATH / 'bootstrap.db').as_posix()}",
-        "STICKER_PROVIDER": "universal",
-        "STICKER_DEVICE": "cpu",
+        "STICKER_PROVIDER": "instantid",
+        "STICKER_DEVICE": "cuda",
         "BIREFNET_MODEL_PATH": str(_TEST_RUNTIME_PATH / "birefnet"),
         "SUPABASE_URL": "",
         "SUPABASE_ANON_KEY": "",
@@ -51,8 +51,8 @@ def temp_dir():
 def isolated_external_services(temp_dir, monkeypatch):
     local_store = LocalFilesystemAssetStore(root_dir=Path(temp_dir) / "assets")
 
-    monkeypatch.setattr(settings, "STICKER_PROVIDER", "universal")
-    monkeypatch.setattr(settings, "STICKER_DEVICE", "cpu")
+    monkeypatch.setattr(settings, "STICKER_PROVIDER", "instantid")
+    monkeypatch.setattr(settings, "STICKER_DEVICE", "cuda")
     monkeypatch.setattr(settings, "SUPABASE_URL", "")
     monkeypatch.setattr(settings, "SUPABASE_ANON_KEY", "")
     monkeypatch.setattr(settings, "SUPABASE_SERVICE_ROLE_KEY", "")
@@ -94,7 +94,7 @@ def isolated_external_services(temp_dir, monkeypatch):
                 )
             return GenerationResult(
                 success=True,
-                provider="universal",
+                provider="instantid",
                 workflow_version=spec.workflow_version,
                 artifacts=artifacts,
                 metrics={"gpu_seconds": 0.01},

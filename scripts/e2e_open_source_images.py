@@ -1,4 +1,4 @@
-"""Exercise arbitrary-image upload and universal sticker generation in process."""
+"""Exercise one-person upload and InstantID sticker generation in process."""
 
 import asyncio
 from pathlib import Path
@@ -41,14 +41,14 @@ def main() -> None:
         )
         consent.raise_for_status()
 
-        source = upload(client, FIXTURES / "cc0-mug.jpg")
+        source = upload(client, FIXTURES / "public-domain-barack-obama.jpg")
         assert source["validation"]["valid"] is True
         source_asset_id = source["asset"]["id"]
 
         character = client.post(
             "/api/v1/characters",
             json={
-                "display_name": "Open-source arbitrary image",
+                "display_name": "Public-domain one-person portrait",
                 "selfie_asset_id": source_asset_id,
             },
         )
@@ -79,7 +79,7 @@ def main() -> None:
 
         result = client.get(f"/api/v1/assets/{candidate['asset_id']}/content")
         result.raise_for_status()
-        output = RESULTS / "universal-object-sticker.png"
+        output = RESULTS / "instantid-chibi-sticker.png"
         output.write_bytes(result.content)
 
         print(

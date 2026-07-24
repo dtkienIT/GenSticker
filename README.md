@@ -2,7 +2,7 @@
 
 **GenSticker** is an Expo SDK 54 application for text and canonical-first personalized stickers.
 
-The app supports both a deterministic device-local UI mock and a real HTTP path backed by FastAPI, PostgreSQL/Supabase Storage, a durable worker, and local BiRefNet inference.
+The app supports both a deterministic device-local UI mock and a real HTTP path backed by FastAPI, PostgreSQL/Supabase Storage, a durable worker, and a one-person SDXL + InstantID sticker pipeline.
 
 For the full stack, set `EXPO_PUBLIC_STICKER_SERVICE=http` and `EXPO_PUBLIC_USE_MOCK_SERVICE=false`. The selfie journey is consent → upload/validation → canonical generation → explicit approval → versioned profile → eight-slot pack → targeted retry → exact text → export/share manifest.
 
@@ -124,7 +124,7 @@ GenSticker/
 │   │   ├── domain/           # Selfie validation domain logic
 │   │   ├── jobs/             # Durable job runner and worker
 │   │   ├── observability/    # Cost ledger and budget policy
-│   │   ├── providers/        # Local universal sticker provider
+│   │   ├── providers/        # One-person InstantID/SDXL sticker provider
 │   │   └── storage/          # Local or private Supabase asset storage
 │   ├── migrations/           # Alembic migration environment and versions
 │   ├── tests/                # Backend API and lifecycle tests

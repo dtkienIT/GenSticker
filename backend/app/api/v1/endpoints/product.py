@@ -169,7 +169,7 @@ def _enqueue_slot_job(
         status="queued",
         current_stage="validating",
         progress=0,
-        provider="universal",
+        provider=settings.STICKER_PROVIDER,
         request_json=json.dumps(
             {
                 "seed": seed,

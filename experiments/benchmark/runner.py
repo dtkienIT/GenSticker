@@ -16,7 +16,9 @@ async def run_benchmark_eval(
     emotion: str = "happy",
 ) -> EvalRun:
     provider = get_generation_provider()
-    source_path = Path("test_images/open_source/cc0-mug.jpg").resolve()
+    source_path = Path(
+        "test_images/open_source/public-domain-barack-obama.jpg"
+    ).resolve()
     spec = GenerationSpec(
         user_id="benchmark-eval-user",
         source_uri=str(source_path),
@@ -36,7 +38,7 @@ async def run_benchmark_eval(
     eval_run = EvalRun(
         id=f"eval_{uuid.uuid4().hex[:8]}",
         provider=result.provider,
-        model_bundle="birefnet-universal-cartoon",
+        model_bundle="sdxl-instantid-chibi-v3",
         workflow_version=result.workflow_version,
         seed=spec.seed,
         started_at=started_at,
@@ -47,7 +49,7 @@ async def run_benchmark_eval(
         metrics={
             "artifacts_count": len(result.artifacts),
             "inference_latency_ms": elapsed_ms,
-            "benchmark_status": "local_universal_passed",
+            "benchmark_status": "local_instantid_passed",
         },
         artifacts=[a.model_dump() for a in result.artifacts],
         status="succeeded" if result.success else "failed",

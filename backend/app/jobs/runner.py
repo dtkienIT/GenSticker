@@ -122,7 +122,7 @@ def _resolve_source_uri(
 
 def _provider_model_name(provider: str, has_source_image: bool) -> str:
     del provider, has_source_image
-    return "birefnet-universal-cartoon"
+    return "sdxl-instantid-chibi-v3"
 
 
 def _delete_uncommitted_artifacts(artifacts: list[Any]) -> None:

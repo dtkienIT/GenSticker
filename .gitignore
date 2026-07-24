@@ -54,6 +54,8 @@ __pycache__/
 # Local runtime data
 data/assets/
 data/*.db-journal
+/models/*
+!/models/README.md
 
 # Local planning workbooks
 sticker_project_plan_PRD_aligned_full.xlsx

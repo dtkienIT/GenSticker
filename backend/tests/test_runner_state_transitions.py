@@ -193,7 +193,7 @@ def _install_fakes(monkeypatch, store, provider: FakeProvider) -> None:
     monkeypatch.setattr(runner, "get_generation_provider", lambda: provider)
 
 
-def test_universal_source_resolution_stays_inside_private_asset_store(
+def test_provider_source_resolution_stays_inside_private_asset_store(
     test_db_session, isolated_external_services, monkeypatch
 ):
     db = test_db_session
@@ -213,7 +213,7 @@ def test_universal_source_resolution_stays_inside_private_asset_store(
     assert resolved == str(store.get_absolute_path(source.relative_path))
 
 
-def test_universal_source_resolution_materializes_cloud_asset(
+def test_provider_source_resolution_materializes_cloud_asset(
     test_db_session, isolated_external_services, monkeypatch, tmp_path
 ):
     db = test_db_session

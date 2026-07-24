@@ -1,20 +1,54 @@
 licenses:
-  - id: lic_sd15_creative
-    component: Stable Diffusion v1.5 Base Model
-    source: https://huggingface.co/runwayml/stable-diffusion-v1-5
-    license_name: CreativeML OpenRAIL-M
+  - id: instantid_code
+    component: InstantID source code
+    source: https://github.com/instantX-research/InstantID
+    revision: 2145b67f9607da6234702063692330185f374486
+    license_name: Apache-2.0
     commercial_use_allowed: true
-    attribution_required: true
-    reviewed_by: Platform Architect
-    reviewed_at: 2026-07-20
-    notes: OpenRAIL-M license allows commercial use with standard use-restriction disclosures.
+    notes: Code license only; it does not clear the released checkpoint.
 
-  - id: lic_ip_adapter
-    component: IP-Adapter Face Weights
-    source: https://github.com/tencent-ailab/IP-Adapter
-    license_name: Apache 2.0
+  - id: instantid_checkpoint
+    component: InstantID IdentityNet and IP-Adapter checkpoint
+    source: https://huggingface.co/InstantX/InstantID
+    revision: 57b32dfee076092ad2930c71fd6d439c2c3b1820
+    license_name: Research-only upstream restriction
+    commercial_use_allowed: false
+    notes: InstantID upstream explicitly restricts the released checkpoint to research.
+
+  - id: insightface_antelopev2
+    component: InsightFace antelopev2 pretrained face models
+    source: https://github.com/deepinsight/insightface
+    license_name: Non-commercial research
+    commercial_use_allowed: false
+    notes: Manually supplied; do not redistribute or use commercially without clearance.
+
+  - id: sdxl_base
+    component: Stable Diffusion XL Base 1.0
+    source: https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0
+    revision: 462165984030d82259a11f4367a4eed129e94a7b
+    license_name: CreativeML Open RAIL++-M
     commercial_use_allowed: true
-    attribution_required: true
-    reviewed_by: Platform Architect
-    reviewed_at: 2026-07-20
-    notes: Apache 2.0 license. Permissive for commercial products.
+    notes: Subject to the license use restrictions.
+
+  - id: canny_controlnet
+    component: xinsir ControlNet Canny SDXL 1.0
+    source: https://huggingface.co/xinsir/controlnet-canny-sdxl-1.0
+    revision: 1271357eda52d54b857c650cacb5b51144643ccb
+    license_name: Apache-2.0
+    commercial_use_allowed: true
+    notes: Spatial hair-shape condition model.
+
+  - id: birefnet
+    component: BiRefNet
+    source: https://huggingface.co/ZhengPeng7/BiRefNet
+    revision: e2bf8e4460fc8fa32bba5ea4d94b3233d367b0e4
+    license_name: MIT
+    commercial_use_allowed: true
+    notes: Background-removal model and code.
+
+  - id: chibi_lora
+    component: StickersRedmond.safetensors
+    source: user-supplied Colab artifact
+    license_name: Unverified
+    commercial_use_allowed: false
+    notes: Keep research-only until provenance and redistribution terms are documented.

@@ -1,10 +1,14 @@
-FROM python:3.10-slim
+FROM pytorch/pytorch:2.4.1-cuda12.4-cudnn9-runtime
 
 WORKDIR /app
 
-# Install system dependencies for Pillow and building
+# InsightFace and OpenCV runtime/build dependencies.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    cmake \
+    git \
+    libgl1 \
+    libglib2.0-0 \
     libpq-dev \
     curl \
     && rm -rf /var/lib/apt/lists/*

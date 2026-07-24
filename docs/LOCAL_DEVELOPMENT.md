@@ -1,15 +1,18 @@
 # Local Development Guide
 
-## Universal sticker model
+## One-person InstantID sticker model
 
-Set `BIREFNET_MODEL_PATH` in `.env`, then materialize the public model once:
+Copy `.env.example` to `.env`, then materialize the pinned public assets:
 
 ```powershell
 $env:PYTHONPATH="."
-.\.venv\Scripts\python.exe scripts\download_birefnet.py
+.\.venv\Scripts\python.exe scripts\prepare_instantid_models.py --include-sdxl
 ```
 
-The model stays outside Git. `STICKER_DEVICE=cpu` is the zero-cost default.
+Model weights stay outside Git. Copy the manually reviewed InsightFace
+`antelopev2` pack and `StickersRedmond.safetensors` into the exact paths in
+`models/README.md`. The worker requires CUDA and never falls back to the old
+OpenCV cartoon path.
 
 This guide explains how to set up, run, and test the **GenSticker** SDK 54 stack in either frontend mock mode or full HTTP mode.
 
@@ -113,7 +116,7 @@ EXPO_PUBLIC_USE_MOCK_SERVICE=false
    npm run start
    ```
 
-Use `10.0.2.2` from the Android emulator, loopback from web/iOS Simulator, and the development machine's LAN address from a physical device. Apply Alembic migrations before starting the processes. The universal CPU provider does not call a paid service; automated tests inject a lightweight segmentation mask.
+Use `10.0.2.2` from the Android emulator, loopback from web/iOS Simulator, and the development machine's LAN address from a physical device. Apply Alembic migrations before starting the processes. The InstantID provider uses local model files and a CUDA worker; automated tests inject a lightweight runtime and do not load those checkpoints.
 
 The two frontend flags exist because the canonical product flow and the legacy Text-to-Sticker flow have separate service factories. Full HTTP mode therefore requires `http` plus `false`; mock mode requires `mock` plus `true`.
 

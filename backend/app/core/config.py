@@ -30,18 +30,37 @@ class Settings(BaseSettings):
     DEV_AUTH_ENABLED: bool = True
     DEFAULT_DEV_USER_ID: str = "local-dev-user"
 
-    # Single local pipeline: arbitrary image -> BiRefNet -> cartoon -> transparent PNG.
-    STICKER_PROVIDER: str = "universal"
+    # One-person research pipeline:
+    # InsightFace -> InstantID + SDXL + face/hair ControlNets -> BiRefNet -> RGBA.
+    STICKER_PROVIDER: str = "instantid"
+    STICKER_DEVICE: str = "cuda"  # "cuda" | "auto"
+    STICKER_SEGMENTER_DEVICE: str = "auto"  # "cpu" | "cuda" | "auto"
+    INSTANTID_REPO_PATH: str = "./models/InstantID"
+    SDXL_MODEL_PATH: str = "./models/sdxl-base"
+    INSTANTID_MODEL_PATH: str = "./models/instantid"
+    CANNY_CONTROLNET_MODEL_PATH: str = "./models/controlnet-canny-sdxl"
+    INSIGHTFACE_MODEL_ROOT: str = "./models/insightface"
+    CHIBI_LORA_PATH: str = "./models/lora/StickersRedmond.safetensors"
     BIREFNET_MODEL_PATH: str = "./models/birefnet"
-    STICKER_DEVICE: str = "cpu"  # "cpu" | "cuda" | "auto"
     BIREFNET_INPUT_SIZE: int = 512
-    STICKER_OUTPUT_SIZE: int = 512
-    STICKER_INNER_SIZE: int = 438
-    STICKER_OUTLINE_PX: int = 12
-    STICKER_MASK_THRESHOLD: int = 28
-    STICKER_CROP_PADDING_RATIO: float = 0.08
-    STICKER_COLOR_CLUSTERS: int = 12
-    STICKER_KMEANS_SEED: int = 7
+    STICKER_OUTPUT_SIZE: int = 1024
+    STICKER_OUTLINE_PX: int = 15
+    STICKER_MASK_THRESHOLD: int = 32
+    STICKER_FACE_DETECTION_SIZE: int = 640
+    STICKER_REFERENCE_CROP_SCALE: float = 2.35
+    STICKER_CANNY_LOW_THRESHOLD: int = 60
+    STICKER_CANNY_HIGH_THRESHOLD: int = 160
+    STICKER_HAIR_DARK_THRESHOLD: int = 95
+    STICKER_IP_ADAPTER_SCALE: float = 0.48
+    STICKER_IDENTITY_CONTROL_SCALE: float = 0.45
+    STICKER_HAIR_CONTROL_SCALE: float = 0.55
+    STICKER_HAIR_CONTROL_END: float = 0.85
+    STICKER_INFERENCE_STEPS: int = 30
+    STICKER_GUIDANCE_SCALE: float = 4.8
+    STICKER_LORA_SCALE: float = 1.25
+    STICKER_TONE_TARGET_P95: float = 225.0
+    STICKER_TONE_MIN_GAIN: float = 0.82
+    STICKER_TONE_DESATURATION: float = 0.06
 
     # Job Runner & Budgeting
     JOB_POLL_INTERVAL_MS: int = 500

@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from backend.app.core.config import settings
 from backend.app.core.errors import (
     GenStickerException,
     ResourceNotFoundException,
@@ -278,7 +279,7 @@ def create_generation_job(
         status="queued",
         current_stage="validating",
         progress=0,
-        provider="universal",
+        provider=settings.STICKER_PROVIDER,
         request_json=json.dumps(
             {
                 "seed": payload.seed,

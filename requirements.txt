@@ -1,4 +1,5 @@
-# GenSticker API/worker runtime. Universal sticker inference runs locally.
+# GenSticker API/worker runtime.
+# InstantID inference requires an NVIDIA CUDA worker and local model assets.
 # Recommended runtime: Python 3.12 on Windows.
 
 -e ./backend
