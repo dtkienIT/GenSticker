@@ -17,7 +17,7 @@ from backend.app.core.security import get_current_user
 from backend.app.db.models.asset import Asset
 from backend.app.db.models.user import User
 from backend.app.db.session import get_db
-from backend.app.domain.validation import default_selfie_validator
+from backend.app.domain.validation import default_image_validator
 from backend.app.storage.asset_store import default_asset_store
 
 router = APIRouter()
@@ -46,13 +46,12 @@ async def upload_selfie(
     if not current_user.consent_accepted or current_user.consent_version != "1.0":
         raise GenStickerException(
             code="consent_required",
-            message="Version 1.0 image-processing consent is required before selfie upload.",
+            message="Version 1.0 image-processing consent is required before image upload.",
             status_code=403,
         )
     content = await file.read()
 
-    # Validate selfie image
-    val_result = default_selfie_validator.validate(content, file.content_type)
+    val_result = default_image_validator.validate(content, file.content_type)
     if not val_result.valid:
         return {
             "asset": None,

@@ -1,40 +1,63 @@
-# GenSticker Backend Package
+# GenSticker Backend
 
-Local-first FastAPI backend & durable job engine scaffold for GenSticker.
+FastAPI API and durable local worker for the single supported generation path:
 
-## Trained CUT provider
+```text
+arbitrary image
+  -> local BiRefNet foreground mask
+  -> subject crop and centering
+  -> deterministic cartoon rendering
+  -> white outline
+  -> 512x512 transparent PNG
+```
 
-The worker can run the trained CUT `ResnetGenerator` without exposing PyTorch details to the
-mobile API. From the repository root, create the project environment and install the backend
-and CUT runtime dependencies:
+The API, SQLite database, private uploads, job runner, model inference, and final assets all run
+locally. The default CPU path does not require a paid API, ComfyUI, or a GPU.
+
+## Local setup
 
 ```powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
+Copy-Item .env.example .env
 ```
 
-The epoch-8 checkpoint and its compatible ResNet-9 inference architecture are bundled in this
-repository. Configure `.env` without any machine-specific model path:
+Download BiRefNet once and configure `.env`:
 
 ```dotenv
-GENERATION_PROVIDER=cut
-CUT_ENABLED=true
-CUT_DEVICE=auto
+STICKER_PROVIDER=universal
+BIREFNET_MODEL_PATH=E:\Program Files\GenSticker\models\birefnet
+STICKER_DEVICE=cpu
 ```
 
-Start the API and worker in separate terminals. The checkpoint is lazy-loaded by the worker on
-the first job and reused for later jobs:
+`BIREFNET_MODEL_PATH` must contain the local Hugging Face BiRefNet snapshot, including
+`config.json`, its Python model files, and `model.safetensors`.
+
+After setting the path, download the public model without a token:
 
 ```powershell
-python -m backend.app.main
-python -m backend.app.jobs.worker
+$env:PYTHONPATH="."
+.\.venv\Scripts\python.exe scripts\download_birefnet.py
 ```
 
-Uploaded selfies remain in the private asset store. The worker passes an internal filesystem
-path to CUT, writes the generated 512x512 RGBA PNG back through `AssetStore`, and the public API
-returns only product-level asset IDs/content routes.
+Run the API and worker in separate terminals:
 
-The checkpoint is stored with Git LFS. Install Git LFS before cloning or run `git lfs pull`
-after cloning so `backend/models/cut/8_net_G.pth` is materialized instead of remaining a pointer.
+```powershell
+.\.venv\Scripts\python.exe -m backend.app.main
+.\.venv\Scripts\python.exe -m backend.app.jobs.worker
+```
+
+The worker materializes the private source image, runs the local provider in a background thread,
+and stores one `universal_sticker` RGBA artifact in the configured asset store.
+
+## Validation without a GPU
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest backend/tests
+.\.venv\Scripts\python.exe -m ruff check backend
+```
+
+Tests inject an in-process segmentation mask. They never download models or contact an external
+service.

@@ -193,7 +193,7 @@ def _install_fakes(monkeypatch, store, provider: FakeProvider) -> None:
     monkeypatch.setattr(runner, "get_generation_provider", lambda: provider)
 
 
-def test_cut_source_resolution_stays_inside_private_asset_store(
+def test_universal_source_resolution_stays_inside_private_asset_store(
     test_db_session, isolated_external_services, monkeypatch
 ):
     db = test_db_session
@@ -208,14 +208,12 @@ def test_cut_source_resolution_stays_inside_private_asset_store(
         source_asset_id=source.id,
     )
     monkeypatch.setattr(runner, "default_asset_store", store)
-    monkeypatch.setattr(runner.settings, "GENERATION_PROVIDER", "cut")
-
     resolved = runner._resolve_source_uri(db, job, source.id)
 
     assert resolved == str(store.get_absolute_path(source.relative_path))
 
 
-def test_cut_source_resolution_materializes_cloud_asset(
+def test_universal_source_resolution_materializes_cloud_asset(
     test_db_session, isolated_external_services, monkeypatch, tmp_path
 ):
     db = test_db_session
@@ -240,7 +238,6 @@ def test_cut_source_resolution_materializes_cloud_asset(
 
     monkeypatch.setattr(store, "get_absolute_path", no_local_path)
     monkeypatch.setattr(runner, "default_asset_store", store)
-    monkeypatch.setattr(runner.settings, "GENERATION_PROVIDER", "cut")
     monkeypatch.setattr(runner.settings, "ASSET_ROOT", str(tmp_path / "worker-assets"))
 
     resolved = Path(runner._resolve_source_uri(db, job, source.id))
@@ -289,7 +286,9 @@ async def test_canonical_source_job_persists_candidates_and_awaits_approval(
     assert completed_character.status == "AWAITING_APPROVAL"
     assert event_types == ["job_started", "stage_progress", "job_succeeded"]
     assert provider.seen_spec.source_asset_id == source.id
-    assert provider.seen_spec.source_uri is None
+    assert provider.seen_spec.source_uri == str(
+        store.get_absolute_path(source.relative_path)
+    )
 
 
 @pytest.mark.asyncio

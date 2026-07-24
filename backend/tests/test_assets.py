@@ -3,7 +3,6 @@ from pathlib import Path
 
 from backend.app.db.models.asset import Asset
 
-
 OPEN_SOURCE_FIXTURES = Path(__file__).parents[2] / "test_images" / "open_source"
 
 
@@ -40,7 +39,7 @@ def test_upload_selfie_success(client):
     assert data["asset"]["height"] == 600
 
 
-def test_upload_photo_without_face_is_rejected(client):
+def test_upload_object_photo_is_accepted(client):
     accept_consent(client)
     img_bytes = (OPEN_SOURCE_FIXTURES / "cc0-mug.jpg").read_bytes()
     response = client.post(
@@ -49,8 +48,9 @@ def test_upload_photo_without_face_is_rejected(client):
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["validation"]["valid"] is False
-    assert data["validation"]["reason_codes"] == ["face_count_invalid"]
+    assert data["validation"]["valid"] is True
+    assert data["validation"]["reason_codes"] == []
+    assert data["asset"]["asset_type"] == "selfie"
 
 
 def test_upload_invalid_image(client):

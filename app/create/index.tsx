@@ -43,7 +43,7 @@ export default function CreateScreen() {
         <Text style={[styles.arrow, { color: colors.primary }]}>→</Text>
       </TouchableOpacity>
 
-      {/* Option 2: Selfie to Sticker */}
+      {/* Option 2: Image to Sticker */}
       <TouchableOpacity
         activeOpacity={0.85}
         style={[
@@ -62,7 +62,7 @@ export default function CreateScreen() {
           <Text style={styles.icon}>🤳</Text>
         </View>
         <View style={styles.textContainer}>
-          <Text style={[typography.h3, { color: colors.textPrimary }]}>Selfie to Sticker</Text>
+          <Text style={[typography.h3, { color: colors.textPrimary }]}>Ảnh thành Sticker</Text>
           <Text style={[typography.body, { color: colors.textSecondary, marginTop: 4 }]}>
             Upload your photo to turn your face into fun cartoon, chibi, or 3D stickers.
           </Text>

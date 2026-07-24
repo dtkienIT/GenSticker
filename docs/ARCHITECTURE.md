@@ -41,10 +41,10 @@ The future production environment will connect the mobile app to an asynchronous
        │                                         │ Pull Jobs
        │                                         ▼
        │                                  ┌──────────────┐
-       │   Download Sticker               │ GPU AI       │
+       │   Download Sticker               │ Local AI     │
        └──────────────────────────────────┤ Worker       │
-              (Supabase CDN / S3)         │ (ComfyUI /   │
-                                          │  Diffusers)  │
+              (Supabase CDN / S3)         │ (BiRefNet /  │
+                                          │  OpenCV)     │
                                           └──────────────┘
 ```
 
@@ -68,8 +68,11 @@ The future production environment will connect the mobile app to an asynchronous
 - PostgreSQL database storing user profiles, generation requests, and sticker metadata.
 - Object storage bucket hosting raw uploads and generated transparent sticker PNGs.
 
-### D. GPU AI Worker (`ComfyUI / Colab Pro / Modal`)
+### D. Local AI Worker (`UniversalStickerProvider`)
 
-- Asynchronous worker listening on job queues.
-- Executes customized ComfyUI workflows (Text2Img, ControlNet, IP-Adapter, Segment Anything for background removal).
-- Uploads final high-resolution PNG to object storage and marks job as completed.
+- Asynchronous durable worker listening for queued generation jobs.
+- Materializes the private uploaded image to a worker-readable local path.
+- Runs local BiRefNet foreground segmentation, centers the complete subject, applies
+  deterministic cartoon rendering, and creates a white outline.
+- Stores one normalized 512x512 RGBA PNG and marks the job as completed.
+- Uses CPU by default and does not require a paid API or a persistent Colab runtime.

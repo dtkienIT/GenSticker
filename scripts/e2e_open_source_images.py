@@ -1,14 +1,14 @@
-"""Exercise real-photo validation and CUT generation against a running local API."""
+"""Exercise arbitrary-image upload and universal sticker generation in process."""
 
 import asyncio
 from pathlib import Path
+
+from fastapi.testclient import TestClient
 
 from backend.app.db.base import Base
 from backend.app.db.session import SessionLocal, engine
 from backend.app.jobs.runner import process_one_job
 from backend.app.main import app
-from fastapi.testclient import TestClient
-
 
 ROOT = Path(__file__).parents[1]
 FIXTURES = ROOT / "test_images" / "open_source"
@@ -41,19 +41,15 @@ def main() -> None:
         )
         consent.raise_for_status()
 
-        mug = upload(client, FIXTURES / "cc0-mug.jpg")
-        assert mug["asset"] is None, mug
-        assert mug["validation"]["reason_codes"] == ["face_count_invalid"], mug
-
-        portrait = upload(client, FIXTURES / "public-domain-barack-obama.jpg")
-        assert portrait["validation"]["valid"] is True
-        selfie_asset_id = portrait["asset"]["id"]
+        source = upload(client, FIXTURES / "cc0-mug.jpg")
+        assert source["validation"]["valid"] is True
+        source_asset_id = source["asset"]["id"]
 
         character = client.post(
             "/api/v1/characters",
             json={
-                "display_name": "Open-source E2E portrait",
-                "selfie_asset_id": selfie_asset_id,
+                "display_name": "Open-source arbitrary image",
+                "selfie_asset_id": source_asset_id,
             },
         )
         character.raise_for_status()
@@ -83,13 +79,12 @@ def main() -> None:
 
         result = client.get(f"/api/v1/assets/{candidate['asset_id']}/content")
         result.raise_for_status()
-        output = RESULTS / "public-domain-portrait-sticker.png"
+        output = RESULTS / "universal-object-sticker.png"
         output.write_bytes(result.content)
 
         print(
             {
-                "mug_validation": mug["validation"],
-                "portrait_validation": portrait["validation"],
+                "source_validation": source["validation"],
                 "job_id": job_id,
                 "job_status": completed_payload["status"],
                 "provider": completed_payload["provider"],

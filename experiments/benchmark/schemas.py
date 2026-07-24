@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -12,14 +12,14 @@ class LicenseRecord(BaseModel):
     attribution_required: bool
     reviewed_by: str
     reviewed_at: str
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class ModelBundle(BaseModel):
     id: str
     base_model: str
-    identity_adapter: Optional[str] = None
-    vae: Optional[str] = None
+    identity_adapter: str | None = None
+    vae: str | None = None
     scheduler: str = "EulerA"
     workflow_version: str = "v1.0"
     precision: str = "fp16"
@@ -37,7 +37,7 @@ class DatasetManifest(BaseModel):
     provenance: str
     consent_status: str
     license_status: str
-    files: List[str] = Field(default_factory=list)
+    files: list[str] = Field(default_factory=list)
 
 
 class EvalRun(BaseModel):
@@ -51,6 +51,6 @@ class EvalRun(BaseModel):
     duration_ms: float
     gpu_seconds: float
     estimated_cost_usd: float
-    metrics: Dict[str, Any] = Field(default_factory=dict)
-    artifacts: List[Dict[str, Any]] = Field(default_factory=list)
+    metrics: dict[str, Any] = Field(default_factory=dict)
+    artifacts: list[dict[str, Any]] = Field(default_factory=list)
     status: str = "completed"

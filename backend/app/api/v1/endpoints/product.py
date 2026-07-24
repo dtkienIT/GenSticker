@@ -169,7 +169,7 @@ def _enqueue_slot_job(
         status="queued",
         current_stage="validating",
         progress=0,
-        provider=settings.GENERATION_PROVIDER,
+        provider="universal",
         request_json=json.dumps(
             {
                 "seed": seed,

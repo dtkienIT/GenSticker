@@ -83,7 +83,7 @@ This document describes the SQLite / PostgreSQL database domain schema.
 - `status` (`queued` | `running` | `succeeded` | `failed` | `cancelled`)
 - `current_stage` (`validating` | `preparing` | `generating` | `background_removal` | `completed`)
 - `progress` (Integer 0-100)
-- `provider` (`mock` | `comfyui`)
+- `provider` (`universal`)
 - `request_json`, `result_json` (Text)
 - `error_code`, `error_message` (Text)
 - `retry_count` (Integer)

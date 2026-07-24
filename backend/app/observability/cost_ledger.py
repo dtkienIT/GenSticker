@@ -41,7 +41,7 @@ class CostLedgerService:
         self.cost_per_second_usd = (
             cost_per_second_usd
             if cost_per_second_usd is not None
-            else settings.MOCK_COST_PER_SECOND_USD
+            else settings.GPU_COST_PER_SECOND_USD
         )
 
     def record_cost(

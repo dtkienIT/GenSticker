@@ -33,13 +33,10 @@
 
 ---
 
-## 📌 Phase 3: AI Model Pipeline & GPU Workers
+## 📌 Phase 3: AI Model Pipeline
 
-- [ ] Colab Pro / Modal GPU worker integration.
-- [ ] ComfyUI pipeline setup for Text-to-Sticker (SDXL / SD1.5 + LoRA).
-- [ ] ComfyUI pipeline for Selfie-to-Sticker (InstantID / IP-Adapter + ControlNet).
-- [x] Hosted Replicate face/text sticker provider integration.
-- [ ] Background removal nodes (rembg / BiRefNet / SAM) for clean transparent PNG stickers.
+- [x] Local arbitrary-image sticker pipeline (BiRefNet + cartoon + transparent PNG).
+- [x] Local BiRefNet foreground removal and white-outline rendering.
 - [x] HTTP product-service binding with validated frontend contracts.
 
 ---

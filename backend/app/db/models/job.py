@@ -14,11 +14,11 @@ class GenerationJob(Base):
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
     character_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("characters.id", ondelete="CASCADE"), index=True, nullable=True)
     pack_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("packs.id", ondelete="CASCADE"), index=True, nullable=True)
-    kind: Mapped[str] = mapped_column(String(50), nullable=False)  # canonical_generation | expression_generation | pack_generation
-    status: Mapped[str] = mapped_column(String(50), default="queued", index=True, nullable=False)  # queued | running | succeeded | failed | cancelled
-    current_stage: Mapped[str] = mapped_column(String(50), default="validating", nullable=False)  # validating | preparing | generating | background_removal | postprocessing | exporting | completed
+    kind: Mapped[str] = mapped_column(String(50), nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="queued", index=True, nullable=False)
+    current_stage: Mapped[str] = mapped_column(String(50), default="validating", nullable=False)
     progress: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    provider: Mapped[str] = mapped_column(String(50), default="mock", nullable=False)
+    provider: Mapped[str] = mapped_column(String(50), default="universal", nullable=False)
     request_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
     result_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     error_code: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)

@@ -2,7 +2,7 @@
 
 1. Bootstrap resolves persisted frontend session IDs and routes the user back to the latest character, job, pack, or sticker state.
 2. Text-to-Sticker remains a separate client-only prototype.
-3. Selfie creation requires versioned consent, picker permission, image preview, local validation, and character creation.
+3. Image-to-sticker creation requires versioned consent, picker permission, image preview, local validation, and character creation.
 4. A canonical job is polled until terminal; its timeline is non-blocking, may be cancelled, and can be resumed from persisted state.
 5. Three candidates appear; recommendation never selects or approves automatically. A candidate can be opened in a full-screen preview.
 6. Explicit approval creates profile v1; subsequent editor saves create immutable versions.

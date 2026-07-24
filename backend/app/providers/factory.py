@@ -1,18 +1,9 @@
-from backend.app.core.config import settings
+from functools import lru_cache
+
 from backend.app.providers.base import GenerationProvider
-from backend.app.providers.comfyui_provider import ComfyUIGenerationProvider
-from backend.app.providers.cut_provider import CutGenerationProvider
-from backend.app.providers.mock_provider import MockGenerationProvider
-from backend.app.providers.replicate_provider import ReplicateGenerationProvider
+from backend.app.providers.universal_sticker_provider import UniversalStickerProvider
 
 
+@lru_cache(maxsize=1)
 def get_generation_provider() -> GenerationProvider:
-    provider_name = settings.GENERATION_PROVIDER.lower()
-
-    if provider_name == "replicate":
-        return ReplicateGenerationProvider()
-    elif provider_name == "cut":
-        return CutGenerationProvider()
-    elif provider_name == "comfyui":
-        return ComfyUIGenerationProvider()
-    return MockGenerationProvider()
+    return UniversalStickerProvider()

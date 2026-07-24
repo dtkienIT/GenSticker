@@ -55,7 +55,7 @@ export default function SelfieScreen() {
   return (
     <ScreenContainer scrollable>
       <SectionHeader
-        title="Chọn ảnh chân dung"
+        title="Chọn ảnh bất kỳ"
         subtitle="Ảnh sẽ được tải lên dịch vụ GenSticker để tạo nhân vật và hình dán."
       />
       <SelfiePicker

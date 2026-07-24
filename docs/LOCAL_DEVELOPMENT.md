@@ -1,5 +1,16 @@
 # Local Development Guide
 
+## Universal sticker model
+
+Set `BIREFNET_MODEL_PATH` in `.env`, then materialize the public model once:
+
+```powershell
+$env:PYTHONPATH="."
+.\.venv\Scripts\python.exe scripts\download_birefnet.py
+```
+
+The model stays outside Git. `STICKER_DEVICE=cpu` is the zero-cost default.
+
 This guide explains how to set up, run, and test the **GenSticker** SDK 54 stack in either frontend mock mode or full HTTP mode.
 
 ---
@@ -102,7 +113,7 @@ EXPO_PUBLIC_USE_MOCK_SERVICE=false
    npm run start
    ```
 
-Use `10.0.2.2` from the Android emulator, loopback from web/iOS Simulator, and the development machine's LAN address from a physical device. Apply Alembic migrations before starting the processes. When `.env` selects Replicate, each generation can incur provider charges; automated tests always isolate external services.
+Use `10.0.2.2` from the Android emulator, loopback from web/iOS Simulator, and the development machine's LAN address from a physical device. Apply Alembic migrations before starting the processes. The universal CPU provider does not call a paid service; automated tests inject a lightweight segmentation mask.
 
 The two frontend flags exist because the canonical product flow and the legacy Text-to-Sticker flow have separate service factories. Full HTTP mode therefore requires `http` plus `false`; mock mode requires `mock` plus `true`.
 

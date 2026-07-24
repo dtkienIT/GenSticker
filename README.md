@@ -2,7 +2,7 @@
 
 **GenSticker** is an Expo SDK 54 application for text and canonical-first personalized stickers.
 
-The app supports both a deterministic device-local mock and a real HTTP path backed by FastAPI, PostgreSQL/Supabase Storage, a durable worker, and Replicate.
+The app supports both a deterministic device-local UI mock and a real HTTP path backed by FastAPI, PostgreSQL/Supabase Storage, a durable worker, and local BiRefNet inference.
 
 For the full stack, set `EXPO_PUBLIC_STICKER_SERVICE=http` and `EXPO_PUBLIC_USE_MOCK_SERVICE=false`. The selfie journey is consent → upload/validation → canonical generation → explicit approval → versioned profile → eight-slot pack → targeted retry → exact text → export/share manifest.
 
@@ -13,7 +13,7 @@ See [Frontend architecture](docs/FRONTEND_ARCHITECTURE.md), [mock service](docs/
 ## 🚀 Key Features
 
 - ✍️ **Text-to-Sticker**: Generate expressive stickers from text prompts.
-- 🤳 **Selfie-to-Sticker**: Pick photos from gallery and customize styles and emotions.
+- 🖼️ **Image-to-Sticker**: Pick an arbitrary image and create a transparent cartoon sticker.
 - 🎨 **Multiple AI Styles**: Chibi, Cartoon, 3D Pixar, and Meme.
 - 😄 **Expressive Emotions**: Happy, Angry, Sad, Love, Confused.
 - ⏳ **Durable Progress**: Multi-step generation jobs processed by a separately restartable worker.
@@ -124,7 +124,7 @@ GenSticker/
 │   │   ├── domain/           # Selfie validation domain logic
 │   │   ├── jobs/             # Durable job runner and worker
 │   │   ├── observability/    # Cost ledger and budget policy
-│   │   ├── providers/        # Mock, Replicate, and ComfyUI provider seam
+│   │   ├── providers/        # Local universal sticker provider
 │   │   └── storage/          # Local or private Supabase asset storage
 │   ├── migrations/           # Alembic migration environment and versions
 │   ├── tests/                # Backend API and lifecycle tests

@@ -18,9 +18,6 @@ class Settings(BaseSettings):
     SUPABASE_JWT_SECRET: str = ""
     SUPABASE_STORAGE_BUCKET: str = "gensticker-assets"
 
-    # Replicate Configuration
-    REPLICATE_API_TOKEN: str = ""
-
     # Storage & Image constraints
     MAX_UPLOAD_BYTES: int = 50 * 1024 * 1024  # 50 MB
     MIN_IMAGE_WIDTH: int = 160
@@ -33,23 +30,25 @@ class Settings(BaseSettings):
     DEV_AUTH_ENABLED: bool = True
     DEFAULT_DEV_USER_ID: str = "local-dev-user"
 
-    # Generation Providers
-    GENERATION_PROVIDER: str = "mock"  # "mock" | "cut" | "comfyui" | "replicate"
-    COMFYUI_ENABLED: bool = False
-    COMFYUI_BASE_URL: str = "http://host.docker.internal:8188"
-    CUT_ENABLED: bool = False
-    CUT_CHECKPOINT_PATH: str = ""
-    CUT_DEVICE: str = "auto"
-    CUT_BACKGROUND_THRESHOLD: int = 240
-    CUT_OUTLINE_KERNEL_SIZE: int = 14
+    # Single local pipeline: arbitrary image -> BiRefNet -> cartoon -> transparent PNG.
+    STICKER_PROVIDER: str = "universal"
+    BIREFNET_MODEL_PATH: str = "./models/birefnet"
+    STICKER_DEVICE: str = "cpu"  # "cpu" | "cuda" | "auto"
+    BIREFNET_INPUT_SIZE: int = 512
+    STICKER_OUTPUT_SIZE: int = 512
+    STICKER_INNER_SIZE: int = 438
+    STICKER_OUTLINE_PX: int = 12
+    STICKER_MASK_THRESHOLD: int = 28
+    STICKER_CROP_PADDING_RATIO: float = 0.08
+    STICKER_COLOR_CLUSTERS: int = 12
+    STICKER_KMEANS_SEED: int = 7
 
     # Job Runner & Budgeting
     JOB_POLL_INTERVAL_MS: int = 500
     STALE_JOB_SECONDS: int = 120
     MAX_JOB_RETRIES: int = 2
     MAX_GPU_SECONDS_PER_JOB: int = 500
-    MOCK_COST_PER_SECOND_USD: float = 0.00019
-    MOCK_GENERATION_DELAY_MS: int = 500
+    GPU_COST_PER_SECOND_USD: float = 0.000075
 
     LOG_LEVEL: str = "INFO"
 

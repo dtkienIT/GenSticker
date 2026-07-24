@@ -16,9 +16,12 @@ services:
       - DATABASE_URL=sqlite:///./data/gensticker.db
       - ASSET_ROOT=./data/assets
       - DEV_AUTH_ENABLED=true
-      - GENERATION_PROVIDER=mock
+      - STICKER_PROVIDER=universal
+      - STICKER_DEVICE=cpu
+      - BIREFNET_MODEL_PATH=/models/birefnet
     volumes:
       - ./data:/app/data
+      - "${BIREFNET_MODEL_PATH:-./models/birefnet}:/models/birefnet:ro"
     healthcheck:
       test:
         [
@@ -41,9 +44,12 @@ services:
       - APP_ENV=development
       - DATABASE_URL=sqlite:///./data/gensticker.db
       - ASSET_ROOT=./data/assets
-      - GENERATION_PROVIDER=mock
+      - STICKER_PROVIDER=universal
+      - STICKER_DEVICE=cpu
+      - BIREFNET_MODEL_PATH=/models/birefnet
     volumes:
       - ./data:/app/data
+      - "${BIREFNET_MODEL_PATH:-./models/birefnet}:/models/birefnet:ro"
     depends_on:
       api:
         condition: service_healthy

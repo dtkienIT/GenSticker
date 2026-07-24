@@ -43,7 +43,7 @@ export const SelfiePicker: React.FC<SelfiePickerProps> = ({
   onError,
   disabled = false,
   allowCamera = true,
-  title = 'Ảnh chân dung',
+  title = 'Ảnh đầu vào',
   helperText = 'Chọn ảnh rõ mặt, đủ sáng và chỉ có một người.',
   galleryLabel = 'Chọn từ thư viện',
   cameraLabel = 'Chụp ảnh',
@@ -250,7 +250,7 @@ export const SelfiePicker: React.FC<SelfiePickerProps> = ({
             ],
           );
         } else {
-          reportError('Cần quyền máy ảnh để chụp ảnh chân dung.');
+          reportError('Cần quyền máy ảnh để chụp ảnh đầu vào.');
         }
         return;
       }
@@ -307,7 +307,7 @@ export const SelfiePicker: React.FC<SelfiePickerProps> = ({
         {safeValue && !previewFailed ? (
           <RNImage
             accessible
-            accessibilityLabel="Ảnh chân dung đã chọn"
+            accessibilityLabel="Ảnh đầu vào đã chọn"
             onError={() => setPreviewFailed(true)}
             onLoad={() => setPreviewFailed(false)}
             resizeMode="cover"
