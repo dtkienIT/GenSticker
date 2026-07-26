@@ -71,6 +71,26 @@ function repository(files = new MemoryFiles(), metadata = new MemoryMetadata()) 
 }
 
 describe('LocalStickerAssetRepository', () => {
+  it('deletes temporary native output after durable persistence', async () => {
+    const setup = repository();
+    setup.files.files.add('file:///cache/request-temp.png');
+
+    await setup.repository.persist(
+      {
+        requestId: 'request-temp',
+        localUri: 'file:///cache/request-temp.png',
+        mimeType: 'image/png',
+        width: 512,
+        height: 512,
+        adapterId: 'onnxruntime-android',
+        temporary: true,
+      },
+      { ...request, requestId: 'request-temp', outputWidth: 512, outputHeight: 512 },
+    );
+
+    expect(setup.files.files.has('file:///cache/request-temp.png')).toBe(false);
+  });
+
   it('copies successful output into app-owned storage before recording metadata', async () => {
     const setup = repository();
 

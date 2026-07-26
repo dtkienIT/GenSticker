@@ -1,5 +1,7 @@
 # GenSticker Delivery Roadmap
 
+> **Approved MVP path:** Plan A is fixed to the pinned SD 1.5 + LCM-LoRA ONNX pipeline in `MODEL_PIPELINE.md`, delivered through Expo/Kotlin and one-time GitHub Release setup. Completion remains conditional on the Pixel 7+ physical gate: warm ≤30 seconds, cold ≤60 seconds, peak RSS ≤4 GB, meaningful transparent 512×512 PNG output, three consecutive measured runs, and blinded quality thresholds. On failure, record Plan A failed; do not use mock/cloud output or lower thresholds.
+
 ## Document Control
 
 **Authority:** The [PRD](./PRD_AI_Sticker_Generator.md) is authoritative; this document is the sole progress ledger for the Android-first release. Contract ownership and observable-interface terms come from the [Integration Contracts](./INTEGRATION_CONTRACTS.md#ownership-matrix).

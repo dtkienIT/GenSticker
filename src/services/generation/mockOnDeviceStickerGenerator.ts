@@ -6,7 +6,9 @@ import type {
   GenerationRequest,
   GenerationStage,
   MockScenario,
+  ModelReadiness,
   OnDeviceStickerGenerator,
+  PrepareModelRequest,
   StylePresetId,
 } from './types';
 import { GenerationFailure } from './types';
@@ -53,6 +55,10 @@ export class MockOnDeviceStickerGenerator implements OnDeviceStickerGenerator {
       return { supported: false, reasonCode: 'DEVICE_UNSUPPORTED' };
     }
     return { supported: true, adapterId: 'mock' };
+  }
+
+  async prepareModel(request: PrepareModelRequest): Promise<ModelReadiness> {
+    return { ...request, ready: true };
   }
 
   async generate(

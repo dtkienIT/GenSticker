@@ -42,5 +42,26 @@ example
 /ios
 /android
 
+# Generated model weights and caches never enter Git
+/model_artifacts/
+/.model-cache/
+
 #Superpowers
 .superpowers/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Local environment
+.env
+
+# Generated/debug artifacts
+*.zip
+
+# Android/Gradle generated files
+**/android/build/
+**/android/.gradle/

@@ -1,5 +1,7 @@
 # Local Development
 
+> **Current MVP toolchain:** Node 22.13+, Expo `~57.0.7`, React Native 0.86, React 19.2.3, `expo-dev-client ~57.0.7`, Android API 24+, and Python 3.13. Native generation requires `npx expo prebuild --platform android` and an Android development build with package `com.vinai.gensticker.dev`; Expo Go is unsupported. Select mock generation only through the explicit development environment setting.
+
 ## Document Control
 
 **Authority:** The [PRD](./PRD_AI_Sticker_Generator.md) is authoritative. This guide implements
@@ -90,6 +92,70 @@ The current `npm run android` script asks Expo CLI to open the scaffold on Andro
 mock/UI loop and cannot prove the target inference path. Never substitute a scaffold, web, Expo Go,
 or emulator result for target Kotlin application, model, Segmentation, persistence, or physical-
 device evidence.
+
+## Real-Model Android Emulator Workflow
+
+The development client can exercise the real Kotlin/ONNX pipeline on a dedicated Android Studio
+emulator. This is functional integration evidence only; it does not replace the Pixel 7+ physical
+performance and quality gate.
+
+Create an Android Virtual Device with:
+
+- Pixel 7 hardware profile;
+- API 37.1 Google Play x86_64 system image;
+- 8192 MB RAM; and
+- at least 12 GB of data storage.
+
+The native capability gate continues to require at least 6 GB of reported RAM. Keep the emulator
+online through the first segmentation run so Google Play Services can deliver ML Kit Subject
+Segmentation.
+
+Start the emulator, then build and install the x86_64 development client from the repository root:
+
+```powershell
+Remove-Item Env:EXPO_PUBLIC_STICKER_RUNTIME -ErrorAction SilentlyContinue
+npx.cmd expo run:android --device
+```
+
+Do not set `EXPO_PUBLIC_STICKER_RUNTIME=mock`; unset or `native` selects the real module. The Expo
+CLI selects `x86_64` for the running emulator while the checked-in default remains `arm64-v8a`.
+
+Validate and stage the existing model bundle after the app is installed:
+
+```powershell
+C:\tmp\gensticker-py313\python.exe -m model_tools.repair_text_encoder `
+  model_artifacts\model-lcm-sd15-v1.0.0
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\stage-local-model.ps1
+```
+
+The repair command validates the source graph, applies ONNX Runtime 1.27's deterministic FP16
+normalization, smoke-tests the fixed `[2,77,768]` output, and atomically replaces the text encoder
+only after all checks pass. It regenerates the immutable `1.0.1` manifests; rename the repaired
+artifact directory to `model_artifacts/model-lcm-sd15-v1.0.1` before staging. An already repaired
+graph is accepted unchanged, so the command is safe to rerun.
+
+The helper verifies all local byte lengths and SHA-256 values, transfers each part through
+`/data/local/tmp`, and copies it under the debug app identity into the app-private
+`files/model-import/` staging directory. Each device-side copy is verified before its temporary
+ADB file is removed. This app-private fallback is required on API 37.1 because its storage
+isolation prevents the app from reading shell-owned files pushed directly below
+`/sdcard/Android/data/com.vinai.gensticker.dev/files/model-import/`; the Kotlin importer still
+accepts that external directory first on Android versions where it is app-readable.
+
+In GenSticker, tap **Install staged local model**. The Kotlin module verifies the bundle again and
+atomically promotes it into app-private storage. Model binaries are neither added to the APK nor
+tracked by Git.
+
+For later JavaScript-only sessions, leave the installed development client in place and run:
+
+```powershell
+Remove-Item Env:EXPO_PUBLIC_STICKER_RUNTIME -ErrorAction SilentlyContinue
+npx.cmd expo start --dev-client
+```
+
+If local PowerShell execution is enabled, the shorter
+`.\scripts\stage-local-model.ps1` invocation is equivalent. `-ValidateOnly` performs host
+verification without writing to an emulator.
 
 ## Target Native Android Workflow
 
@@ -202,16 +268,19 @@ historical scaffold rather than the Android local-data contract.
 
 ## Common Failures
 
-| Symptom                                                       | Required response                                                                                                                                                      |
-| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Current scaffold fails Expo dependency validation             | Restore the lockfile installation with `npm ci`, run `npx expo install --check`, and review any intentional scaffold dependency update.                                |
-| Current scaffold runs but target behavior is absent           | Use the target Kotlin/Compose project after `W1-07`; the Expo scaffold cannot validate target application or on-device behavior.                                       |
-| Target Kotlin or runtime-native changes are absent on device  | Rebuild and reinstall with the target project's checked-in Gradle workflow.                                                                                            |
-| Device is not listed by `adb devices`                         | Reconnect the device, authorize USB debugging, and verify Android Platform Tools before rebuilding.                                                                    |
-| Device fails the capability gate                              | Confirm `DeviceCapabilities`; below-floor or runtime-incompatible devices are negative fixtures, not supported test devices.                                           |
-| Model preparation reports an integrity or compatibility error | Compare the exact `ModelManifest`, checksum, runtime, memory, and delegate evidence. Do not retry with an unnamed artifact.                                            |
-| Offline cold start fails after a successful install           | Confirm all required application, model, and Segmentation assets were delivered before disabling connectivity; retain the failure and recovery trace.                  |
-| A cancelled or crashed request leaves the app busy            | Preserve the trace and storage state, verify temporary-file and active-request cleanup, then run the failure-recovery matrix. Do not clear data to conceal the defect. |
+| Symptom                                                             | Required response                                                                                                                                                      |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Current scaffold fails Expo dependency validation                   | Restore the lockfile installation with `npm ci`, run `npx expo install --check`, and review any intentional scaffold dependency update.                                |
+| Current scaffold runs but target behavior is absent                 | Use the target Kotlin/Compose project after `W1-07`; the Expo scaffold cannot validate target application or on-device behavior.                                       |
+| Target Kotlin or runtime-native changes are absent on device        | Rebuild and reinstall with the target project's checked-in Gradle workflow.                                                                                            |
+| Device is not listed by `adb devices`                               | Reconnect the device, authorize USB debugging, and verify Android Platform Tools before rebuilding.                                                                    |
+| Device fails the capability gate                                    | Confirm `DeviceCapabilities`; below-floor or runtime-incompatible devices are negative fixtures, not supported test devices.                                           |
+| Model preparation reports an integrity or compatibility error       | Compare the exact `ModelManifest`, checksum, runtime, memory, and delegate evidence. Do not retry with an unnamed artifact.                                            |
+| Local model import reports `LOCAL_MODEL_NOT_STAGED`                 | Install the development client, run `scripts/stage-local-model.ps1`, and tap **Install staged local model** again.                                                     |
+| API 37.1 reports a missing first part after a direct `/sdcard` push | Use `scripts/stage-local-model.ps1`; Android 37.1 isolates shell-owned external files, so the helper stages them under the debug app identity.                         |
+| Emulator reports `INSUFFICIENT_MEMORY`                              | Recreate or cold-boot the dedicated AVD with 8192 MB RAM; the real-model debug path does not lower the 6 GB gate.                                                      |
+| Offline cold start fails after a successful install                 | Confirm all required application, model, and Segmentation assets were delivered before disabling connectivity; retain the failure and recovery trace.                  |
+| A cancelled or crashed request leaves the app busy                  | Preserve the trace and storage state, verify temporary-file and active-request cleanup, then run the failure-recovery matrix. Do not clear data to conceal the defect. |
 
 ## Related Documents
 

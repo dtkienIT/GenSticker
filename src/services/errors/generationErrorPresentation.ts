@@ -20,6 +20,18 @@ const GENERATION_COPY: Record<
     title: 'On-device runtime unavailable',
     message: 'The Android inference runtime has not been connected in this build.',
   },
+  MODEL_NOT_AVAILABLE: {
+    title: 'Model setup required',
+    message: 'Download and verify the local sticker model before generating.',
+  },
+  MODEL_INCOMPATIBLE: {
+    title: 'Model update required',
+    message: 'The installed model does not match this app build. Download it again.',
+  },
+  INSUFFICIENT_MEMORY: {
+    title: 'Not enough device memory',
+    message: 'This device cannot safely run the local sticker model.',
+  },
   GENERATION_BUSY: {
     title: 'Generation already running',
     message: 'Wait for the active sticker to finish, then try again.',

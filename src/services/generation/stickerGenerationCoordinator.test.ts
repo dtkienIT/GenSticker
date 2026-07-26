@@ -8,15 +8,23 @@ import type {
   GeneratedOutput,
   GenerationProgressEvent,
   GenerationRequest,
+  ModelReadiness,
   OnDeviceStickerGenerator,
+  PrepareModelRequest,
 } from './types';
 import { StickerGenerationCoordinator } from './stickerGenerationCoordinator';
 
 class RecordingGenerator implements OnDeviceStickerGenerator {
   requests: GenerationRequest[] = [];
+  preparations: PrepareModelRequest[] = [];
 
   async getCapabilities(): Promise<DeviceCapabilityResult> {
     return { supported: true, adapterId: 'test' };
+  }
+
+  async prepareModel(request: PrepareModelRequest): Promise<ModelReadiness> {
+    this.preparations.push(request);
+    return { ...request, ready: true };
   }
 
   async generate(
@@ -92,6 +100,21 @@ function coordinator(
 }
 
 describe('StickerGenerationCoordinator', () => {
+  it('prepares the pinned model before starting generation', async () => {
+    const setup = coordinator({
+      evaluate: async () => ({ status: 'allowed', normalizedPrompt: 'Astronaut cat' }),
+    });
+
+    await setup.coordinator.run(
+      { prompt: 'Astronaut cat', stylePresetId: 'chibi' },
+      () => undefined,
+    );
+
+    expect(setup.generator.preparations).toEqual([
+      { contractVersion: '1.0', modelId: 'lcm-sd15-chibi', modelVersion: '1.0.1' },
+    ]);
+  });
+
   it('never calls generation when safety blocks the prompt', async () => {
     const setup = coordinator({
       evaluate: async () => ({ status: 'blocked', reasonCode: 'PROMPT_BLOCKED' }),

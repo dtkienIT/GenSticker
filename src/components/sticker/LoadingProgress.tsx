@@ -8,10 +8,12 @@ export interface LoadingProgressProps {
 }
 
 const STAGE_LABELS: Record<GenerationProgressEvent['stage'], string> = {
+  validating: 'Validating the local request…',
   preparing_model: 'Preparing the on-device runtime…',
   generating: 'Generating the image on this device…',
   removing_background: 'Removing the background…',
   encoding: 'Encoding a transparent PNG…',
+  completed: 'Finishing the sticker…',
   saving: 'Saving to your local gallery…',
 };
 

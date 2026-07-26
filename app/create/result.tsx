@@ -88,7 +88,8 @@ export default function ResultScreen() {
           {currentAsset.prompt}
         </Text>
         <Text style={[typography.caption, { color: colors.textSecondary }]}>
-          {currentAsset.stylePresetId.toUpperCase()} · 1024 × 1024 · PNG
+          {currentAsset.stylePresetId.toUpperCase()} · {currentAsset.width} × {currentAsset.height}{' '}
+          · PNG
         </Text>
       </View>
 

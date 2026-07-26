@@ -1,0 +1,19 @@
+[project]
+name = "gensticker-model-tools"
+version = "0.1.0"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "accelerate==1.14.0",
+  "diffusers==0.39.0",
+  "onnx==1.19.0",
+  "onnxruntime==1.27.0",
+  "peft==0.19.1",
+  "torch==2.13.0",
+  "transformers==5.14.1",
+]
+
+[project.optional-dependencies]
+test = ["pytest==9.0.2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

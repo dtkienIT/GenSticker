@@ -1,5 +1,7 @@
 # On-Device Model Pipeline
 
+> **Binding MVP artifact:** Python 3.13 with PyTorch 2.13.0, Diffusers 0.39.0, Transformers 5.14.1, and ONNX Runtime 1.27.0 exports fixed-shape FP16 CLIP, fused SD 1.5/LCM UNet, and VAE decoder graphs at 512×512. Revisions are pinned in `model_tools/export_spec.py`; runtime uses four steps and guidance 1.5. The generated manifest records release URLs, install paths, byte lengths, SHA-256 values, canonical bundle digest, tokenizer/scheduler assets, licenses, and 6 GB minimum RAM/storage. Tag: `model-lcm-sd15-v1.0.1`; assets stay below 2 GiB. Upload requires explicit approval.
+
 ## Document Control
 
 **Document role:** Delivery protocol. Production selection status for the model, runtime,

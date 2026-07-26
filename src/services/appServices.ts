@@ -8,16 +8,20 @@ import {
 import { LocalStickerAssetRepository } from './assets/localStickerAssetRepository';
 import { ExpoPlatformAssetExporter } from './export/expoPlatformAssetExporter';
 import { MockOnDeviceStickerGenerator } from './generation/mockOnDeviceStickerGenerator';
+import { NativeOnDeviceStickerGenerator } from './generation/nativeOnDeviceStickerGenerator';
+import { getNativeStickerRuntimeBridge } from './generation/nativeRuntimeBridge';
 import { resolveMockOutput } from './generation/mockOutputResolver';
 import { StickerGenerationCoordinator } from './generation/stickerGenerationCoordinator';
 import type { MockScenario, OnDeviceStickerGenerator } from './generation/types';
 import { UnavailableOnDeviceStickerGenerator } from './generation/unavailableOnDeviceStickerGenerator';
 import { LocalPromptSafetyEvaluator } from './safety/localPromptSafetyEvaluator';
+import { NativeModelBundleManager } from './setup/nativeModelBundleManager';
+import { StaticModelBundleManager } from './setup/staticModelBundleManager';
 
 export type StickerRuntimeMode = 'mock' | 'native';
 
 export function getStickerRuntimeMode(): StickerRuntimeMode {
-  return process.env.EXPO_PUBLIC_STICKER_RUNTIME === 'native' ? 'native' : 'mock';
+  return process.env.EXPO_PUBLIC_STICKER_RUNTIME === 'mock' ? 'mock' : 'native';
 }
 
 function createRequestId(): string {
@@ -33,8 +37,27 @@ const mockGenerator = new MockOnDeviceStickerGenerator({
   outputResolver: resolveMockOutput,
 });
 
+const nativeBridge = getNativeStickerRuntimeBridge();
 const generator: OnDeviceStickerGenerator =
-  getStickerRuntimeMode() === 'mock' ? mockGenerator : new UnavailableOnDeviceStickerGenerator();
+  getStickerRuntimeMode() === 'mock'
+    ? mockGenerator
+    : nativeBridge
+      ? new NativeOnDeviceStickerGenerator(nativeBridge)
+      : new UnavailableOnDeviceStickerGenerator();
+
+const modelBundle =
+  getStickerRuntimeMode() === 'mock'
+    ? new StaticModelBundleManager()
+    : nativeBridge
+      ? new NativeModelBundleManager(nativeBridge)
+      : new StaticModelBundleManager({
+          status: 'failed',
+          modelId: 'lcm-sd15-chibi',
+          modelVersion: '1.0.1',
+          downloadedBytes: 0,
+          totalBytes: 0,
+          errorCode: 'DOWNLOAD_FAILED',
+        });
 
 const repository = new LocalStickerAssetRepository({
   assetRootUri: stickerAssetDirectory.uri,
@@ -66,6 +89,7 @@ const exporter = new ExpoPlatformAssetExporter({
 
 export const stickerServices = {
   generator,
+  modelBundle,
   repository,
   coordinator,
   exporter,

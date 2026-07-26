@@ -22,7 +22,7 @@ export class LocalPromptSafetyEvaluator implements PromptSafetyEvaluator {
       return { status: 'failed', code: 'EVALUATOR_FAILED', retryable: true };
     }
 
-    const normalizedPrompt = prompt.trim().replace(/\s+/g, ' ');
+    const normalizedPrompt = prompt.normalize('NFKC').trim().replace(/\s+/g, ' ');
     if (BLOCKED_PATTERNS.some((pattern) => pattern.test(normalizedPrompt))) {
       return { status: 'blocked', reasonCode: 'PROMPT_BLOCKED' };
     }

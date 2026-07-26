@@ -1,0 +1,69 @@
+{
+  "artifactBytes": 2068818989,
+  "artifactSha256": "7821175c2410bee3a4cc7be6aa9d1c0c19647aa99983746b2b4ef6b868998397",
+  "inputHeight": 512,
+  "inputWidth": 512,
+  "licenseId": "creativeml-openrail-m+openrail++",
+  "manifestVersion": "1.0",
+  "minimumMemoryMb": 6144,
+  "minimumStorageBytes": 4137637978,
+  "modelId": "lcm-sd15-chibi",
+  "modelVersion": "1.0.1",
+  "parts": [
+    {
+      "bytes": 271,
+      "name": "runtime-config.json",
+      "path": "runtime-config.json",
+      "sha256": "8ec5f97869dc7c302ec42ec149855f6d584e928410d8641fd52586077f78a7d2",
+      "url": "https://github.com/dtkienIT/GenSticker/releases/download/model-lcm-sd15-v1.0.1/runtime-config.json"
+    },
+    {
+      "bytes": 611,
+      "name": "scheduler--scheduler_config.json",
+      "path": "scheduler/scheduler_config.json",
+      "sha256": "cec1f4bd5ad14f2edc0e63dece8e76346da10e3316dd00c6a2d8279a1a890d2d",
+      "url": "https://github.com/dtkienIT/GenSticker/releases/download/model-lcm-sd15-v1.0.1/scheduler--scheduler_config.json"
+    },
+    {
+      "bytes": 246284552,
+      "name": "text_encoder--model.onnx",
+      "path": "text_encoder/model.onnx",
+      "sha256": "c6d46477c9b7782fcdddd33b107d1ab17d08227339ed443a63aef484bf8658df",
+      "url": "https://github.com/dtkienIT/GenSticker/releases/download/model-lcm-sd15-v1.0.1/text_encoder--model.onnx"
+    },
+    {
+      "bytes": 3642073,
+      "name": "tokenizer--tokenizer.json",
+      "path": "tokenizer/tokenizer.json",
+      "sha256": "6d9109cc838977f3ca94a379eec36aecc7c807e1785cd729660ca2fc0171fb35",
+      "url": "https://github.com/dtkienIT/GenSticker/releases/download/model-lcm-sd15-v1.0.1/tokenizer--tokenizer.json"
+    },
+    {
+      "bytes": 364,
+      "name": "tokenizer--tokenizer_config.json",
+      "path": "tokenizer/tokenizer_config.json",
+      "sha256": "4d1439e2cefa4a2c46934aa42dafab7a4f35c3d47612d9a9a04f880c4ca494ab",
+      "url": "https://github.com/dtkienIT/GenSticker/releases/download/model-lcm-sd15-v1.0.1/tokenizer--tokenizer_config.json"
+    },
+    {
+      "bytes": 1719806120,
+      "name": "unet--model.onnx",
+      "path": "unet/model.onnx",
+      "sha256": "38075416146ae83d93283bc2e8793ac56a54737f022caecba646f4dafc0a4ec5",
+      "url": "https://github.com/dtkienIT/GenSticker/releases/download/model-lcm-sd15-v1.0.1/unet--model.onnx"
+    },
+    {
+      "bytes": 99084998,
+      "name": "vae_decoder--model.onnx",
+      "path": "vae_decoder/model.onnx",
+      "sha256": "6e1245e8174b55bc5e6f2812acfe7014264dab3d6a50ce790c8ee43bf293b705",
+      "url": "https://github.com/dtkienIT/GenSticker/releases/download/model-lcm-sd15-v1.0.1/vae_decoder--model.onnx"
+    }
+  ],
+  "quantization": "fp16",
+  "runtime": "onnxruntime-android",
+  "runtimeVersion": "1.27.0",
+  "schedulerAssets": ["scheduler/scheduler_config.json"],
+  "supportedDelegates": ["NNAPI", "CPU"],
+  "tokenizerAssets": ["tokenizer/tokenizer.json", "tokenizer/tokenizer_config.json"]
+}

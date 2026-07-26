@@ -1,5 +1,7 @@
 # GenSticker On-Device Architecture
 
+> **Binding MVP architecture:** Expo SDK 57/React Native 0.86 owns UI and orchestration. The Android-only local Expo module at `modules/expo-sticker-runtime` owns DownloadManager setup, digest verification and atomic promotion, ONNX Runtime inference, ML Kit segmentation, cancellation, and temporary PNG creation. It runs only in a development build; Expo Go is unsupported. Model assets come from an immutable GitHub Release manifest and never enter Git.
+
 ## Document Control
 
 **Purpose:** Define the Android-first target system boundaries and responsibilities for the on-device text-to-sticker release.

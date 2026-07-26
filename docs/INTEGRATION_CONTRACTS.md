@@ -1,5 +1,7 @@
 # GenSticker Integration Contracts
 
+> **Binding MVP bridge:** `ExpoStickerRuntime` exposes `getCapabilities`, `getModelBundleState`, `startModelDownload`, `cancelModelDownload`, `prepareModel`, `generate`, idempotent `cancel`, `onModelDownloadProgress`, and `onGenerationProgress`. `GeneratedOutput.temporary` marks native scratch output, deleted only after durable gallery persistence. The Expo TypeScript adapter is normative for this MVP; mock mode requires an explicit development setting.
+
 ## Document Control
 
 **Contract version:** `1.0`

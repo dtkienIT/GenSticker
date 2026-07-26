@@ -1,5 +1,7 @@
 # GenSticker User Flows
 
+> **Binding first-run flow:** capability gate → exact model size and Wi-Fi guidance → download with cancel/resume/retry → verify every part and canonical digest → initialize dynamic ML Kit segmentation → offline-ready. Generation performs NFKC normalization and fail-closed local safety before native work, permits one request, uses only `chibi` at 512×512, persists success, then deletes temporary output. Failure or cancellation creates no gallery item.
+
 ## Document Control
 
 **Document role:** State and recovery guidance for v1.

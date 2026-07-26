@@ -3,11 +3,20 @@ export const CONTRACT_VERSION = '1.0' as const;
 export type StylePresetId = 'chibi' | 'cartoon' | 'three-d' | 'meme';
 
 export type GenerationStage =
-  'preparing_model' | 'generating' | 'removing_background' | 'encoding' | 'saving';
+  | 'validating'
+  | 'preparing_model'
+  | 'generating'
+  | 'removing_background'
+  | 'encoding'
+  | 'completed'
+  | 'saving';
 
 export type GenerationErrorCode =
   | 'DEVICE_UNSUPPORTED'
   | 'RUNTIME_UNAVAILABLE'
+  | 'MODEL_NOT_AVAILABLE'
+  | 'MODEL_INCOMPATIBLE'
+  | 'INSUFFICIENT_MEMORY'
   | 'GENERATION_BUSY'
   | 'GENERATION_CANCELLED'
   | 'GENERATION_TIMEOUT'
@@ -33,7 +42,7 @@ export class GenerationFailure extends Error {
 
   constructor(
     readonly code: GenerationErrorCode,
-    message = code,
+    message: string = code,
   ) {
     super(message);
     this.name = 'GenerationFailure';
@@ -55,6 +64,9 @@ export interface GenerationProgressEvent {
   requestId: string;
   stage: GenerationStage;
   progressPercent: number;
+  sequence?: number;
+  stageProgress?: number;
+  elapsedMs?: number;
 }
 
 export interface GeneratedOutput {
@@ -64,13 +76,41 @@ export interface GeneratedOutput {
   width: number;
   height: number;
   adapterId: string;
+  temporary?: boolean;
 }
 
 export type DeviceCapabilityResult =
-  | { supported: true; adapterId: string }
+  | {
+      supported: true;
+      adapterId: string;
+      totalMemoryClassMb?: number;
+      deviceKind?: 'physical' | 'emulator';
+      architecture?: string;
+      availableDelegates?: string[];
+      selectedDelegate?: string;
+      runtimeVersion?: string;
+    }
   | {
       supported: false;
-      reasonCode: 'DEVICE_UNSUPPORTED' | 'RUNTIME_UNAVAILABLE';
+      reasonCode: 'DEVICE_UNSUPPORTED' | 'RUNTIME_UNAVAILABLE' | 'INSUFFICIENT_MEMORY';
+      deviceKind?: 'physical' | 'emulator';
+      architecture?: string;
+    };
+
+export interface PrepareModelRequest {
+  contractVersion: typeof CONTRACT_VERSION;
+  modelId: string;
+  modelVersion: string;
+}
+
+export type ModelReadiness =
+  | { contractVersion: typeof CONTRACT_VERSION; modelId: string; modelVersion: string; ready: true }
+  | {
+      contractVersion: typeof CONTRACT_VERSION;
+      modelId: string;
+      modelVersion: string;
+      ready: false;
+      errorCode: GenerationErrorCode;
     };
 
 export type CancelResult =
@@ -79,6 +119,7 @@ export type CancelResult =
 
 export interface OnDeviceStickerGenerator {
   getCapabilities(): Promise<DeviceCapabilityResult>;
+  prepareModel(request: PrepareModelRequest): Promise<ModelReadiness>;
   generate(
     request: GenerationRequest,
     onProgress: (event: GenerationProgressEvent) => void,

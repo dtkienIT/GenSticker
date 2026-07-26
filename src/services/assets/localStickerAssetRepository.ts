@@ -49,6 +49,9 @@ export class LocalStickerAssetRepository implements StickerAssetRepository {
     try {
       await this.options.files.copy(output.localUri, localUri);
       await this.options.metadata.save([item, ...current]);
+      if (output.temporary) {
+        await this.deleteTemporaryOutput(output.localUri);
+      }
       return item;
     } catch (error) {
       try {
@@ -57,6 +60,9 @@ export class LocalStickerAssetRepository implements StickerAssetRepository {
         }
       } catch {
         // Best-effort rollback; the gallery record was never committed.
+      }
+      if (output.temporary) {
+        await this.deleteTemporaryOutput(output.localUri);
       }
       if (error instanceof GenerationFailure) throw error;
       throw new GenerationFailure('ASSET_STORAGE_FAILED');
@@ -96,5 +102,13 @@ export class LocalStickerAssetRepository implements StickerAssetRepository {
 
   private isOwned(uri: string): boolean {
     return uri.startsWith(`${this.assetRootUri}/`);
+  }
+
+  private async deleteTemporaryOutput(uri: string): Promise<void> {
+    try {
+      if (await this.options.files.exists(uri)) await this.options.files.delete(uri);
+    } catch {
+      // Cache cleanup is best effort after the durable gallery transaction.
+    }
   }
 }

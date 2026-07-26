@@ -14,6 +14,7 @@ import {
   type GenerationProgressEvent,
   type StylePresetId,
 } from '@/services/generation/types';
+import type { ModelBundleState, ModelDownloadProgress } from '@/services/setup/types';
 
 export interface StickerDraft {
   prompt: string;
@@ -28,6 +29,8 @@ interface StickerState {
   hasHydrated: boolean;
   capabilityStatus: CapabilityStatus;
   capability: DeviceCapabilityResult | null;
+  modelBundleState: ModelBundleState | null;
+  modelDownloadProgress: ModelDownloadProgress | null;
   draft: StickerDraft;
   jobStatus: JobStatus;
   progress: GenerationProgressEvent | null;
@@ -39,6 +42,10 @@ interface StickerState {
   retryCount: number;
   initialize: () => Promise<void>;
   checkCapabilities: () => Promise<void>;
+  refreshModelBundle: () => Promise<void>;
+  downloadModel: () => Promise<void>;
+  installLocalModel: () => Promise<void>;
+  cancelModelDownload: () => Promise<void>;
   updateDraft: (draft: Partial<StickerDraft>) => void;
   runGeneration: () => Promise<GallerySticker | null>;
   cancelGeneration: () => Promise<void>;
@@ -60,6 +67,8 @@ export const useStickerStore = create<StickerState>()(
       hasHydrated: false,
       capabilityStatus: 'checking',
       capability: null,
+      modelBundleState: null,
+      modelDownloadProgress: null,
       draft: { prompt: '', stylePresetId: 'chibi' },
       jobStatus: 'idle',
       progress: null,
@@ -76,7 +85,36 @@ export const useStickerStore = create<StickerState>()(
         const gallery = await stickerServices.repository.list();
         const currentAsset = gallery.find((item) => item.assetId === get().currentAssetId) ?? null;
         set({ gallery, currentAsset, currentAssetId: currentAsset?.assetId ?? null });
+        await get().refreshModelBundle();
         await get().checkCapabilities();
+      },
+
+      refreshModelBundle: async () => {
+        const modelBundleState = await stickerServices.modelBundle.getState();
+        set({ modelBundleState });
+      },
+
+      downloadModel: async () => {
+        set({ modelDownloadProgress: null, error: null });
+        const modelBundleState = await stickerServices.modelBundle.start((modelDownloadProgress) =>
+          set({ modelDownloadProgress }),
+        );
+        set({ modelBundleState, modelDownloadProgress: null });
+        if (modelBundleState.status === 'ready') await get().checkCapabilities();
+      },
+
+      installLocalModel: async () => {
+        set({ modelDownloadProgress: null, error: null });
+        const modelBundleState = await stickerServices.modelBundle.installLocal(
+          (modelDownloadProgress) => set({ modelDownloadProgress }),
+        );
+        set({ modelBundleState, modelDownloadProgress: null });
+        if (modelBundleState.status === 'ready') await get().checkCapabilities();
+      },
+
+      cancelModelDownload: async () => {
+        const modelBundleState = await stickerServices.modelBundle.cancel();
+        set({ modelBundleState, modelDownloadProgress: null });
       },
 
       checkCapabilities: async () => {

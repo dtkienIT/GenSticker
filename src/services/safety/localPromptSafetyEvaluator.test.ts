@@ -2,6 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { LocalPromptSafetyEvaluator } from './localPromptSafetyEvaluator';
 
 describe('LocalPromptSafetyEvaluator', () => {
+  it('normalizes Unicode compatibility characters and whitespace before allowing', async () => {
+    const evaluator = new LocalPromptSafetyEvaluator();
+
+    const result = await evaluator.evaluate('  Ｃｈｉｂｉ\t\n cat  ');
+
+    expect(result).toEqual({ status: 'allowed', normalizedPrompt: 'Chibi cat' });
+  });
+
   it('normalizes and allows an ordinary sticker prompt', async () => {
     const evaluator = new LocalPromptSafetyEvaluator();
 

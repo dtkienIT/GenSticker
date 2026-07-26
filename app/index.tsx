@@ -9,6 +9,7 @@ import { StickerCard } from '@/components/sticker/StickerCard';
 import { StyleCard } from '@/components/sticker/StyleCard';
 import { STICKER_STYLES } from '@/constants/styles';
 import { getStickerRuntimeMode } from '@/services/appServices';
+import { presentLocalModelSetup } from '@/services/setup/localModelSetupPresentation';
 import { useStickerStore } from '@/store/useStickerStore';
 import { useAppTheme } from '@/theme';
 import { stickerPromptSchema } from '@/validation/stickerSchemas';
@@ -25,12 +26,20 @@ export default function PromptWorkspace() {
   const draft = useStickerStore((state) => state.draft);
   const gallery = useStickerStore((state) => state.gallery);
   const capabilityStatus = useStickerStore((state) => state.capabilityStatus);
+  const modelBundleState = useStickerStore((state) => state.modelBundleState);
+  const modelDownloadProgress = useStickerStore((state) => state.modelDownloadProgress);
   const error = useStickerStore((state) => state.error);
   const updateDraft = useStickerStore((state) => state.updateDraft);
   const checkCapabilities = useStickerStore((state) => state.checkCapabilities);
+  const downloadModel = useStickerStore((state) => state.downloadModel);
+  const installLocalModel = useStickerStore((state) => state.installLocalModel);
+  const cancelModelDownload = useStickerStore((state) => state.cancelModelDownload);
   const editPrompt = useStickerStore((state) => state.editPrompt);
   const selectAsset = useStickerStore((state) => state.selectAsset);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const modelReady = getStickerRuntimeMode() === 'mock' || modelBundleState?.status === 'ready';
+  const modelDownloading = modelBundleState?.status === 'downloading';
+  const modelSetup = presentLocalModelSetup(modelBundleState, __DEV__);
 
   const submit = () => {
     const parsed = stickerPromptSchema.safeParse(draft);
@@ -99,6 +108,53 @@ export default function PromptWorkspace() {
           ) : null}
         </View>
 
+        {getStickerRuntimeMode() === 'native' && !modelReady ? (
+          <View
+            style={[
+              styles.modelSetup,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                borderRadius: borderRadius.md,
+                padding: spacing.md,
+              },
+            ]}
+          >
+            <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>
+              Local model setup
+            </Text>
+            <Text style={[typography.caption, { color: colors.textSecondary }]}>
+              {modelSetup.message}
+            </Text>
+            {modelDownloadProgress ? (
+              <Text style={[typography.caption, { color: colors.primary }]}>
+                {modelDownloadProgress.phase === 'verifying' ? 'Verifying' : 'Downloading'} ·{' '}
+                {formatBytes(modelDownloadProgress.downloadedBytes)} /{' '}
+                {formatBytes(modelDownloadProgress.totalBytes)}
+              </Text>
+            ) : modelBundleState?.totalBytes ? (
+              <Text style={[typography.caption, { color: colors.textMuted }]}>
+                Download size: {formatBytes(modelBundleState.totalBytes)}
+              </Text>
+            ) : null}
+            {modelSetup.action !== 'none' ? (
+              <AppButton
+                title={modelSetup.buttonLabel}
+                variant={modelDownloading ? 'outline' : 'secondary'}
+                onPress={() => {
+                  if (modelSetup.action === 'cancel') {
+                    void cancelModelDownload();
+                  } else if (modelSetup.action === 'installLocal') {
+                    void installLocalModel();
+                  } else {
+                    void downloadModel();
+                  }
+                }}
+              />
+            ) : null}
+          </View>
+        ) : null}
+
         <AppTextInput
           label="Sticker prompt"
           placeholder="A cheerful astronaut cat holding boba"
@@ -137,7 +193,7 @@ export default function PromptWorkspace() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.styleRow}
         >
-          {STICKER_STYLES.map((style) => (
+          {STICKER_STYLES.filter((style) => style.id === 'chibi').map((style) => (
             <StyleCard
               key={style.id}
               styleOption={style}
@@ -150,7 +206,7 @@ export default function PromptWorkspace() {
         <AppButton
           title="Generate on this device"
           size="lg"
-          disabled={capabilityStatus !== 'ready'}
+          disabled={capabilityStatus !== 'ready' || !modelReady}
           onPress={submit}
         />
       </View>
@@ -207,6 +263,7 @@ const styles = StyleSheet.create({
   badgeRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   capability: { padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
   capabilityCopy: { flex: 1 },
+  modelSetup: { borderWidth: 1, gap: 10 },
   promptInput: { minHeight: 116, textAlignVertical: 'top' },
   exampleRow: { gap: 8 },
   exampleChip: { borderWidth: 1, paddingHorizontal: 12, paddingVertical: 9 },
@@ -217,3 +274,10 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   gridItem: { width: '48%' },
 });
+
+function formatBytes(bytes: number): string {
+  if (bytes <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  return `${(bytes / 1024 ** exponent).toFixed(exponent === 0 ? 0 : 1)} ${units[exponent]}`;
+}

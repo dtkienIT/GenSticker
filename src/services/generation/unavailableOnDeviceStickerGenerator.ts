@@ -5,12 +5,18 @@ import type {
   GeneratedOutput,
   GenerationProgressEvent,
   GenerationRequest,
+  ModelReadiness,
   OnDeviceStickerGenerator,
+  PrepareModelRequest,
 } from './types';
 
 export class UnavailableOnDeviceStickerGenerator implements OnDeviceStickerGenerator {
   async getCapabilities(): Promise<DeviceCapabilityResult> {
     return { supported: false, reasonCode: 'RUNTIME_UNAVAILABLE' };
+  }
+
+  async prepareModel(request: PrepareModelRequest): Promise<ModelReadiness> {
+    return { ...request, ready: false, errorCode: 'MODEL_NOT_AVAILABLE' };
   }
 
   async generate(

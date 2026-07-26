@@ -30,29 +30,31 @@
 
 ## Target File Map
 
-| File | Responsibility |
-| --- | --- |
-| `docs/README.md` | Documentation index, authority hierarchy, current-to-target orientation, and reading routes by role |
-| `docs/ARCHITECTURE.md` | Target system boundaries, component responsibilities, data flow, failure isolation, and capability gate |
-| `docs/INTEGRATION_CONTRACTS.md` | Versioned application/native/model/storage interfaces, events, errors, ownership, and contract-change policy |
-| `docs/ROADMAP.md` | Five-week workstreams, live status, owners, dependencies, blockers, acceptance evidence, and contingency decision |
-| `docs/FEASIBILITY_SPIKE.md` | Week 1 experiment protocol, device matrix, measurements, decision thresholds, and Plan A/B/C record |
-| `docs/MODEL_PIPELINE.md` | Workstation model preparation and shipped on-device runtime/artifact responsibilities |
-| `docs/SAFETY_AND_PRIVACY.md` | Input moderation, negative prompting, red-team policy, blocklist update, data handling, and telemetry |
-| `docs/USER_FLOWS.md` | User-visible states, transitions, edge cases, and recovery behavior |
-| `docs/TESTING_AND_RELEASE.md` | Test layers, device/performance evidence, wide-user gate, and Google Play readiness |
-| `docs/LOCAL_DEVELOPMENT.md` | Reproducible Expo SDK 57 and Android native development workflow |
+| File                            | Responsibility                                                                                                    |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `docs/README.md`                | Documentation index, authority hierarchy, current-to-target orientation, and reading routes by role               |
+| `docs/ARCHITECTURE.md`          | Target system boundaries, component responsibilities, data flow, failure isolation, and capability gate           |
+| `docs/INTEGRATION_CONTRACTS.md` | Versioned application/native/model/storage interfaces, events, errors, ownership, and contract-change policy      |
+| `docs/ROADMAP.md`               | Five-week workstreams, live status, owners, dependencies, blockers, acceptance evidence, and contingency decision |
+| `docs/FEASIBILITY_SPIKE.md`     | Week 1 experiment protocol, device matrix, measurements, decision thresholds, and Plan A/B/C record               |
+| `docs/MODEL_PIPELINE.md`        | Workstation model preparation and shipped on-device runtime/artifact responsibilities                             |
+| `docs/SAFETY_AND_PRIVACY.md`    | Input moderation, negative prompting, red-team policy, blocklist update, data handling, and telemetry             |
+| `docs/USER_FLOWS.md`            | User-visible states, transitions, edge cases, and recovery behavior                                               |
+| `docs/TESTING_AND_RELEASE.md`   | Test layers, device/performance evidence, wide-user gate, and Google Play readiness                               |
+| `docs/LOCAL_DEVELOPMENT.md`     | Reproducible Expo SDK 57 and Android native development workflow                                                  |
 
 ---
 
 ### Task 1: Establish the documentation hierarchy and target architecture
 
 **Files:**
+
 - Create: `docs/README.md`
 - Modify: `docs/ARCHITECTURE.md`
 - Reference only: `docs/PRD_AI_Sticker_Generator.md`
 
 **Interfaces:**
+
 - Consumes: PRD Sections 5, 7, 8, and 9 plus the approved source-of-truth hierarchy.
 - Produces: Canonical component names and boundaries used by every later document: `App shell`, `Capability gate`, `Safety filter`, `Generation orchestrator`, `Model runtime`, `Segmentation`, `Asset repository`, and `Platform sharing`.
 
@@ -72,11 +74,17 @@ Write `docs/README.md` with these exact top-level sections:
 
 ```markdown
 # GenSticker Documentation
+
 ## Source-of-Truth Hierarchy
+
 ## Current Repository State
+
 ## Target Release State
+
 ## Documentation Map
+
 ## Reading Paths by Role
+
 ## Documentation Maintenance Rules
 ```
 
@@ -88,17 +96,29 @@ Replace `docs/ARCHITECTURE.md` with these exact sections:
 
 ```markdown
 # GenSticker On-Device Architecture
+
 ## Document Control
+
 ## Architectural Drivers
+
 ## Current Repository State
+
 ## Target System Context
+
 ## Component Responsibilities
+
 ## End-to-End Data Flow
+
 ## Native Boundary
+
 ## Storage and Asset Lifecycle
+
 ## Failure Isolation and Recovery
+
 ## Capability Gate
+
 ## Explicit Non-Goals
+
 ## Related Documents
 ```
 
@@ -133,11 +153,13 @@ git commit -m "docs: define on-device architecture"
 ### Task 2: Define the team integration contract
 
 **Files:**
+
 - Create: `docs/INTEGRATION_CONTRACTS.md`
 - Reference only: `docs/ARCHITECTURE.md`
 - Reference only: `docs/PRD_AI_Sticker_Generator.md`
 
 **Interfaces:**
+
 - Consumes: Component names from Task 1.
 - Produces: Contract version `1.0`, TypeScript port signatures, native bridge payloads, progress stages, error codes, model manifest, asset metadata, fixtures, ownership, and change rules consumed by Tasks 3–7.
 
@@ -158,18 +180,31 @@ Create `docs/INTEGRATION_CONTRACTS.md` with contract version `1.0` and these sec
 
 ```markdown
 # GenSticker Integration Contracts
+
 ## Document Control
+
 ## Contract Principles
+
 ## Ownership Matrix
+
 ## Application Generation Port
+
 ## Native Bridge Contract
+
 ## Progress and Cancellation
+
 ## Model Manifest Contract
+
 ## Generated Asset Contract
+
 ## Safety Decision Contract
+
 ## Error Taxonomy
+
 ## Compatibility and Versioning
+
 ## Contract Test Fixtures
+
 ## Change Procedure
 ```
 
@@ -263,6 +298,7 @@ git commit -m "docs: define on-device integration contracts"
 ### Task 3: Replace fragmented status documents with an evidence-based roadmap
 
 **Files:**
+
 - Modify: `docs/ROADMAP.md`
 - Delete: `docs/IMPLEMENTATION_STATUS.md`
 - Delete: `docs/FRONTEND_IMPLEMENTATION_STATUS.md`
@@ -270,6 +306,7 @@ git commit -m "docs: define on-device integration contracts"
 - Reference only: `docs/INTEGRATION_CONTRACTS.md`
 
 **Interfaces:**
+
 - Consumes: PRD Week 1–5 plan, contract ownership roles, and status vocabulary.
 - Produces: The sole progress ledger, including milestone IDs used by the remaining documents.
 
@@ -289,18 +326,31 @@ Replace `docs/ROADMAP.md` with these sections:
 
 ```markdown
 # GenSticker Delivery Roadmap
+
 ## Document Control
+
 ## Status Rules
+
 ## Current Baseline
+
 ## Five-Week Delivery Summary
+
 ## Week 1: Feasibility and Go/No-Go
+
 ## Week 2: Core Loop
+
 ## Week 3: Style, Safety, and Complete Flow
+
 ## Week 4: Integration and Wide Testing
+
 ## Week 5: Hardening and Release
+
 ## Cross-Cutting Workstreams
+
 ## Contingency Decision Record
+
 ## Blockers and Decisions
+
 ## Update Procedure
 ```
 
@@ -353,6 +403,7 @@ git commit -m "docs: consolidate delivery status in roadmap"
 ### Task 4: Document the feasibility gate and model-delivery pipeline
 
 **Files:**
+
 - Create: `docs/FEASIBILITY_SPIKE.md`
 - Create: `docs/MODEL_PIPELINE.md`
 - Reference only: `docs/INTEGRATION_CONTRACTS.md`
@@ -360,6 +411,7 @@ git commit -m "docs: consolidate delivery status in roadmap"
 - Reference only: `experiments/benchmark/runner.py`
 
 **Interfaces:**
+
 - Consumes: `DeviceCapabilities`, `ModelManifest`, `GenerationResult`, and generated-asset provenance from Task 2.
 - Produces: Week 1 evidence format, selected-plan decision input, model artifact lifecycle, and runtime acceptance data used by the roadmap and release guide.
 
@@ -379,18 +431,31 @@ Write `docs/FEASIBILITY_SPIKE.md` with:
 
 ```markdown
 # Week 1 On-Device Feasibility Spike
+
 ## Document Control
+
 ## Decision to Be Made
+
 ## Hypotheses
+
 ## Candidate Runtime and Model Matrix
+
 ## Device Test Matrix
+
 ## Test Inputs and Golden Prompts
+
 ## Measurement Protocol
+
 ## Quality Review Protocol
+
 ## Safety Smoke Test
+
 ## Evidence Package
+
 ## Plan A/B/C Decision Rules
+
 ## Decision Record
+
 ## Reproduction Checklist
 ```
 
@@ -414,19 +479,33 @@ Write `docs/MODEL_PIPELINE.md` with:
 
 ```markdown
 # On-Device Model Pipeline
+
 ## Document Control
+
 ## Scope and Separation of Concerns
+
 ## Candidate Selection Criteria
+
 ## License and Provenance Gate
+
 ## Workstation Preparation Pipeline
+
 ## Conversion and Quantization
+
 ## Validation Against Source Outputs
+
 ## Model Manifest Generation
+
 ## App Packaging Strategy
+
 ## Runtime Delegate Selection
+
 ## Inference and Segmentation Sequence
+
 ## Artifact Integrity and Rollback
+
 ## Reproducibility Evidence
+
 ## Explicit Non-Goals
 ```
 
@@ -453,6 +532,7 @@ git commit -m "docs: define feasibility and model pipeline"
 ### Task 5: Define safety, privacy, and user-state behavior
 
 **Files:**
+
 - Create: `docs/SAFETY_AND_PRIVACY.md`
 - Create: `docs/USER_FLOWS.md`
 - Delete: `docs/PRIVACY_AND_ASSETS.md`
@@ -460,6 +540,7 @@ git commit -m "docs: define feasibility and model pipeline"
 - Reference only: `docs/INTEGRATION_CONTRACTS.md`
 
 **Interfaces:**
+
 - Consumes: Safety decisions, error codes, progress stages, cancellation, and generated asset contract from Task 2.
 - Produces: User-visible behavior and policy rules consumed by testing and implementation work.
 
@@ -479,18 +560,31 @@ Create `docs/SAFETY_AND_PRIVACY.md` with:
 
 ```markdown
 # Safety and Privacy
+
 ## Document Control
+
 ## Scope and Accepted Residual Risk
+
 ## Layered Input-Side Safety
+
 ## Prompt Handling and Logging Rules
+
 ## Fixed Safety Negative Prompt
+
 ## Local Blocklist
+
 ## Opportunistic Signed Blocklist Updates
+
 ## Adversarial Red-Team Protocol
+
 ## Local Data Lifecycle
+
 ## Deletion and Reset
+
 ## Lightweight Opt-In Telemetry
+
 ## Incident and Patch Response
+
 ## Explicit V1 Exclusions
 ```
 
@@ -502,18 +596,31 @@ Create `docs/USER_FLOWS.md` with:
 
 ```markdown
 # GenSticker User Flows
+
 ## Document Control
+
 ## Shared State Model
+
 ## First Launch and Capability Gate
+
 ## Prompt Submission and Moderation
+
 ## Generation and Progress
+
 ## Cancellation
+
 ## Successful Preview
+
 ## Save and Share
+
 ## Regenerate and Edit Prompt
+
 ## Local Gallery
+
 ## Failure and Recovery Matrix
+
 ## Unsupported Device Flow
+
 ## Offline Guarantees
 ```
 
@@ -544,6 +651,7 @@ git commit -m "docs: define safety and user flows"
 ### Task 6: Define verification, release, and local development workflows
 
 **Files:**
+
 - Create: `docs/TESTING_AND_RELEASE.md`
 - Modify: `docs/LOCAL_DEVELOPMENT.md`
 - Delete: `docs/MOBILE_QA_CHECKLIST.md`
@@ -552,6 +660,7 @@ git commit -m "docs: define safety and user flows"
 - Reference only: `docs/INTEGRATION_CONTRACTS.md`
 
 **Interfaces:**
+
 - Consumes: All stable contracts, user states, safety constraints, feasibility evidence, and roadmap gates.
 - Produces: Repeatable contributor setup, verification commands, evidence packages, and release acceptance procedure.
 
@@ -571,19 +680,33 @@ Write `docs/TESTING_AND_RELEASE.md` with:
 
 ```markdown
 # Testing and Release
+
 ## Document Control
+
 ## Quality Gates
+
 ## Unit Tests
+
 ## Contract Tests
+
 ## Native Integration Tests
+
 ## Golden Prompt Regression
+
 ## Device Performance and Thermal Tests
+
 ## Functional and Accessibility QA
+
 ## Safety Red-Team Tests
+
 ## Failure-Recovery Tests
+
 ## Wide User Testing
+
 ## Evidence Package Format
+
 ## Google Play Readiness
+
 ## Release Go/No-Go Checklist
 ```
 
@@ -595,17 +718,29 @@ Replace `docs/LOCAL_DEVELOPMENT.md` with:
 
 ```markdown
 # Local Development
+
 ## Document Control
+
 ## Supported Host Setup
+
 ## Required Versions
+
 ## Repository Setup
+
 ## Expo Application Workflow
+
 ## Android Development Build
+
 ## Native Module Workflow
+
 ## Model Fixtures
+
 ## Verification Commands
+
 ## Local Data Reset
+
 ## Common Failures
+
 ## Related Documents
 ```
 
@@ -637,6 +772,7 @@ git commit -m "docs: define development testing and release workflow"
 ### Task 7: Remove remaining obsolete contracts and complete cross-document validation
 
 **Files:**
+
 - Delete: `docs/API_CONTRACT.md`
 - Delete: `docs/DATA_MODEL.md`
 - Delete: `docs/FRONTEND_ARCHITECTURE.md`
@@ -646,6 +782,7 @@ git commit -m "docs: define development testing and release workflow"
 - Preserve unchanged: `docs/PRD_AI_Sticker_Generator.md`
 
 **Interfaces:**
+
 - Consumes: The complete target documentation set.
 - Produces: One internally linked, PRD-aligned documentation system with no duplicate contracts or progress ledgers.
 
