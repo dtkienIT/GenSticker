@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~57.0.7",
+    "@noble/hashes": "2.2.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.7",
     "expo-asset": "~57.0.6",
@@ -23,6 +24,8 @@
     "expo-symbols": "~57.0.1",
     "expo-system-ui": "~57.0.1",
     "expo-web-browser": "~57.0.1",
+    "idb": "8.0.3",
+    "onnxruntime-web": "1.27.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.0",
@@ -36,14 +39,18 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@playwright/test": "1.62.0",
     "@types/react": "~19.2.2",
     "@typescript-eslint/eslint-plugin": "^8.64.0",
     "@typescript-eslint/parser": "^8.64.0",
+    "@webgpu/types": "0.1.71",
     "eslint": "^10.7.0",
     "eslint-config-prettier": "^10.1.8",
+    "fake-indexeddb": "6.2.5",
     "prettier": "^3.9.5",
     "typescript": "~6.0.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "workbox-build": "7.4.1"
   },
   "scripts": {
     "start": "expo start",
