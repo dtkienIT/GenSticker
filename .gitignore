@@ -45,6 +45,7 @@ example
 # Generated model weights and caches never enter Git
 /model_artifacts/
 /.model-cache/
+/public/ort/
 
 #Superpowers
 .superpowers/

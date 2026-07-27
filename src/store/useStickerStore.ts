@@ -16,6 +16,12 @@ import {
 } from '@/services/generation/types';
 import type { ModelBundleState, ModelDownloadProgress } from '@/services/setup/types';
 
+const serverSessionStorage = {
+  getItem: async () => null,
+  setItem: async () => undefined,
+  removeItem: async () => undefined,
+};
+
 export interface StickerDraft {
   prompt: string;
   stylePresetId: StylePresetId;
@@ -213,7 +219,9 @@ export const useStickerStore = create<StickerState>()(
     }),
     {
       name: '@gensticker/session/v2',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() =>
+        typeof window === 'undefined' ? serverSessionStorage : AsyncStorage,
+      ),
       partialize: (state) => ({
         draft: state.draft,
         currentAssetId: state.currentAssetId,
