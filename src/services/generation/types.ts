@@ -93,6 +93,7 @@ export type DeviceCapabilityResult =
   | {
       supported: false;
       reasonCode: 'DEVICE_UNSUPPORTED' | 'RUNTIME_UNAVAILABLE' | 'INSUFFICIENT_MEMORY';
+      detailCode?: string;
       deviceKind?: 'physical' | 'emulator';
       architecture?: string;
     };

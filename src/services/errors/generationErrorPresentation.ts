@@ -14,11 +14,11 @@ const GENERATION_COPY: Record<
 > = {
   DEVICE_UNSUPPORTED: {
     title: 'Device not supported yet',
-    message: 'This Android device does not meet the current on-device generation requirements.',
+    message: 'This device or browser does not meet the current local generation requirements.',
   },
   RUNTIME_UNAVAILABLE: {
     title: 'On-device runtime unavailable',
-    message: 'The Android inference runtime has not been connected in this build.',
+    message: 'The local inference runtime is not available in this build or browser.',
   },
   MODEL_NOT_AVAILABLE: {
     title: 'Model setup required',
@@ -29,8 +29,8 @@ const GENERATION_COPY: Record<
     message: 'The installed model does not match this app build. Download it again.',
   },
   INSUFFICIENT_MEMORY: {
-    title: 'Not enough device memory',
-    message: 'This device cannot safely run the local sticker model.',
+    title: 'Not enough local capacity',
+    message: 'This device does not have enough memory or storage for the local sticker model.',
   },
   GENERATION_BUSY: {
     title: 'Generation already running',

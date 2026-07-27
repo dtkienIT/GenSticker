@@ -15,10 +15,11 @@ import { StickerGenerationCoordinator } from './generation/stickerGenerationCoor
 import type { MockScenario, OnDeviceStickerGenerator } from './generation/types';
 import { UnavailableOnDeviceStickerGenerator } from './generation/unavailableOnDeviceStickerGenerator';
 import { LocalPromptSafetyEvaluator } from './safety/localPromptSafetyEvaluator';
+import type { StickerRuntimeMode } from './runtimeMode';
 import { NativeModelBundleManager } from './setup/nativeModelBundleManager';
 import { StaticModelBundleManager } from './setup/staticModelBundleManager';
 
-export type StickerRuntimeMode = 'mock' | 'native';
+export type { StickerRuntimeMode } from './runtimeMode';
 
 export function getStickerRuntimeMode(): StickerRuntimeMode {
   return process.env.EXPO_PUBLIC_STICKER_RUNTIME === 'mock' ? 'mock' : 'native';
