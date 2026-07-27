@@ -1,0 +1,18 @@
+{
+  "name": "GenSticker — Local AI Sticker Generator",
+  "short_name": "GenSticker",
+  "description": "Generate transparent stickers locally with the same on-device model.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F5F7FB",
+  "theme_color": "#208AEF",
+  "icons": [
+    {
+      "src": "/pwa-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

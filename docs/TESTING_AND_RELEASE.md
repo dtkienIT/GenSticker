@@ -1,5 +1,21 @@
 # Testing and Release
 
+## Web App Verification
+
+The Chromium web target has its own maintenance gates and does not replace Android physical-device
+evidence:
+
+```powershell
+npm.cmd run web:export
+npm.cmd run test:web
+```
+
+`web:export` stages the pinned ONNX Runtime WebGPU support files, exports Expo Router static pages,
+and generates the application-shell service worker. Routine browser tests compile with the
+deterministic mock runtime and do not download the 2.07 GB model. Real-model acceptance requires
+the local model server, a WebGPU/FP16-capable Chrome or Edge build, and the evidence fields recorded
+in `WEB_FEASIBILITY.md`.
+
 ## Document Control
 
 **Document role:** Binding verification and release-acceptance procedure for the Android-first

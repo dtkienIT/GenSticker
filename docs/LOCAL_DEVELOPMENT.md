@@ -1,5 +1,26 @@
 # Local Development
 
+## Local WebGPU Web App
+
+The Expo web build runs the same `lcm-sd15-chibi` `1.0.1` FP16 generation graphs and tokenizer as
+the Android runtime. During local development, the browser reads them from the ignored
+`model_artifacts/model-lcm-sd15-v1.0.1` directory through a range-capable localhost server; the
+generation weights are not copied into browser storage.
+
+From separate PowerShell terminals:
+
+```powershell
+npm.cmd run web:model:fetch-segmentation
+npm.cmd run web:model:serve
+npm.cmd run web
+```
+
+Open the Expo localhost URL in current desktop Chrome or Edge. Localhost is treated as a secure
+context, but the browser/GPU must expose WebGPU and `shader-f16`. The first command is idempotent
+and verifies the pinned U²-NetP checksum. The production PWA path instead uses
+`EXPO_PUBLIC_WEB_MODEL_SOURCE=cache` and installs the same verified files in versioned Cache
+Storage for offline use.
+
 > **Current MVP toolchain:** Node 22.13+, Expo `~57.0.7`, React Native 0.86, React 19.2.3, `expo-dev-client ~57.0.7`, Android API 24+, and Python 3.13. Native generation requires `npx expo prebuild --platform android` and an Android development build with package `com.vinai.gensticker.dev`; Expo Go is unsupported. Select mock generation only through the explicit development environment setting.
 
 ## Document Control

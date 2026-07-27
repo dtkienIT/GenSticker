@@ -26,6 +26,7 @@
       "package": "com.vinai.gensticker.dev"
     },
     "web": {
+      "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },

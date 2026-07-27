@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ScrollView,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -31,6 +32,8 @@ const EXAMPLES = [
 export default function PromptWorkspace() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const [browserWidth, setBrowserWidth] = useState<number | null>(null);
+  const [hasHydratedLayout, setHasHydratedLayout] = useState(false);
   const { colors, borderRadius, spacing, typography } = useAppTheme();
   const draft = useStickerStore((state) => state.draft);
   const gallery = useStickerStore((state) => state.gallery);
@@ -47,7 +50,16 @@ export default function PromptWorkspace() {
   const selectAsset = useStickerStore((state) => state.selectAsset);
   const [validationError, setValidationError] = useState<string | null>(null);
   const runtimeMode = getStickerRuntimeMode();
-  const layout = workspaceLayout(width);
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const updateWidth = () => setBrowserWidth(window.innerWidth);
+    updateWidth();
+    setHasHydratedLayout(true);
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+  const viewportWidth = browserWidth ?? width;
+  const layout = workspaceLayout(viewportWidth);
   const modelReady = runtimeMode === 'mock' || modelBundleState?.status === 'ready';
   const modelDownloading = modelBundleState?.status === 'downloading';
   const modelSetup = presentLocalModelSetup(modelBundleState, __DEV__);
@@ -66,8 +78,19 @@ export default function PromptWorkspace() {
 
   return (
     <ScreenContainer scrollable>
-      <View style={[styles.workspace, { flexDirection: layout.direction }]}>
-        <View style={[styles.promptColumn, { flex: layout.promptFlex }]}>
+      <View
+        key={hasHydratedLayout ? 'hydrated-workspace' : 'server-workspace'}
+        style={[styles.workspace, { flexDirection: layout.direction }]}
+      >
+        <View
+          style={[
+            styles.promptColumn,
+            {
+              flex: layout.promptFlex,
+              width: layout.direction === 'row' ? undefined : '100%',
+            },
+          ]}
+        >
           <View
             style={[
               styles.hero,
@@ -238,7 +261,15 @@ export default function PromptWorkspace() {
           </View>
         </View>
 
-        <View style={[styles.sideColumn, { flex: layout.sideFlex }]}>
+        <View
+          style={[
+            styles.sideColumn,
+            {
+              flex: layout.sideFlex,
+              width: layout.direction === 'row' ? undefined : '100%',
+            },
+          ]}
+        >
           <View style={[styles.quickLinks, { marginBottom: spacing.lg }]}>
             <AppButton
               title={`My Stickers (${gallery.length})`}
@@ -250,7 +281,7 @@ export default function PromptWorkspace() {
               variant="outline"
               onPress={() => router.push('/settings')}
             />
-            {__DEV__ ? (
+            {__DEV__ || Platform.OS === 'web' ? (
               <AppButton
                 title="Diagnostics"
                 variant="outline"
@@ -307,8 +338,8 @@ export default function PromptWorkspace() {
 const styles = StyleSheet.create({
   hero: { borderWidth: 1, gap: 16 },
   workspace: { gap: 20, alignItems: 'flex-start' },
-  promptColumn: { width: '100%' },
-  sideColumn: { width: '100%' },
+  promptColumn: { minWidth: 0 },
+  sideColumn: { minWidth: 0 },
   badgeRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   capability: { padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
   capabilityCopy: { flex: 1 },

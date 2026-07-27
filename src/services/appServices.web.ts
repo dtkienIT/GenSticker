@@ -19,7 +19,8 @@ export function getStickerRuntimeMode(): StickerRuntimeMode {
 }
 
 const mockGenerator = new MockOnDeviceStickerGenerator({
-  platform: 'web',
+  // The mock intentionally exercises the supported generation flow in browser tests.
+  platform: 'android',
   outputResolver: resolveMockOutput,
 });
 

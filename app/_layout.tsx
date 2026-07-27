@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider, useAppTheme } from '@/theme';
 import { useStickerStore } from '@/store/useStickerStore';
+import { registerServiceWorker } from '@/services/pwa/registerServiceWorker';
 
 function AppBootstrap() {
   const hasHydrated = useStickerStore((state) => state.hasHydrated);
@@ -11,6 +12,9 @@ function AppBootstrap() {
   useEffect(() => {
     if (hasHydrated) void initialize();
   }, [hasHydrated, initialize]);
+  useEffect(() => {
+    void registerServiceWorker();
+  }, []);
   return null;
 }
 

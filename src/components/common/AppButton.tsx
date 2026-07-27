@@ -72,6 +72,8 @@ export const AppButton: React.FC<AppButtonProps> = ({
 
   return (
     <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={title}
       disabled={disabled || loading}
       activeOpacity={0.8}
       style={[
