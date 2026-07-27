@@ -152,13 +152,21 @@ function resolvePart(
 export function resolveWebModelFiles(
   manifest: WebModelManifest,
   baseUrlValue: string,
+  usePublishedUrls = false,
 ): WebModelFiles {
   const baseUrl = new URL(baseUrlValue);
   if (!baseUrl.pathname.endsWith('/')) {
     baseUrl.pathname += '/';
   }
-  const parts = manifest.parts.map((part) => resolvePart(manifest, baseUrl, part.path));
-  const urlFor = (path: string) => resolvePart(manifest, baseUrl, path).resolvedUrl;
+  const parts = manifest.parts.map((part) => ({
+    ...part,
+    resolvedUrl: usePublishedUrls ? part.url : new URL(part.path, baseUrl).href,
+  }));
+  const urlFor = (path: string) => {
+    const part = parts.find((candidate) => candidate.path === path);
+    if (!part) throw new Error(`Missing model part: ${path}`);
+    return part.resolvedUrl;
+  };
 
   return {
     modelId: manifest.modelId,
