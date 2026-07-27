@@ -49,6 +49,7 @@
 ### Task 1: Pin browser dependencies and implement numeric parity
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `package-lock.json`
 - Modify: `tsconfig.json`
@@ -58,6 +59,7 @@
 - Create: `src/services/generation/web/lcmMath.test.ts`
 
 **Interfaces:**
+
 - Produces: `ClipTokenizer.fromJson(json: string).encode(text: string): bigint[]`
 - Produces: `JavaRandom`, `seededLatentsGaussian`, `float32ToFloat16`, `float16ToFloat32`, `guidedNoise`, `lcmTimesteps`, `lcmStep`, `decodedRgba`, and `composeAlpha`.
 
@@ -139,6 +141,7 @@ git commit -m "feat: add web inference numeric parity"
 ### Task 2: Add browser capability detection and runtime diagnostics types
 
 **Files:**
+
 - Create: `src/services/generation/web/webCapabilities.ts`
 - Create: `src/services/generation/web/webCapabilities.test.ts`
 - Create: `src/services/diagnostics/types.ts`
@@ -147,6 +150,7 @@ git commit -m "feat: add web inference numeric parity"
 - Modify: `src/services/errors/generationErrorPresentation.ts`
 
 **Interfaces:**
+
 - Produces: `detectWebCapabilities(deps?: CapabilityDependencies): Promise<WebCapabilitySnapshot>`
 - Produces: `getCapabilities(): Promise<DeviceCapabilityResult>` mapping supported WebGPU to adapter ID `onnxruntime-web-webgpu`.
 - Produces: `StickerRuntimeMode = 'mock' | 'native' | 'web'`.
@@ -209,6 +213,7 @@ Expected: tests and typecheck PASS.
 ### Task 3: Serve and resolve the existing project model
 
 **Files:**
+
 - Create: `scripts/serve-web-model.mjs`
 - Create: `scripts/fetch-web-segmentation-model.mjs`
 - Create: `src/services/setup/web/webModelManifest.ts`
@@ -222,6 +227,7 @@ Expected: tests and typecheck PASS.
 - Modify: `package.json`
 
 **Interfaces:**
+
 - Produces: `WebModelFiles` with `textEncoderUrl`, `unetUrl`, `vaeDecoderUrl`, `tokenizerUrl`, `segmentationUrl`, `modelId`, and `modelVersion`.
 - Produces: `WebModelBundleManager implements ModelBundleManager` plus `resolveFiles(): Promise<WebModelFiles>`.
 - Produces: `createWebModelBundleManager(config, dependencies): WebModelBundleManager`.
@@ -251,8 +257,9 @@ Expected: FAIL because the model source classes are absent.
 Use only Node built-ins. Resolve every request under the configured root, reject traversal, and support `HEAD`, full `GET`, and one byte range:
 
 ```js
-const modelRoot = path.resolve(process.env.GENSTICKER_MODEL_ROOT ??
-  'model_artifacts/model-lcm-sd15-v1.0.1');
+const modelRoot = path.resolve(
+  process.env.GENSTICKER_MODEL_ROOT ?? 'model_artifacts/model-lcm-sd15-v1.0.1',
+);
 const port = Number(process.env.GENSTICKER_MODEL_PORT ?? 8790);
 ```
 
@@ -295,12 +302,14 @@ git commit -m "feat: serve project models to the web runtime"
 ### Task 4: Add verified cached-model installation for deployed PWA mode
 
 **Files:**
+
 - Modify: `src/services/setup/web/webModelBundleManager.ts`
 - Modify: `src/services/setup/web/webModelBundleManager.test.ts`
 - Create: `src/services/setup/web/incrementalDigest.ts`
 - Create: `src/services/setup/web/incrementalDigest.test.ts`
 
 **Interfaces:**
+
 - Consumes: `WebModelFiles`, `ModelBundleManager`.
 - Produces: cache name `gensticker-model-lcm-sd15-chibi-1.0.1`.
 - Produces: active metadata key `@gensticker/web-model/active`.
@@ -348,6 +357,7 @@ Expected: tests and typecheck PASS.
 ### Task 5: Implement worker-based WebGPU generation
 
 **Files:**
+
 - Create: `src/services/generation/web/workerProtocol.ts`
 - Create: `src/services/generation/web/webOnDeviceStickerGenerator.ts`
 - Create: `src/services/generation/web/webOnDeviceStickerGenerator.test.ts`
@@ -359,6 +369,7 @@ Expected: tests and typecheck PASS.
 - Modify: `package.json`
 
 **Interfaces:**
+
 - Consumes: `WebModelBundleManager.resolveFiles()`, numeric parity modules, and the existing `OnDeviceStickerGenerator`.
 - Produces: `WebOnDeviceStickerGenerator implements OnDeviceStickerGenerator`.
 - Produces: ordered `WorkerResponse` messages: `ready`, `progress`, `result`, and `failure`.
@@ -433,6 +444,7 @@ git commit -m "feat: run sticker generation in a WebGPU worker"
 ### Task 6: Add IndexedDB stickers, browser export, and local metrics
 
 **Files:**
+
 - Create: `src/services/assets/webStickerAssetRepository.ts`
 - Create: `src/services/assets/webStickerAssetRepository.test.ts`
 - Create: `src/services/export/webPlatformAssetExporter.ts`
@@ -442,6 +454,7 @@ git commit -m "feat: run sticker generation in a WebGPU worker"
 - Modify: `vitest.config.ts`
 
 **Interfaces:**
+
 - Produces: `WebStickerAssetRepository implements StickerAssetRepository`.
 - Produces: `WebPlatformAssetExporter implements PlatformAssetExporter`.
 - Produces: `LocalDiagnostics.record`, `list`, `exportJson`, and `clear`.
@@ -478,6 +491,7 @@ git commit -m "feat: persist and export web stickers"
 ### Task 7: Compose browser services and connect store behavior
 
 **Files:**
+
 - Create: `src/services/appServices.web.ts`
 - Modify: `src/services/appServices.ts`
 - Modify: `src/store/useStickerStore.ts`
@@ -486,6 +500,7 @@ git commit -m "feat: persist and export web stickers"
 - Modify: `src/services/setup/localModelSetupPresentation.test.ts`
 
 **Interfaces:**
+
 - Consumes: all web services from Tasks 2–6.
 - Produces: the same `stickerServices`, `getStickerRuntimeMode`, `getMockScenario`, and `setMockScenario` exports used by screens.
 
@@ -531,6 +546,7 @@ Expected: all tests and typecheck PASS.
 ### Task 8: Build the responsive web experience and diagnostics
 
 **Files:**
+
 - Modify: `app/index.tsx`
 - Modify: `app/create/generating.tsx`
 - Modify: `app/create/result.tsx`
@@ -545,6 +561,7 @@ Expected: all tests and typecheck PASS.
 - Create: `src/components/web/DiagnosticsEventList.tsx`
 
 **Interfaces:**
+
 - Consumes: existing store plus web model/capability/diagnostic state.
 - Produces: desktop two-column workspace at widths ≥1024 and single-column behavior below it.
 
@@ -583,6 +600,7 @@ Expected: tests, typecheck, and lint PASS.
 ### Task 9: Add installable PWA packaging and production browser tests
 
 **Files:**
+
 - Create: `public/manifest.webmanifest`
 - Create: `public/_headers`
 - Create: `scripts/build-web-pwa.mjs`
@@ -597,6 +615,7 @@ Expected: tests, typecheck, and lint PASS.
 - Modify: `docs/TESTING_AND_RELEASE.md`
 
 **Interfaces:**
+
 - Produces: `npm run web:export`, `npm run web:serve`, and `npm run test:web`.
 - Produces: generated `dist/sw.js` with application-shell precache and model-cache lookup.
 
@@ -680,10 +699,12 @@ git commit -m "feat: package the sticker generator as a PWA"
 ### Task 10: Run real-model acceptance on the available PC
 
 **Files:**
+
 - Create: `docs/WEB_FEASIBILITY.md`
 - Modify: `docs/TESTING_AND_RELEASE.md`
 
 **Interfaces:**
+
 - Consumes: the completed local-source web application.
 - Produces: an evidence record; it does not change the model or supported-browser policy.
 

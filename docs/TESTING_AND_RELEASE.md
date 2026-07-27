@@ -14,7 +14,8 @@ npm.cmd run test:web
 and generates the application-shell service worker. Routine browser tests compile with the
 deterministic mock runtime and do not download the 2.07 GB model. Real-model acceptance requires
 the local model server, a WebGPU/FP16-capable Chrome or Edge build, and the evidence fields recorded
-in `WEB_FEASIBILITY.md`.
+in [Web Model Feasibility](./WEB_FEASIBILITY.md). The recorded desktop run completed a real
+project-directory model generation; it remains separate from Android and mobile-browser evidence.
 
 ## Document Control
 

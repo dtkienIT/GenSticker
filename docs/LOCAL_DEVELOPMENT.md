@@ -17,9 +17,10 @@ npm.cmd run web
 
 Open the Expo localhost URL in current desktop Chrome or Edge. Localhost is treated as a secure
 context, but the browser/GPU must expose WebGPU and `shader-f16`. The first command is idempotent
-and verifies the pinned U²-NetP checksum. The production PWA path instead uses
-`EXPO_PUBLIC_WEB_MODEL_SOURCE=cache` and installs the same verified files in versioned Cache
-Storage for offline use.
+and verifies the pinned U²-NetP checksum. Local production exports also default to the project
+model server. A deployable PWA can instead set `EXPO_PUBLIC_WEB_MODEL_SOURCE=cache` before
+`npm.cmd run web:export` to install the same verified files in versioned Cache Storage for offline
+use.
 
 > **Current MVP toolchain:** Node 22.13+, Expo `~57.0.7`, React Native 0.86, React 19.2.3, `expo-dev-client ~57.0.7`, Android API 24+, and Python 3.13. Native generation requires `npx expo prebuild --platform android` and an Android development build with package `com.vinai.gensticker.dev`; Expo Go is unsupported. Select mock generation only through the explicit development environment setting.
 
