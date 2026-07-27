@@ -46,20 +46,20 @@ tests.
 
 ## Real Prompt Measurement
 
-Prompt: `A cheerful astronaut cat holding boba`
+Corrected acceptance prompt: `A sleepy corgi hugging a coffee mug`
 
 | Phase                          | Elapsed from phase start |
 | ------------------------------ | -----------------------: |
-| Model/session preparation      |                   21.7 s |
-| UNet step 1                    |                   10.0 s |
-| UNet step 2                    |                    6.0 s |
-| UNet step 3                    |                    5.9 s |
-| UNet step 4                    |                    5.9 s |
-| Decode after final UNet step   |                    8.2 s |
-| U²-NetP background removal     |                    1.7 s |
-| PNG encoding                   |                   0.04 s |
-| Inference and post-processing  |                   37.7 s |
-| End-to-end through persistence |                   59.5 s |
+| Model/session preparation      |                   48.0 s |
+| UNet step 1                    |                   10.2 s |
+| UNet step 2                    |                    6.5 s |
+| UNet step 3                    |                    6.5 s |
+| UNet step 4                    |                    6.4 s |
+| Decode after final UNet step   |                    8.5 s |
+| U²-NetP background removal     |                    2.4 s |
+| PNG encoding                   |                   0.07 s |
+| Inference and post-processing  |                   40.5 s |
+| End-to-end through persistence |                   88.5 s |
 
 Progress events continued to update during the run, and the page remained interactive. ONNX Runtime
 emitted non-fatal constant-folding warnings for FP16 `Sqrt` nodes without CPU kernels; execution
@@ -67,8 +67,12 @@ continued on WebGPU and completed.
 
 ## Output Validation
 
-- Result: success, `512 × 512`, `image/png`, 62,872 bytes.
-- Alpha: 4,028 fully transparent pixels and 258,115 partially transparent pixels out of 262,144.
+- Result: visually correct centered subject, `512 × 512`, `image/png`, 262,629 bytes.
+- Color: 30,250 distinct RGB colors; the previous broken FP16 conversion produced only 18 grayscale
+  values.
+- Alpha: 140,815 fully transparent, 110,051 fully opaque, and 11,278 partially transparent pixels.
+- Segmentation: a two-pixel morphological opening and largest-component pass removed disconnected
+  background islands while preserving the subject outline.
 - Persistence: the sticker and PNG blob remained present after reload and appeared in **My
   Stickers**.
 - Download: Playwright saved the generated PNG successfully with no download failure.
@@ -78,13 +82,19 @@ continued on WebGPU and completed.
 
 ## Defects Found During Acceptance
 
-Two production-only defects were found and fixed before the successful run:
+Five production-only defects were found and fixed before the successful run:
 
 1. Production export could reuse Metro's preceding mock-build cache. Web exports now clear the
    bundler cache and explicitly select the web runtime.
 2. The Expo/Metro worker bootstrap uses `importScripts`; launching it as a module worker caused
    `Module scripts don't support importScripts()`. The inference worker now launches as a classic
    worker, with a regression test covering the constructor contract.
+3. Chrome 150 exposes native `Float16Array` output values. The worker treated those numeric values
+   as raw half-float bit patterns and decoded them twice, producing a grayscale contour map.
+4. Refreshing the gallery immediately after persistence revoked the result page's `blob:` URL. The
+   store now selects the refreshed gallery asset before opening the result screen.
+5. Raw U²-NetP masks retained disconnected background islands. The web post-processing pass now
+   opens narrow bridges and keeps only the main connected subject.
 
 ## Remaining Limits
 

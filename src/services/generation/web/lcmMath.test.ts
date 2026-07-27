@@ -9,6 +9,7 @@ import {
   lcmStep,
   lcmTimesteps,
   seededLatentsGaussian,
+  tensorDataToFloat32,
 } from './lcmMath';
 
 describe('LCM web numeric parity', () => {
@@ -20,6 +21,14 @@ describe('LCM web numeric parity', () => {
     for (const value of [0, -0, 1.5, -3.25, 65504, 0.00006103515625]) {
       expect(float16ToFloat32(float32ToFloat16(value))).toBeCloseTo(value, 5);
     }
+  });
+
+  test('does not decode native Float16Array numeric values as raw half bits', () => {
+    const nativeFloat16Values = new Float32Array([-0.5, 0.25, 1]);
+
+    expect(Array.from(tensorDataToFloat32('float16', nativeFloat16Values))).toEqual([
+      -0.5, 0.25, 1,
+    ]);
   });
 
   test('matches Java Random double and Gaussian sequences', () => {

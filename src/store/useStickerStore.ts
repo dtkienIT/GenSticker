@@ -185,14 +185,15 @@ export const useStickerStore = create<StickerState>()(
             });
           });
           const gallery = await stickerServices.repository.list();
+          const currentAsset = gallery.find((asset) => asset.assetId === item.assetId) ?? item;
           set({
             gallery,
-            currentAssetId: item.assetId,
-            currentAsset: item,
+            currentAssetId: currentAsset.assetId,
+            currentAsset,
             jobStatus: 'completed',
-            progress: { requestId: item.requestId, stage: 'saving', progressPercent: 100 },
+            progress: { requestId: currentAsset.requestId, stage: 'saving', progressPercent: 100 },
           });
-          return item;
+          return currentAsset;
         } catch (error) {
           const presentation = presentStickerError(error);
           recordDiagnostic({

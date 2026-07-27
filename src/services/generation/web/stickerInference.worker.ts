@@ -2,16 +2,22 @@
 
 import type * as OrtRuntime from 'onnxruntime-web/webgpu';
 import { ClipTokenizer } from './clipTokenizer';
-import { applyMaskAlpha, normalizeMask, preprocessU2Net, resizeMask } from './imagePipeline';
+import {
+  applyMaskAlpha,
+  normalizeMask,
+  preprocessU2Net,
+  resizeMask,
+  retainLargestMaskComponent,
+} from './imagePipeline';
 import {
   decodedRgba,
-  float16ToFloat32,
   float32ToFloat16,
   guidedNoise,
   JavaRandom,
   lcmStep,
   lcmTimesteps,
   seededLatentsGaussian,
+  tensorDataToFloat32,
 } from './lcmMath';
 import type { WorkerRequest, WorkerResponse } from './workerProtocol';
 
@@ -59,11 +65,8 @@ function fp16Tensor(values: Float32Array, dims: readonly number[]): OrtRuntime.T
 }
 
 function tensorToFloat32(tensor: OrtRuntime.Tensor): Float32Array {
-  if (tensor.type === 'float32') {
-    return new Float32Array(tensor.data as Float32Array);
-  }
-  if (tensor.type === 'float16') {
-    return Float32Array.from(tensor.data as Uint16Array, (value) => float16ToFloat32(value));
+  if (tensor.type === 'float32' || tensor.type === 'float16') {
+    return tensorDataToFloat32(tensor.type, tensor.data as ArrayLike<number>);
   }
   throw new Error(`Unsupported tensor output type: ${tensor.type}`);
 }
@@ -164,7 +167,8 @@ async function removeBackground(rgba: Uint8ClampedArray): Promise<Uint8ClampedAr
   const normalized = normalizeMask(tensorToFloat32(output));
   const sourceHeight = output.dims.at(-2) ?? 320;
   const sourceWidth = output.dims.at(-1) ?? 320;
-  const mask = resizeMask(normalized, sourceWidth, sourceHeight, WIDTH, HEIGHT);
+  const resized = resizeMask(normalized, sourceWidth, sourceHeight, WIDTH, HEIGHT);
+  const mask = retainLargestMaskComponent(resized, WIDTH, HEIGHT, 0.5, 2);
   return applyMaskAlpha(rgba, mask);
 }
 

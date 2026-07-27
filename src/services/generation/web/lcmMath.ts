@@ -103,6 +103,16 @@ export function float16ToFloat32(value: number): number {
   return floatView[0];
 }
 
+export function tensorDataToFloat32(
+  type: 'float16' | 'float32',
+  data: ArrayLike<number>,
+): Float32Array {
+  if (type === 'float16' && data instanceof Uint16Array) {
+    return Float32Array.from(data, (value) => float16ToFloat32(value));
+  }
+  return Float32Array.from(data);
+}
+
 export function guidedNoise(
   output: Float32Array,
   latentSize: number,

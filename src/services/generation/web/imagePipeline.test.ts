@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { applyMaskAlpha, normalizeMask, preprocessU2Net, resizeMask } from './imagePipeline';
+import {
+  applyMaskAlpha,
+  normalizeMask,
+  preprocessU2Net,
+  resizeMask,
+  retainLargestMaskComponent,
+} from './imagePipeline';
 
 describe('web image pipeline', () => {
   it('creates a normalized NCHW 320px U²-Net input', () => {
@@ -23,5 +29,34 @@ describe('web image pipeline', () => {
 
     expect(mask[0]).toBeCloseTo(0.5);
     expect(Array.from(applyMaskAlpha(rgba, mask))).toEqual([10, 20, 30, 128]);
+  });
+
+  it('removes disconnected segmentation islands outside the main subject', () => {
+    const mask = new Float32Array([0.8, 0, 0.9, 0.9, 0, 0, 0.9, 0.7, 0.6, 0.6, 0, 0]);
+
+    expect(Array.from(retainLargestMaskComponent(mask, 4, 3, 0.5))).toEqual([
+      0,
+      0,
+      expect.closeTo(0.9, 5),
+      expect.closeTo(0.9, 5),
+      0,
+      0,
+      expect.closeTo(0.9, 5),
+      expect.closeTo(0.7, 5),
+      0,
+      0,
+      0,
+      0,
+    ]);
+  });
+
+  it('opens narrow mask bridges before retaining the subject', () => {
+    const mask = new Float32Array([
+      0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+    ]);
+
+    expect(Array.from(retainLargestMaskComponent(mask, 6, 5, 0.5, 1))).toEqual([
+      0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+    ]);
   });
 });

@@ -3,6 +3,8 @@ import type { ModelBundleState, ModelDownloadProgress } from '@/services/setup/t
 
 const mocks = vi.hoisted(() => ({
   installLocal: vi.fn(),
+  coordinatorRun: vi.fn(),
+  repositoryList: vi.fn(),
   getCapabilities: vi.fn().mockResolvedValue({
     supported: true,
     adapterId: 'expo-sticker-runtime-onnx',
@@ -20,6 +22,13 @@ vi.mock('@/services/appServices', () => ({
     generator: {
       getCapabilities: mocks.getCapabilities,
     },
+    coordinator: {
+      run: mocks.coordinatorRun,
+      cancel: vi.fn(),
+    },
+    repository: {
+      list: mocks.repositoryList,
+    },
   },
 }));
 
@@ -28,6 +37,8 @@ import { useStickerStore } from './useStickerStore';
 describe('useStickerStore local model setup', () => {
   beforeEach(() => {
     mocks.installLocal.mockReset();
+    mocks.coordinatorRun.mockReset();
+    mocks.repositoryList.mockReset();
     useStickerStore.setState({
       modelBundleState: null,
       modelDownloadProgress: null,
@@ -35,6 +46,33 @@ describe('useStickerStore local model setup', () => {
       capability: null,
       error: null,
     });
+  });
+
+  test('keeps the refreshed gallery URL as the current generated asset', async () => {
+    const stale = {
+      assetId: 'sticker-1',
+      requestId: 'request-1',
+      prompt: 'A cheerful cat',
+      stylePresetId: 'chibi' as const,
+      createdAt: '2026-07-27T00:00:00.000Z',
+      mimeType: 'image/png' as const,
+      width: 512,
+      height: 512,
+      localUri: 'blob:revoked',
+    };
+    const refreshed = { ...stale, localUri: 'blob:active' };
+    mocks.coordinatorRun.mockResolvedValue(stale);
+    mocks.repositoryList.mockResolvedValue([refreshed]);
+    useStickerStore.setState({
+      draft: { prompt: stale.prompt, stylePresetId: 'chibi' },
+      gallery: [],
+      currentAsset: null,
+      currentAssetId: null,
+      jobStatus: 'idle',
+    });
+
+    await expect(useStickerStore.getState().runGeneration()).resolves.toEqual(refreshed);
+    expect(useStickerStore.getState().currentAsset).toEqual(refreshed);
   });
 
   test('installs staged model with verification progress and refreshes capabilities', async () => {

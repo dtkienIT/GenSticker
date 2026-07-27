@@ -100,6 +100,114 @@ export function resizeMask(
   return result;
 }
 
+export function retainLargestMaskComponent(
+  mask: Float32Array,
+  width: number,
+  height: number,
+  threshold = 0.25,
+  openingRadius = 0,
+): Float32Array {
+  if (mask.length !== width * height) {
+    throw new Error('Invalid mask dimensions');
+  }
+  const foreground = Uint8Array.from(mask, (value) => (value >= threshold ? 1 : 0));
+  const componentInput =
+    openingRadius > 0 ? erodeBinary(foreground, width, height, openingRadius) : foreground;
+  const labels = new Int32Array(mask.length);
+  const queue = new Int32Array(mask.length);
+  let nextLabel = 0;
+  let largestLabel = 0;
+  let largestSize = 0;
+
+  for (let start = 0; start < mask.length; start += 1) {
+    if (componentInput[start] === 0 || labels[start] !== 0) continue;
+    nextLabel += 1;
+    let head = 0;
+    let tail = 1;
+    queue[0] = start;
+    labels[start] = nextLabel;
+
+    while (head < tail) {
+      const index = queue[head];
+      head += 1;
+      const x = index % width;
+      const y = Math.floor(index / width);
+      const neighbors = [
+        x > 0 ? index - 1 : -1,
+        x + 1 < width ? index + 1 : -1,
+        y > 0 ? index - width : -1,
+        y + 1 < height ? index + width : -1,
+      ];
+      for (const neighbor of neighbors) {
+        if (neighbor >= 0 && labels[neighbor] === 0 && componentInput[neighbor] === 1) {
+          labels[neighbor] = nextLabel;
+          queue[tail] = neighbor;
+          tail += 1;
+        }
+      }
+    }
+
+    if (tail > largestSize) {
+      largestSize = tail;
+      largestLabel = nextLabel;
+    }
+  }
+
+  const selected = Uint8Array.from(labels, (label) => (label === largestLabel ? 1 : 0));
+  const retained =
+    openingRadius > 0 ? dilateBinary(selected, width, height, openingRadius) : selected;
+  return Float32Array.from(mask, (value, index) => (retained[index] === 1 ? value : 0));
+}
+
+function erodeBinary(
+  source: Uint8Array,
+  width: number,
+  height: number,
+  radius: number,
+): Uint8Array {
+  const result = new Uint8Array(source.length);
+  for (let y = radius; y < height - radius; y += 1) {
+    for (let x = radius; x < width - radius; x += 1) {
+      let keep = true;
+      for (let offsetY = -radius; offsetY <= radius && keep; offsetY += 1) {
+        for (let offsetX = -radius; offsetX <= radius; offsetX += 1) {
+          if (source[(y + offsetY) * width + x + offsetX] === 0) {
+            keep = false;
+            break;
+          }
+        }
+      }
+      if (keep) result[y * width + x] = 1;
+    }
+  }
+  return result;
+}
+
+function dilateBinary(
+  source: Uint8Array,
+  width: number,
+  height: number,
+  radius: number,
+): Uint8Array {
+  const result = new Uint8Array(source.length);
+  for (let index = 0; index < source.length; index += 1) {
+    if (source[index] === 0) continue;
+    const x = index % width;
+    const y = Math.floor(index / width);
+    for (let offsetY = -radius; offsetY <= radius; offsetY += 1) {
+      const targetY = y + offsetY;
+      if (targetY < 0 || targetY >= height) continue;
+      for (let offsetX = -radius; offsetX <= radius; offsetX += 1) {
+        const targetX = x + offsetX;
+        if (targetX >= 0 && targetX < width) {
+          result[targetY * width + targetX] = 1;
+        }
+      }
+    }
+  }
+  return result;
+}
+
 export function applyMaskAlpha(rgba: Uint8ClampedArray, mask: Float32Array): Uint8ClampedArray {
   if (rgba.length !== mask.length * 4) {
     throw new Error('Mask and RGBA dimensions do not match');
