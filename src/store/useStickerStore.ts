@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { stickerServices } from '@/services/appServices';
 import type { GallerySticker } from '@/services/assets/types';
+import type { LocalDiagnosticEvent } from '@/services/diagnostics/types';
 import {
   presentStickerError,
   type StickerErrorPresentation,
@@ -64,6 +65,10 @@ interface StickerState {
 
 function attemptKey(draft: StickerDraft): string {
   return `${draft.prompt.trim().toLocaleLowerCase()}::${draft.stylePresetId}`;
+}
+
+function recordDiagnostic(event: Omit<LocalDiagnosticEvent, 'id' | 'recordedAt'>): void {
+  void stickerServices.diagnostics?.record(event);
 }
 
 export const useStickerStore = create<StickerState>()(
@@ -129,15 +134,29 @@ export const useStickerStore = create<StickerState>()(
           const capability = await stickerServices.generator.getCapabilities();
           if (capability.supported) {
             set({ capabilityStatus: 'ready', capability });
+            recordDiagnostic({
+              kind: 'capability',
+              detailCode: 'SUPPORTED',
+              metadata: {
+                adapterId: capability.adapterId,
+                delegate: capability.selectedDelegate ?? 'unknown',
+              },
+            });
           } else {
             set({
               capabilityStatus: 'unsupported',
               capability,
               error: presentStickerError(new GenerationFailure(capability.reasonCode)),
             });
+            recordDiagnostic({
+              kind: 'capability',
+              errorCode: capability.reasonCode,
+              detailCode: capability.detailCode,
+            });
           }
         } catch (error) {
           set({ capabilityStatus: 'failed', error: presentStickerError(error) });
+          recordDiagnostic({ kind: 'error', detailCode: 'CAPABILITY_CHECK_FAILED' });
         }
       },
 
@@ -155,9 +174,16 @@ export const useStickerStore = create<StickerState>()(
           error: null,
         });
         try {
-          const item = await stickerServices.coordinator.run(draft, (progress) =>
-            set({ progress }),
-          );
+          const item = await stickerServices.coordinator.run(draft, (progress) => {
+            set({ progress });
+            recordDiagnostic({
+              kind: 'generation',
+              requestId: progress.requestId,
+              stage: progress.stage,
+              elapsedMs: progress.elapsedMs,
+              metadata: { progressPercent: progress.progressPercent },
+            });
+          });
           const gallery = await stickerServices.repository.list();
           set({
             gallery,
@@ -169,6 +195,11 @@ export const useStickerStore = create<StickerState>()(
           return item;
         } catch (error) {
           const presentation = presentStickerError(error);
+          recordDiagnostic({
+            kind: 'error',
+            errorCode: error instanceof GenerationFailure ? error.code : 'UNKNOWN_ERROR',
+            detailCode: presentation.code,
+          });
           set({
             jobStatus:
               error instanceof GenerationFailure && error.code === 'GENERATION_CANCELLED'

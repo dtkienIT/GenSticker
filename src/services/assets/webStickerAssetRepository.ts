@@ -13,6 +13,7 @@ interface WebStickerRepositoryDependencies {
   revokeObjectUrl?: (url: string) => void;
   createAssetId?: () => string;
   now?: () => string;
+  releaseTemporaryUri?: (uri: string) => void;
 }
 
 export class WebStickerAssetRepository implements StickerAssetRepository {
@@ -41,7 +42,10 @@ export class WebStickerAssetRepository implements StickerAssetRepository {
     try {
       const database = await this.database();
       const existing = await database.getFromIndex('stickers', 'requestId', request.requestId);
-      if (existing) return this.materialize(existing);
+      if (existing) {
+        if (output.temporary) this.dependencies.releaseTemporaryUri?.(output.localUri);
+        return this.materialize(existing);
+      }
 
       const response = await (this.dependencies.fetch ?? fetch)(output.localUri);
       if (!response.ok) throw new Error(`PNG read failed: ${response.status}`);
@@ -63,6 +67,7 @@ export class WebStickerAssetRepository implements StickerAssetRepository {
         png,
       };
       await database.add('stickers', stored);
+      if (output.temporary) this.dependencies.releaseTemporaryUri?.(output.localUri);
       return this.materialize(stored);
     } catch (error) {
       if (error instanceof GenerationFailure) throw error;

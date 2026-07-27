@@ -1,5 +1,6 @@
-import type { GallerySticker, StickerAssetRepository } from './assets/types';
-import type { PlatformAssetExporter } from './export/types';
+import { WebStickerAssetRepository } from './assets/webStickerAssetRepository';
+import { LocalDiagnostics } from './diagnostics/localDiagnostics';
+import { WebPlatformAssetExporter } from './export/webPlatformAssetExporter';
 import { MockOnDeviceStickerGenerator } from './generation/mockOnDeviceStickerGenerator';
 import { resolveMockOutput } from './generation/mockOutputResolver';
 import { StickerGenerationCoordinator } from './generation/stickerGenerationCoordinator';
@@ -49,34 +50,9 @@ const generator: OnDeviceStickerGenerator =
 const modelBundle =
   getStickerRuntimeMode() === 'mock' ? new StaticModelBundleManager() : webModelBundle;
 
-const memoryGallery: GallerySticker[] = [];
-const repository: StickerAssetRepository = {
-  async persist(output, request) {
-    const item: GallerySticker = {
-      assetId: `sticker-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-      requestId: request.requestId,
-      localUri: output.localUri,
-      prompt: request.prompt,
-      stylePresetId: request.stylePresetId,
-      createdAt: new Date().toISOString(),
-      mimeType: output.mimeType,
-      width: output.width,
-      height: output.height,
-    };
-    memoryGallery.unshift(item);
-    return item;
-  },
-  async list() {
-    return [...memoryGallery];
-  },
-  async get(assetId) {
-    return memoryGallery.find((item) => item.assetId === assetId) ?? null;
-  },
-  async delete(assetId) {
-    const index = memoryGallery.findIndex((item) => item.assetId === assetId);
-    if (index >= 0) memoryGallery.splice(index, 1);
-  },
-};
+const repository = new WebStickerAssetRepository({
+  releaseTemporaryUri: (uri) => webGenerator.releaseTemporaryOutput(uri),
+});
 
 const safety = new LocalPromptSafetyEvaluator({
   getScenario: () => mockGenerator.getScenario(),
@@ -88,14 +64,8 @@ const coordinator = new StickerGenerationCoordinator({
   createRequestId: () => `request-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
   createSeed: () => Math.floor(Math.random() * 2_147_483_647),
 });
-const exporter: PlatformAssetExporter = {
-  async saveToPhotoLibrary() {
-    return { status: 'unavailable' };
-  },
-  async share() {
-    return { status: 'unavailable' };
-  },
-};
+const exporter = new WebPlatformAssetExporter();
+const diagnostics = new LocalDiagnostics();
 
 export const stickerServices = {
   generator,
@@ -103,6 +73,7 @@ export const stickerServices = {
   repository,
   coordinator,
   exporter,
+  diagnostics,
 };
 
 export function setMockScenario(scenario: MockScenario): void {

@@ -5,6 +5,7 @@ import {
   ExpoStickerFileStore,
   stickerAssetDirectory,
 } from './assets/expoAssetInfrastructure';
+import type { DiagnosticsService } from './diagnostics/types';
 import { LocalStickerAssetRepository } from './assets/localStickerAssetRepository';
 import { ExpoPlatformAssetExporter } from './export/expoPlatformAssetExporter';
 import { MockOnDeviceStickerGenerator } from './generation/mockOnDeviceStickerGenerator';
@@ -88,12 +89,28 @@ const exporter = new ExpoPlatformAssetExporter({
   getScenario: () => mockGenerator.getScenario(),
 });
 
+const diagnostics: DiagnosticsService = {
+  async record() {
+    return undefined;
+  },
+  async list() {
+    return [];
+  },
+  async exportJson() {
+    return JSON.stringify({ schemaVersion: 1, events: [] });
+  },
+  async clear() {
+    return undefined;
+  },
+};
+
 export const stickerServices = {
   generator,
   modelBundle,
   repository,
   coordinator,
   exporter,
+  diagnostics,
 };
 
 export function setMockScenario(scenario: MockScenario): void {

@@ -18,3 +18,10 @@ export interface LocalDiagnosticEvent {
   detailCode?: WebCapabilityDetailCode | string;
   metadata?: Record<string, string | number | boolean | null>;
 }
+
+export interface DiagnosticsService {
+  record(event: Omit<LocalDiagnosticEvent, 'id' | 'recordedAt'>): Promise<unknown>;
+  list(): Promise<LocalDiagnosticEvent[]>;
+  exportJson(): Promise<string>;
+  clear(): Promise<void>;
+}
