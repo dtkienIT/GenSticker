@@ -49,7 +49,9 @@ export default function SettingsScreen() {
         <Text selectable style={[typography.body, { color: colors.textSecondary }]}>
           {getStickerRuntimeMode() === 'mock'
             ? 'Deterministic local mock adapter'
-            : 'Android native adapter requested'}
+            : getStickerRuntimeMode() === 'web'
+              ? 'Browser WebGPU adapter — runs locally in this browser'
+              : 'Android native adapter requested'}
         </Text>
         <Text style={[typography.caption, { color: colors.textMuted }]}>
           Mock output verifies the app flow only. It is not production inference or model
@@ -69,8 +71,8 @@ export default function SettingsScreen() {
       >
         <Text style={[typography.bodyBold, { color: colors.textPrimary }]}>Data handling</Text>
         <Text style={[typography.body, { color: colors.textSecondary }]}>
-          Prompts and generated mock PNGs remain local to the app. Save and Share create or send an
-          external copy without removing the gallery original.
+          Prompts and generated PNGs remain local to this app. Download, Save, and Share create or
+          send an external copy without removing the gallery original.
         </Text>
       </View>
     </ScreenContainer>

@@ -34,8 +34,17 @@ export class WebStickerAssetRepository implements StickerAssetRepository {
     }
     const localUri = (this.dependencies.createObjectUrl ?? URL.createObjectURL)(stored.png);
     this.objectUrls.set(stored.assetId, localUri);
-    const { png: _png, ...metadata } = stored;
-    return { ...metadata, localUri };
+    return {
+      assetId: stored.assetId,
+      requestId: stored.requestId,
+      prompt: stored.prompt,
+      stylePresetId: stored.stylePresetId,
+      createdAt: stored.createdAt,
+      mimeType: stored.mimeType,
+      width: stored.width,
+      height: stored.height,
+      localUri,
+    };
   }
 
   async persist(output: GeneratedOutput, request: GenerationRequest): Promise<GallerySticker> {

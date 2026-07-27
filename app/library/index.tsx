@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
@@ -9,6 +9,7 @@ import { useStickerStore } from '@/store/useStickerStore';
 
 export default function LibraryScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const gallery = useStickerStore((state) => state.gallery);
   const deleteAsset = useStickerStore((state) => state.deleteAsset);
   const selectAsset = useStickerStore((state) => state.selectAsset);
@@ -37,7 +38,10 @@ export default function LibraryScreen() {
       ) : (
         <View style={styles.grid}>
           {gallery.map((sticker) => (
-            <View key={sticker.assetId} style={styles.gridItem}>
+            <View
+              key={sticker.assetId}
+              style={[styles.gridItem, { width: width >= 1024 ? '31.5%' : '48%' }]}
+            >
               <StickerCard
                 sticker={sticker}
                 onDelete={() => confirmDelete(sticker.assetId)}
@@ -54,6 +58,6 @@ export default function LibraryScreen() {
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  gridItem: { width: '48%' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12 },
+  gridItem: {},
 });

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AppButton } from '@/components/common/AppButton';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
@@ -33,7 +33,12 @@ export default function ResultScreen() {
     const result = await saveCurrentToPhotos();
     setSaving(false);
     if (result.status === 'succeeded')
-      Alert.alert('Saved to Photos', 'The PNG was copied to your device photo library.');
+      Alert.alert(
+        Platform.OS === 'web' ? 'PNG downloaded' : 'Saved to Photos',
+        Platform.OS === 'web'
+          ? 'The transparent PNG was downloaded.'
+          : 'The PNG was copied to your device photo library.',
+      );
     else if (result.status === 'permission_denied')
       Alert.alert(
         'Photos permission needed',
@@ -115,7 +120,12 @@ export default function ResultScreen() {
       ) : null}
 
       <View style={styles.actions}>
-        <AppButton title="Save to Photos" size="lg" loading={saving} onPress={() => void save()} />
+        <AppButton
+          title={Platform.OS === 'web' ? 'Download PNG' : 'Save to Photos'}
+          size="lg"
+          loading={saving}
+          onPress={() => void save()}
+        />
         <AppButton
           title="Share PNG"
           size="lg"

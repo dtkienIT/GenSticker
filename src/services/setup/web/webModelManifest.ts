@@ -137,18 +137,6 @@ export function parseWebModelManifest(json: string): WebModelManifest {
   };
 }
 
-function resolvePart(
-  manifest: WebModelManifest,
-  baseUrl: URL,
-  path: string,
-): WebModelPart & { resolvedUrl: string } {
-  const part = manifest.parts.find((candidate) => candidate.path === path);
-  if (!part) {
-    throw new Error(`Missing model part: ${path}`);
-  }
-  return { ...part, resolvedUrl: new URL(part.path, baseUrl).href };
-}
-
 export function resolveWebModelFiles(
   manifest: WebModelManifest,
   baseUrlValue: string,

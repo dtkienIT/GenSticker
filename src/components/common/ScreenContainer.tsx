@@ -33,7 +33,9 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <View style={[styles.container, { padding: spacing.md }, style]}>{children}</View>
+      <View style={styles.center}>
+        <View style={[styles.container, { padding: spacing.md }, style]}>{children}</View>
+      </View>
     </SafeAreaView>
   );
 };
@@ -44,8 +46,14 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    maxWidth: 1280,
+    width: '100%',
+    alignSelf: 'center',
   },
+  center: { flex: 1, alignItems: 'center' },
   container: {
     flex: 1,
+    maxWidth: 1280,
+    width: '100%',
   },
 });
