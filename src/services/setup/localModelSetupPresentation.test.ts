@@ -41,4 +41,20 @@ describe('presentLocalModelSetup', () => {
   test('does not replace production download action', () => {
     expect(presentLocalModelSetup(null, false).action).toBe('download');
   });
+
+  test('explains how to start a missing project model server', () => {
+    expect(
+      presentLocalModelSetup(
+        {
+          status: 'failed',
+          modelId: 'lcm-sd15-chibi',
+          modelVersion: '1.0.1',
+          downloadedBytes: 0,
+          totalBytes: 100,
+          errorCode: 'LOCAL_MODEL_SERVER_UNAVAILABLE',
+        },
+        true,
+      ).message,
+    ).toContain('npm run web:model:serve');
+  });
 });

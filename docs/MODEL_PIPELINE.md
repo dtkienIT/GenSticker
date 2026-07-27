@@ -1,5 +1,13 @@
 # On-Device Model Pipeline
 
+The web runtime uses the same generation graphs and tokenizer as Android. Transparent-background
+post-processing uses the U²-NetP checkpoint distributed by
+[`rembg`](https://github.com/danielgatis/rembg/releases/tag/v0.0.0), derived from the
+Apache-2.0-licensed [`U-2-Net`](https://github.com/xuebinqin/U-2-Net) project. The acquisition
+script pins SHA-256
+`309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8`, matching the published
+file digest.
+
 > **Binding MVP artifact:** Python 3.13 with PyTorch 2.13.0, Diffusers 0.39.0, Transformers 5.14.1, and ONNX Runtime 1.27.0 exports fixed-shape FP16 CLIP, fused SD 1.5/LCM UNet, and VAE decoder graphs at 512×512. Revisions are pinned in `model_tools/export_spec.py`; runtime uses four steps and guidance 1.5. The generated manifest records release URLs, install paths, byte lengths, SHA-256 values, canonical bundle digest, tokenizer/scheduler assets, licenses, and 6 GB minimum RAM/storage. Tag: `model-lcm-sd15-v1.0.1`; assets stay below 2 GiB. Upload requires explicit approval.
 
 ## Document Control

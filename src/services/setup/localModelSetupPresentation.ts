@@ -7,6 +7,8 @@ export interface LocalModelSetupPresentation {
 }
 
 const FAILURE_MESSAGES: Partial<Record<ModelBundleErrorCode, string>> = {
+  LOCAL_MODEL_SERVER_UNAVAILABLE:
+    'The project model server is unavailable. Run npm run web:model:serve, then retry.',
   LOCAL_MODEL_NOT_STAGED:
     'No staged model was found. Run scripts/stage-local-model.ps1, then retry.',
   MODEL_CHECKSUM_MISMATCH: 'The staged model failed checksum verification. Stage the files again.',

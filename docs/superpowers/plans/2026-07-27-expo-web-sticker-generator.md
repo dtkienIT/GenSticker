@@ -260,7 +260,7 @@ Return `Access-Control-Allow-Origin: *`, `Cross-Origin-Resource-Policy: cross-or
 
 - [ ] **Step 4: Implement pinned U²-NetP acquisition**
 
-Download `u2netp.onnx` to `model_artifacts/model-lcm-sd15-v1.0.1/segmentation/u2netp.onnx`, require SHA-256 `3e9dacb24fdb7064e6f3462daa6f828dbe168e0d6b6f253c4b709905646e8a62`, and delete a mismatched temporary file. Add the upstream Apache-2.0 attribution URL to `docs/MODEL_PIPELINE.md`.
+Download `u2netp.onnx` to `model_artifacts/model-lcm-sd15-v1.0.1/segmentation/u2netp.onnx`, require the publisher-verified SHA-256 `309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8`, and delete a mismatched temporary file. Add the upstream Apache-2.0 attribution URL to `docs/MODEL_PIPELINE.md`.
 
 - [ ] **Step 5: Implement local `WebModelBundleManager`**
 
