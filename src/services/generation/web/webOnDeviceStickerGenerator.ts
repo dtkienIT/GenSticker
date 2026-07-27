@@ -52,9 +52,7 @@ export class WebOnDeviceStickerGenerator implements OnDeviceStickerGenerator {
   private createWorker(): WorkerLike {
     return (
       this.dependencies.createWorker?.() ??
-      new Worker(new URL('./stickerInference.worker.ts', import.meta.url), {
-        type: 'module',
-      })
+      new Worker(new URL('./stickerInference.worker.ts', import.meta.url))
     );
   }
 

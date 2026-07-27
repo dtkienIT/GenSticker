@@ -23,14 +23,18 @@ function run(program, args, environment = process.env) {
 run('npm', ['run', 'web:runtime:stage']);
 run(
   'npx',
-  ['expo', 'export', '--platform', 'web'],
+  ['expo', 'export', '--platform', 'web', '--clear'],
   mock
     ? {
         ...process.env,
         EXPO_PUBLIC_STICKER_RUNTIME: 'mock',
         EXPO_PUBLIC_WEB_MODEL_SOURCE: 'local',
       }
-    : process.env,
+    : {
+        ...process.env,
+        EXPO_PUBLIC_STICKER_RUNTIME: 'web',
+        EXPO_PUBLIC_WEB_MODEL_SOURCE: process.env.EXPO_PUBLIC_WEB_MODEL_SOURCE ?? 'local',
+      },
 );
 await copyFile('assets/images/icon.png', 'dist/pwa-icon.png');
 

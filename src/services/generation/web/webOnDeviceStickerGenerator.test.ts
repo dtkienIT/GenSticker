@@ -56,6 +56,44 @@ function createGenerator(worker: FakeWorker) {
 }
 
 describe('WebOnDeviceStickerGenerator', () => {
+  it('creates a classic worker compatible with the Metro worker bootstrap', async () => {
+    const worker = new FakeWorker();
+    const WorkerConstructor = vi.fn(function () {
+      return worker;
+    });
+    vi.stubGlobal('Worker', WorkerConstructor);
+    const generator = new WebOnDeviceStickerGenerator({
+      resolveModelFiles: vi.fn(async () => ({
+        modelId: 'lcm-sd15-chibi',
+        modelVersion: '1.0.1',
+        manifestUrl: 'http://model/manifest.json',
+        runtimeConfigUrl: 'http://model/runtime.json',
+        schedulerUrl: 'http://model/scheduler.json',
+        textEncoderUrl: 'http://model/text.onnx',
+        tokenizerUrl: 'http://model/tokenizer.json',
+        tokenizerConfigUrl: 'http://model/tokenizer-config.json',
+        unetUrl: 'http://model/unet.onnx',
+        vaeDecoderUrl: 'http://model/vae.onnx',
+        segmentationUrl: 'http://model/u2netp.onnx',
+        parts: [],
+      })),
+      getCapabilities: vi.fn(async () => ({
+        supported: true as const,
+        adapterId: 'onnxruntime-web-webgpu',
+      })),
+    });
+
+    await generator.prepareModel({
+      contractVersion: CONTRACT_VERSION,
+      modelId: 'lcm-sd15-chibi',
+      modelVersion: '1.0.1',
+    });
+
+    expect(WorkerConstructor).toHaveBeenCalledOnce();
+    expect(WorkerConstructor.mock.calls[0]).toHaveLength(1);
+    vi.unstubAllGlobals();
+  });
+
   it('prepares the worker and returns ordered progress plus a PNG URL', async () => {
     const worker = new FakeWorker();
     const generator = createGenerator(worker);
