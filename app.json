@@ -8,7 +8,16 @@
     "scheme": "gensticker",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.vinai.gensticker",
+      "buildNumber": "1",
+      "deploymentTarget": "17.0",
+      "entitlements": {
+        "com.apple.developer.kernel.increased-memory-limit": true
+      },
+      "infoPlist": {
+        "NSPhotoLibraryAddUsageDescription": "Allow GenSticker to save transparent stickers to your photo library."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -47,10 +56,11 @@
         "expo-media-library",
         {
           "photosPermission": false,
-          "savePhotosPermission": false,
+          "savePhotosPermission": "Allow GenSticker to save transparent stickers to your photo library.",
           "granularPermissions": []
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": false,

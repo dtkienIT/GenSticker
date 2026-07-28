@@ -1,0 +1,88 @@
+name: Build iOS Core ML model
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the validated assets to the immutable GitHub Release
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  MODEL_RELEASE_TAG: model-lcm-sd15-coreml-v1.0.1
+  MODEL_ARCHIVE: lcm-sd15-chibi-coreml-ios-v1.0.1.zip
+
+jobs:
+  convert:
+    runs-on: macos-15
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: model_tools/coreml-requirements.txt
+
+      - name: Install pinned Core ML conversion dependencies
+        run: python -m pip install -r model_tools/coreml-requirements.txt
+
+      - name: Export and validate the pinned Core ML bundle
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python -m model_tools.export_coreml_lcm_sd15 \
+            --work-dir "$RUNNER_TEMP/gensticker-coreml-work" \
+            --output "$RUNNER_TEMP/gensticker-coreml-output"
+
+      - name: Run model-tool unit tests
+        run: |
+          python -m pip install pytest==9.0.2
+          python -m pytest \
+            model_tools/tests/test_coreml_export_spec.py \
+            model_tools/tests/test_coreml_manifest.py \
+            model_tools/tests/test_export_coreml_lcm_sd15.py \
+            -q
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gensticker-coreml-ios-v1.0.1
+          path: |
+            ${{ runner.temp }}/gensticker-coreml-output/${{ env.MODEL_ARCHIVE }}
+            ${{ runner.temp }}/gensticker-coreml-output/model.manifest.json
+            ${{ runner.temp }}/gensticker-coreml-output/model-distribution.manifest.json
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    if: ${{ inputs.publish }}
+    needs: convert
+    runs-on: macos-15
+    environment: model-release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: gensticker-coreml-ios-v1.0.1
+          path: ${{ runner.temp }}/gensticker-coreml-output
+
+      - name: Publish approved immutable release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$MODEL_RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $MODEL_RELEASE_TAG already exists; immutable model assets will not be overwritten."
+            exit 1
+          fi
+          gh release create "$MODEL_RELEASE_TAG" \
+            --title "$MODEL_RELEASE_TAG" \
+            --notes "Pinned GenSticker iOS Core ML runtime assets." \
+            "$RUNNER_TEMP/gensticker-coreml-output/$MODEL_ARCHIVE" \
+            "$RUNNER_TEMP/gensticker-coreml-output/model.manifest.json" \
+            "$RUNNER_TEMP/gensticker-coreml-output/model-distribution.manifest.json"

@@ -1,0 +1,61 @@
+name: iOS native CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.1
+          cache: npm
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Run shared checks
+        run: |
+          npm test
+          npm run typecheck
+          npm run lint
+
+      - name: Run Swift core tests
+        working-directory: modules/expo-sticker-runtime/ios
+        run: swift test
+
+      - name: Generate the Expo SDK 57 iOS project
+        env:
+          CI: '1'
+          EXPO_PUBLIC_STICKER_RUNTIME: native
+        run: npx expo prebuild --platform ios --clean
+
+      - name: Install CocoaPods
+        working-directory: ios
+        run: pod install --repo-update
+
+      - name: Compile an unsigned simulator build
+        run: |
+          xcodebuild \
+            -workspace ios/GenSticker.xcworkspace \
+            -scheme GenSticker \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Verify generated iOS configuration
+        run: |
+          grep -q 'com.apple.developer.kernel.increased-memory-limit' ios/GenSticker/GenSticker.entitlements
+          grep -q 'NSPhotoLibraryAddUsageDescription' ios/GenSticker/Info.plist

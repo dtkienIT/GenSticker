@@ -51,7 +51,7 @@ export class MockOnDeviceStickerGenerator implements OnDeviceStickerGenerator {
     if (this.scenario === 'capability_failure') {
       throw new GenerationFailure('UNKNOWN_ERROR');
     }
-    if (this.options.platform !== 'android' || this.scenario === 'unsupported') {
+    if (!['android', 'ios'].includes(this.options.platform) || this.scenario === 'unsupported') {
       return { supported: false, reasonCode: 'DEVICE_UNSUPPORTED' };
     }
     return { supported: true, adapterId: 'mock' };

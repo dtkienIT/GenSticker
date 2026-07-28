@@ -1,6 +1,20 @@
 # Local Development
 
-> **Current MVP toolchain:** Node 22.13+, Expo `~57.0.7`, React Native 0.86, React 19.2.3, `expo-dev-client ~57.0.7`, Android API 24+, and Python 3.13. Native generation requires `npx expo prebuild --platform android` and an Android development build with package `com.vinai.gensticker.dev`; Expo Go is unsupported. Select mock generation only through the explicit development environment setting.
+> **Current MVP toolchain:** Node 22.13+, Expo `~57.0.8`, React Native 0.86, React 19.2.3,
+> `expo-dev-client ~57.0.9`, Android API 24+, iOS 17+, and the platform-specific Python model
+> environments. Native generation requires development builds; Expo Go is unsupported. Select
+> mock generation only through the explicit development environment setting.
+
+## iOS development and delivery
+
+iOS uses Continuous Native Generation; do not commit `/ios`. Windows contributors use the EAS
+profiles in `eas.json`: `simulator` is mock-only, while `development`, `preview`, and `production`
+select native Core ML. Register a physical phone with `eas device:create`, then build with
+`eas build --platform ios --profile development`.
+
+The Core ML exporter is macOS-only and runs through the manual, approval-gated GitHub workflow.
+Swift tests, iOS prebuild, CocoaPods, and unsigned simulator compilation run in macOS CI. TestFlight
+delivery occurs only after the signed entitlement check and the physical-device gate pass.
 
 ## Document Control
 

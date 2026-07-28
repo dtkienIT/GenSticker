@@ -1,6 +1,10 @@
 # GenSticker On-Device Architecture
 
-> **Binding MVP architecture:** Expo SDK 57/React Native 0.86 owns UI and orchestration. The Android-only local Expo module at `modules/expo-sticker-runtime` owns DownloadManager setup, digest verification and atomic promotion, ONNX Runtime inference, ML Kit segmentation, cancellation, and temporary PNG creation. It runs only in a development build; Expo Go is unsupported. Model assets come from an immutable GitHub Release manifest and never enter Git.
+> **Binding MVP architecture:** Expo SDK 57/React Native 0.86 owns shared UI and orchestration.
+> The local Expo module at `modules/expo-sticker-runtime` exposes contract `1.0` through separate
+> Android ONNX/NNAPI and iOS Core ML/ANE adapters. Each adapter owns verified model setup,
+> platform-native background removal, cancellation, and temporary PNG creation. Expo Go is
+> unsupported. Model assets come from immutable GitHub Release manifests and never enter Git.
 
 ## Document Control
 
@@ -51,6 +55,12 @@ The Generation orchestrator coordinates a permitted generation request, progress
 ### Model runtime
 
 The Model runtime executes the selected on-device generation path and produces a raw image. Its concrete native implementation, model format, delegate configuration, and compatibility rules remain behind the integration contract until the feasibility spike supplies evidence for the selected contingency plan.
+
+Android retains the ONNX Runtime adapter and ML Kit segmentation. iOS 17+ loads the text encoder,
+chunked UNet, and VAE decoder with Core ML `.cpuAndNeuralEngine`, then uses
+`VNGenerateForegroundInstanceMaskRequest` to create PNG alpha. The iOS capability gate accepts only
+physical arm64 iPhone 12/A14-or-newer devices with the required memory and storage; the simulator
+reports native inference unavailable and is exercised through the explicit mock profile.
 
 ### Segmentation
 

@@ -14,11 +14,11 @@ const GENERATION_COPY: Record<
 > = {
   DEVICE_UNSUPPORTED: {
     title: 'Device not supported yet',
-    message: 'This Android device does not meet the current on-device generation requirements.',
+    message: 'This device does not meet the current on-device generation requirements.',
   },
   RUNTIME_UNAVAILABLE: {
     title: 'On-device runtime unavailable',
-    message: 'The Android inference runtime has not been connected in this build.',
+    message: 'The on-device inference runtime is unavailable in this build.',
   },
   MODEL_NOT_AVAILABLE: {
     title: 'Model setup required',

@@ -45,6 +45,10 @@ example
 # Generated model weights and caches never enter Git
 /model_artifacts/
 /.model-cache/
+*.mlmodelc/
+*.mlpackage/
+/modules/expo-sticker-runtime/ios/Resources/*
+!/modules/expo-sticker-runtime/ios/Resources/model-distribution.manifest.json
 
 #Superpowers
 .superpowers/

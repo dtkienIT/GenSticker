@@ -1,36 +1,47 @@
 # GenSticker
 
-GenSticker is an Expo SDK 57 feasibility shell for an Android-first, fully on-device text-to-sticker product.
-
-The active app flow is:
+GenSticker is an Expo SDK 57 app for fully on-device text-to-sticker generation. The shared Expo
+Router application runs on Android and iOS behind native contract `1.0`:
 
 ```text
-prompt → local safety gate → mockable on-device adapter → transparent PNG → preview → save/share
+prompt → local safety gate → native generation → background removal
+       → transparent PNG → durable gallery → Photos/share sheet
 ```
 
-The checked-in adapter is a deterministic local mock. Its progress, failures, transparent PNGs, save flow, and sharing flow exercise the application contract only; they are not production inference or device-feasibility evidence.
+Android uses the existing ONNX Runtime/NNAPI adapter. iOS uses Core ML on the Apple Neural Engine
+and Vision subject lifting on a physical iPhone 12/A14 or newer running iOS 17+. The deterministic
+mock is available only when `EXPO_PUBLIC_STICKER_RUNTIME=mock`; production profiles always select
+the native adapter.
 
-## Run the app
+## Local development
+
+Install Node.js 22.13 or newer, then:
 
 ```powershell
-npm.cmd install
+npm.cmd ci
 npm.cmd start
 ```
 
-Open the project in Expo Go on Android first. The mock capability gate intentionally reports iOS and web as unsupported.
+Expo Go cannot load the custom native module. Use an Expo development build:
 
-The default runtime is `mock`. Set `EXPO_PUBLIC_STICKER_RUNTIME=native` only when testing the unavailable-runtime UI; a real Android inference module has not been connected yet.
+```powershell
+# Android
+npx.cmd expo run:android
 
-## Product routes
+# iOS simulator mock from a Windows checkout via EAS
+npx.cmd eas build --platform ios --profile simulator
 
-- `/` — capability-gated prompt workspace
-- `/create/generating` — local progress, cancellation, error, and retry
-- `/create/result` — transparent preview, Photos export, sharing, regeneration, and prompt editing
-- `/library` — durable app-owned sticker gallery
-- `/settings` — local appearance and build disclosure
-- `/debug` — development-only deterministic fault injection
+# Registered physical iPhone development build
+npx.cmd eas device:create
+npx.cmd eas build --platform ios --profile development
+```
 
-The retired selfie, consent, canonical-character, profile, sticker-pack, and cloud-service journeys are not part of this app.
+The iOS Core ML artifact is not checked into Git. A maintainer manually runs the
+`Build iOS Core ML model` workflow, approves the protected `model-release` environment, publishes
+the immutable release, and then commits the generated
+`modules/expo-sticker-runtime/ios/Resources/model-distribution.manifest.json`. Until that real,
+digest-bearing manifest exists, native iOS model setup correctly reports
+`MODEL_MANIFEST_MISSING`.
 
 ## Verification
 
@@ -39,14 +50,35 @@ npm.cmd test
 npm.cmd run typecheck
 npm.cmd run lint
 npm.cmd run format:check
+python -m pytest model_tools/tests -q
 npx.cmd expo install --check
-npx.cmd expo export --platform android --output-dir dist/android-smoke
 ```
 
-Physical Android verification is still required for Photos permission behavior, the operating-system share sheet, offline operation, process restart, and visual alpha-channel inspection.
+macOS CI additionally runs Swift unit tests, Expo SDK 57 iOS prebuild, CocoaPods installation, and
+an unsigned simulator compile. Before TestFlight submission, verify the signed `.app`:
 
-## Architecture boundary
+```bash
+bash scripts/verify-ios-entitlement.sh /path/to/GenSticker.app
+eas build --platform ios --profile production
+eas submit --platform ios --profile production
+```
 
-Screens depend on the `OnDeviceStickerGenerator`, `PromptSafetyEvaluator`, `StickerAssetRepository`, and `PlatformAssetExporter` ports. The future Android runtime must implement those contracts without moving inference logic into routes or stores.
+Production delivery remains gated on the physical iPhone 12 acceptance run in
+[`docs/TESTING_AND_RELEASE.md`](docs/TESTING_AND_RELEASE.md). Failure of latency, memory, stability,
+offline, cancellation, recovery, gallery, Photos, or sharing criteria is a no-go, not a reason to
+enable cloud or mock inference.
 
-The authoritative product and target-release documentation lives under [`docs/`](./docs/). This Expo shell must not be represented as the Kotlin/Compose production application or as evidence that a model/runtime has passed the Week 1 feasibility gate.
+## Architecture
+
+Screens depend on `OnDeviceStickerGenerator`, `ModelBundleManager`, `PromptSafetyEvaluator`,
+`StickerAssetRepository`, and `PlatformAssetExporter`. Platform code stays behind those interfaces:
+
+| Platform | Native adapter                | Model                       | Background removal |
+| -------- | ----------------------------- | --------------------------- | ------------------ |
+| Android  | `expo-sticker-runtime-onnx`   | ONNX Runtime / NNAPI        | ML Kit             |
+| iOS      | `expo-sticker-runtime-coreml` | 4-bit chunked Core ML / ANE | Vision             |
+
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md),
+[`docs/MODEL_PIPELINE.md`](docs/MODEL_PIPELINE.md), and
+[`docs/TESTING_AND_RELEASE.md`](docs/TESTING_AND_RELEASE.md) for native boundaries, artifact
+lifecycle, and release gates.

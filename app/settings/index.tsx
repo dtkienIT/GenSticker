@@ -49,7 +49,7 @@ export default function SettingsScreen() {
         <Text selectable style={[typography.body, { color: colors.textSecondary }]}>
           {getStickerRuntimeMode() === 'mock'
             ? 'Deterministic local mock adapter'
-            : 'Android native adapter requested'}
+            : 'Native on-device adapter requested'}
         </Text>
         <Text style={[typography.caption, { color: colors.textMuted }]}>
           Mock output verifies the app flow only. It is not production inference or model

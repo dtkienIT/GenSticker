@@ -5,11 +5,15 @@
 ## Document Control
 
 **Contract version:** `1.0`
-**Document role:** Binding interface for the Android-first target release
+**Document role:** Binding interface for the Android and iOS target release
 **Authority:** [PRD § 5 Scope](./PRD_AI_Sticker_Generator.md#5-scope), [PRD § 7 User Flow](./PRD_AI_Sticker_Generator.md#7-user-flow), [PRD § 8 System Design & Architecture](./PRD_AI_Sticker_Generator.md#8-system-design--architecture), [PRD § 9 Tech Stack & Design Justification](./PRD_AI_Sticker_Generator.md#9-tech-stack--design-justification), and [PRD § 10 Content Safety & Moderation](./PRD_AI_Sticker_Generator.md#10-content-safety--moderation).
 **Architecture alignment:** [Architecture component responsibilities](./ARCHITECTURE.md#component-responsibilities) and [application-to-runtime boundary](./ARCHITECTURE.md#application-to-runtime-boundary).
 
 This document is the single observable interface between the application, native runtime, model pipeline, local storage, safety, and QA workstreams. Implementations may change internally only when their behaviour remains compatible with this contract. The PRD remains authoritative if this contract conflicts with it.
+
+Android reports `expo-sticker-runtime-onnx`; iOS reports `expo-sticker-runtime-coreml`. Both retain
+the same request, readiness, progress, cancellation, generated-output, and model-lifecycle shapes
+at contract version `1.0`.
 
 ## Contract Principles
 

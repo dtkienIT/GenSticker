@@ -26,6 +26,19 @@ describe('MockOnDeviceStickerGenerator', () => {
     });
   });
 
+  it('reports the iOS simulator mock runtime as supported', async () => {
+    const generator = new MockOnDeviceStickerGenerator({
+      platform: 'ios',
+      outputResolver: async () => 'file:///mock/chibi.png',
+      stepDelayMs: 0,
+    });
+
+    await expect(generator.getCapabilities()).resolves.toEqual({
+      supported: true,
+      adapterId: 'mock',
+    });
+  });
+
   it('emits deterministic stages and a transparent PNG output', async () => {
     const progress: GenerationProgressEvent[] = [];
     const generator = new MockOnDeviceStickerGenerator({

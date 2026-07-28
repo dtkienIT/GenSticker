@@ -1,6 +1,19 @@
 {
-  "platforms": ["android"],
+  "platforms": [
+    "android",
+    "apple"
+  ],
   "android": {
-    "modules": ["expo.modules.stickerruntime.ExpoStickerRuntimeModule"]
+    "modules": [
+      "expo.modules.stickerruntime.ExpoStickerRuntimeModule"
+    ]
+  },
+  "apple": {
+    "modules": [
+      "ExpoStickerRuntimeModule"
+    ],
+    "appDelegateSubscribers": [
+      "ExpoStickerRuntimeAppDelegateSubscriber"
+    ]
   }
 }

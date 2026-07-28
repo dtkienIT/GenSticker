@@ -1,5 +1,30 @@
 # Testing and Release
 
+## iOS 17 / TestFlight gate
+
+macOS CI must pass `swift test` for the native core, Expo SDK 57 iOS prebuild, CocoaPods resolution,
+and an unsigned simulator compile. The simulator profile uses explicit mock mode and is not
+performance evidence. Development, preview, and production EAS profiles use native mode.
+
+The approved Core ML release workflow must validate the pinned conversion, publish immutable
+assets only after the protected `model-release` approval, and produce the distribution manifest
+committed with the app. Verify the signed EAS application contains
+`com.apple.developer.kernel.increased-memory-limit=true`.
+
+On a physical iPhone 12 running iOS 17 or newer, record:
+
+- three consecutive transparent 512×512 outputs;
+- warm generation at or below 30 seconds and cold generation at or below 60 seconds;
+- peak RSS at or below 4 GB with no jetsam or crash;
+- offline generation after setup, cancellation followed by a clean retry, and recovery after
+  background/foreground and process relaunch;
+- durable gallery persistence plus correct add-only Photos export and share-sheet behavior;
+- setup success, insufficient storage, interruption/resumption, cancellation, corrupt archive,
+  corrupt internal file, upgrade, relaunch, and rollback behavior.
+
+Any failed threshold records a production no-go. Production must not enable cloud inference or
+mock fallback.
+
 ## Document Control
 
 **Document role:** Binding verification and release-acceptance procedure for the Android-first

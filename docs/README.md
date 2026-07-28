@@ -14,13 +14,20 @@ Source code implements approved decisions and contracts; it must not silently re
 
 ## Current Repository State
 
-The repository currently contains an Expo/TypeScript mock application that simulates sticker generation with local assets. It is useful as a UI scaffold, but it does not implement the on-device generation pipeline.
+The repository contains the shared Expo/TypeScript product, the Android ONNX native adapter, and
+the iOS Core ML native adapter. Deterministic mock mode remains available only through an explicit
+development setting. Native feasibility and release claims still require the physical-device
+evidence defined in the testing guide.
 
 An unused FastAPI scaffold also remains in the repository from the earlier prototype. It is historical code, not a release dependency or target architecture. The current codebase is therefore a starting point to realign, rather than evidence that the target release is implemented.
 
 ## Target Release State
 
-The target release is an [Android-first Kotlin and Jetpack Compose text-to-sticker experience](./PRD_AI_Sticker_Generator.md#application-stack-client) that runs fully locally after installation ([PRD assumptions](./PRD_AI_Sticker_Generator.md#assumptions)). The application accepts a prompt, applies on-device input filtering, submits a generation request through a runtime selected by the feasibility spike, segments the result into a transparent PNG generated asset, and stores it locally for preview, save, and OS sharing.
+The target release is the Expo SDK 57 text-to-sticker experience running fully locally after model
+setup. Android ONNX/NNAPI and iOS Core ML/ANE are separate native adapters behind contract `1.0`.
+The application accepts a prompt, applies on-device input filtering, generates through the selected
+adapter, segments the result into a transparent PNG, and stores it locally for preview, save, and
+OS sharing.
 
 The release has [no custom production backend](./PRD_AI_Sticker_Generator.md#constraints). It uses a [capability gate for the supported device floor](./PRD_AI_Sticker_Generator.md#constraints), preserves a usable local gallery, and follows the [Week 1 Plan A/B/C contingency decision](./PRD_AI_Sticker_Generator.md#contingency-ladder-formalized).
 
