@@ -9,8 +9,6 @@ import { StickerCard } from '../src/components/sticker/StickerCard';
 import { STICKER_STYLES } from '../src/constants/styles';
 import { useStickerStore } from '../src/store/useStickerStore';
 import { useAppTheme } from '../src/theme';
-import { ServiceModeBadge } from '../src/components/common/ServiceModeBadge';
-import { getStickerServiceMode } from '../src/services/factory';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -31,12 +29,7 @@ export default function HomeScreen() {
           },
         ]}
       >
-        <View
-          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          <Text style={styles.heroBadge}>✨ AI Powered</Text>
-          <ServiceModeBadge mode={getStickerServiceMode()} testID="service-mode-badge" />
-        </View>
+        <Text style={styles.heroBadge}>✨ AI Powered</Text>
         <Text style={[typography.h1, { color: colors.textPrimary, marginTop: spacing.xs }]}>
           Create stickers with AI
         </Text>
