@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import type { FC, ChangeEvent, DragEvent } from 'react';
-import { UploadCloud, X, Sparkles, AlertCircle, FileCheck } from 'lucide-react';
+import { UploadCloud, X, Sparkles, AlertCircle, FileCheck, LogIn } from 'lucide-react';
 import { useImageUpload } from '../../hooks/useImageUpload';
 import { StyleSelector } from './StyleSelector';
 import type { StickerStyleId } from '../../types/sticker';
@@ -10,6 +10,8 @@ interface ImageUploaderProps {
   selectedStyle: StickerStyleId;
   onSelectStyle: (style: StickerStyleId) => void;
   isGenerating?: boolean;
+  isAuthenticated: boolean;
+  onRequestAuth: () => void;
 }
 
 const SAMPLE_AVATARS = [
@@ -32,6 +34,8 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
   selectedStyle,
   onSelectStyle,
   isGenerating = false,
+  isAuthenticated,
+  onRequestAuth,
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const {
@@ -62,6 +66,11 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
   };
 
   const handleGenerateClick = () => {
+    if (!isAuthenticated) {
+      onRequestAuth();
+      return;
+    }
+
     if (file && previewUrl) {
       onStartGeneration(file, previewUrl);
     }
@@ -271,9 +280,15 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
 
         {/* CTA Generate Button */}
         <div style={{ marginTop: '32px', textAlign: 'center' }}>
+          {!isAuthenticated && (
+            <p style={{ fontSize: '0.85rem', color: 'var(--accent-pink)', marginBottom: '12px', fontWeight: 600 }}>
+              🔒 Bạn cần đăng nhập tài khoản để sử dụng dịch vụ sinh sticker AI
+            </p>
+          )}
+
           <button
             onClick={handleGenerateClick}
-            disabled={!file || isGenerating}
+            disabled={(!file && isAuthenticated) || isGenerating}
             className="btn-primary"
             style={{
               padding: '16px 40px',
@@ -283,8 +298,17 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
               justifyContent: 'center'
             }}
           >
-            <Sparkles size={22} className="animate-spin-slow" />
-            <span>Tạo Bộ 20 Sticker Ngay</span>
+            {isAuthenticated ? (
+              <>
+                <Sparkles size={22} className="animate-spin-slow" />
+                <span>Tạo Bộ 20 Sticker Ngay</span>
+              </>
+            ) : (
+              <>
+                <LogIn size={20} />
+                <span>Đăng Nhập Để Tạo Sticker</span>
+              </>
+            )}
           </button>
         </div>
 

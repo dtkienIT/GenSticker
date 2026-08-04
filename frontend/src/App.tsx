@@ -3,7 +3,9 @@ import { Footer } from './components/common/Footer';
 import { ImageUploader } from './components/upload/ImageUploader';
 import { ProcessingPipeline } from './components/processing/ProcessingPipeline';
 import { StickerGrid } from './components/gallery/StickerGrid';
+import { AuthModal } from './components/auth/AuthModal';
 import { useStickerGenerator } from './hooks/useStickerGenerator';
+import { useAuth } from './hooks/useAuth';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export function App() {
@@ -15,11 +17,30 @@ export function App() {
     toggleFavorite,
   } = useStickerGenerator();
 
+  const {
+    user,
+    isAuthenticated,
+    isAuthModalOpen,
+    authMode,
+    isLoading: isAuthLoading,
+    error: authError,
+    openAuthModal,
+    closeAuthModal,
+    setAuthMode,
+    login,
+    register,
+    quickDemoLogin,
+    logout,
+  } = useAuth();
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
       {/* Navbar */}
       <Header 
+        user={user}
+        onOpenAuth={openAuthModal}
+        onLogout={logout}
         onReset={resetGenerator} 
         hasActiveSession={state.status !== 'idle'} 
       />
@@ -33,6 +54,8 @@ export function App() {
             onStartGeneration={startGeneration}
             selectedStyle={state.selectedStyle}
             onSelectStyle={setSelectedStyle}
+            isAuthenticated={isAuthenticated}
+            onRequestAuth={() => openAuthModal('login')}
           />
         )}
 
@@ -84,6 +107,19 @@ export function App() {
         )}
 
       </main>
+
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        mode={authMode}
+        isLoading={isAuthLoading}
+        error={authError}
+        onClose={closeAuthModal}
+        onSwitchMode={setAuthMode}
+        onLogin={login}
+        onRegister={register}
+        onQuickDemoLogin={quickDemoLogin}
+      />
 
       {/* Footer */}
       <Footer />

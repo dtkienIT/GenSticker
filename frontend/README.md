@@ -1,32 +1,41 @@
-# React + TypeScript + Vite
+# 🚀 GenSticker AI - Frontend Web App (ReactJS + TypeScript)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Thư mục này chứa toàn bộ mã nguồn **Frontend Web Application** cho dự án **GenSticker AI**.
 
-Currently, two official plugins are available:
+## 🛠 Công Nghệ Sử Dụng
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Core Framework**: React 19 + TypeScript
+- **Build Tool**: Vite (HMR siêu nhanh)
+- **Styling**: Vanilla CSS (Design System phong cách Cyber Dark Glassmorphism)
+- **Icons**: `lucide-react`
+- **Effects**: `canvas-confetti`
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## ⚡ Hướng Dẫn Nhanh Cho Developer
 
-## Expanding the Oxlint configuration
+```bash
+# 1. Cài đặt thư viện
+npm install
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+# 2. Chạy Dev Server tại http://localhost:5173
+npm run dev
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+# 3. Kiểm tra mã nguồn & Build bản Production
+npm run build
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+---
+
+## 🏛 Kiến Trúc & Cấu Trúc File (`src/`)
+
+- `src/types/`: Khai báo kiểu TypeScript (`StickerItem`, `GenerationState`, `ProcessStep`, `StickerStyle`).
+- `src/mock/`: Dữ liệu giả lập 20 sticker & 5 bước pipeline xử lý AI.
+- `src/services/`: Lớp dịch vụ `StickerService` đóng gói logic async và tải file.
+- `src/hooks/`: Custom hooks (`useImageUpload`, `useStickerGenerator`) xử lý logic độc lập với UI.
+- `src/components/`: Component giao diện chia thành `common`, `upload`, `processing`, `gallery`.
+- `src/index.css`: Bảng màu CSS Variables & hiệu ứng Glassmorphism.
+
+---
+
+> Chi tiết kiến trúc tổng quan xem tại file `../README.md` ở thư mục gốc.
