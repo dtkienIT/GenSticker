@@ -6,9 +6,12 @@ import { StickerGrid } from './components/gallery/StickerGrid';
 import { AuthModal } from './components/auth/AuthModal';
 import { useStickerGenerator } from './hooks/useStickerGenerator';
 import { useAuth } from './hooks/useAuth';
+import { useTheme } from './hooks/useTheme';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export function App() {
+  const { theme, toggleTheme } = useTheme();
+
   const {
     state,
     setSelectedStyle,
@@ -39,6 +42,8 @@ export function App() {
       {/* Navbar */}
       <Header 
         user={user}
+        theme={theme}
+        onToggleTheme={toggleTheme}
         onOpenAuth={openAuthModal}
         onLogout={logout}
         onReset={resetGenerator} 

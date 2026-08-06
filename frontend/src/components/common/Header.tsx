@@ -1,9 +1,12 @@
 import type { FC } from 'react';
 import type { User } from '../../types/auth';
-import { Sparkles, Layers, Globe, LogIn, LogOut, User as UserIcon } from 'lucide-react';
+import type { Theme } from '../../hooks/useTheme';
+import { Sparkles, Layers, Globe, LogIn, LogOut, User as UserIcon, Sun, Moon } from 'lucide-react';
 
 interface HeaderProps {
   user: User | null;
+  theme: Theme;
+  onToggleTheme: () => void;
   onOpenAuth: (mode?: 'login' | 'register') => void;
   onLogout: () => void;
   onReset?: () => void;
@@ -12,6 +15,8 @@ interface HeaderProps {
 
 export const Header: FC<HeaderProps> = ({
   user,
+  theme,
+  onToggleTheme,
   onOpenAuth,
   onLogout,
   onReset,
@@ -137,6 +142,33 @@ export const Header: FC<HeaderProps> = ({
               </button>
             </div>
           )}
+
+          {/* Light/Dark Theme Toggle Button */}
+          <button
+            onClick={onToggleTheme}
+            className="btn-secondary"
+            style={{ 
+              padding: '8px 14px', 
+              borderRadius: '99px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer'
+            }}
+            title={theme === 'dark' ? 'Chuyển sang Giao diện Sáng' : 'Chuyển sang Giao diện Tối'}
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun size={18} color="#fbbf24" className="animate-spin-slow" />
+                <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>Giao diện Sáng</span>
+              </>
+            ) : (
+              <>
+                <Moon size={18} color="#8b5cf6" />
+                <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>Giao diện Tối</span>
+              </>
+            )}
+          </button>
 
           <a 
             href="https://github.com" 

@@ -86,7 +86,7 @@ export const StyleSelector: FC<StyleSelectorProps> = ({
                 {/* Details */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: isSelected ? '#e9d5ff' : 'var(--text-primary)' }}>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: isSelected ? 'var(--accent-purple)' : 'var(--text-primary)' }}>
                       {style.name}
                     </span>
                   </div>
