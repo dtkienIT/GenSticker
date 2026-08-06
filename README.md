@@ -53,6 +53,7 @@ GenSticker/
 │   │   ├── database.py           # Kết nối Supabase SDK & Postgres
 │   │   └── config.py             # Cấu hình biến môi trường
 │   ├── run.py                    # Khởi chạy Uvicorn Backend server
+│   ├── requirements.txt          # Danh sách thư viện Python
 │   └── README.md                 # Tài liệu hướng dẫn Backend
 ├── frontend/                     # Mã nguồn React Frontend Web App
 │   ├── src/
@@ -63,12 +64,15 @@ GenSticker/
 │   └── README.md                 # Tài liệu hướng dẫn Frontend
 ├── .env.example                  # Mẫu biến môi trường đồng bộ với .env
 ├── .env                          # Biến môi trường thực tế (Git ignored)
+├── requirements.txt              # Danh sách thư viện Python chính
 └── README.md                     # Tài liệu tổng quan dự án
 ```
 
 ---
 
-## ⚡ Hướng Dẫn Khởi Chạy Dự Án Cục Bộ (Local Setup)
+## ⚡ Hướng Dẫn Khởi Chạy Dự Án Cục Bộ (Local Setup cho Máy Mới)
+
+Dành cho người mới clone dự án về máy:
 
 ### 1. Cấu Hình Biến Môi Trường (`.env`)
 Tạo file `.env` tại thư mục gốc bằng cách sao chép từ `.env.example`:
@@ -77,17 +81,23 @@ cp .env.example .env
 ```
 Điền đầy đủ thông tin `SUPABASE_URL`, `SUPABASE_ANON_KEY` và `TELEGRAM_BOT_TOKEN`.
 
-### 2. Khởi Chạy Backend (FastAPI)
-```bash
-# Di chuyển vào thư mục backend và kích hoạt venv
-.venv\Scripts\activate
+### 2. Khởi Tạo Môi Trường & Chạy Backend (FastAPI)
+```powershell
+# a. Tạo và kích hoạt môi trường ảo Python .venv
+python -m venv .venv
+.venv\Scripts\activate        # Trên Windows
+# source .venv/bin/activate   # Trên macOS / Linux
 
-# Khởi chạy server FastAPI (Port 8000)
+# b. Cài đặt các thư viện Python
+pip install -r requirements.txt
+
+# c. Khởi chạy server FastAPI Backend (Port 8000)
 python backend/run.py
 ```
 > Swagger UI documentation: **`http://localhost:8000/docs`**
 
-### 3. Khởi Chạy Frontend (React Vite)
+### 3. Cài Đặt & Khởi Chạy Frontend (React Vite)
+Open a new terminal window:
 ```bash
 cd frontend
 npm install

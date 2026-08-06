@@ -26,20 +26,31 @@ backend/
 ├── data/                     # Thư mục dữ liệu cục bộ & trạng thái bot
 │   ├── pending_telegram_packs.json # Trạng thái các pack đang chờ tạo
 │   └── telegram_last_update_id.txt # Offset ID polling Telegram
+├── requirements.txt          # Danh sách gói thư viện Python backend
 ├── run.py                    # Script khởi chạy Uvicorn server
 └── README.md                 # Tài liệu hướng dẫn Backend
 ```
 
 ---
 
-## ⚡ Hướng Dẫn Khởi Chạy Backend Cục Bộ
+## ⚡ Hướng Dẫn Khởi Chạy Backend Cục Bộ (Cho Máy Mới)
 
-1. **Khởi động môi trường Virtualenv (Python)**:
+1. **Khởi tạo và kích hoạt môi trường Virtualenv (Python)**:
    ```powershell
-   .venv\Scripts\activate
+   # Tạo virtualenv .venv tại thư mục gốc nếu chưa có
+   python -m venv .venv
+
+   # Kích hoạt venv
+   .venv\Scripts\activate        # Trên Windows
+   # source .venv/bin/activate   # Trên macOS / Linux
    ```
 
-2. **Chạy FastAPI Backend Server**:
+2. **Cài đặt thư viện phụ thuộc**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Chạy FastAPI Backend Server**:
    ```bash
    python backend/run.py
    ```
@@ -48,7 +59,7 @@ backend/
    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
    ```
 
-3. **Truy cập tài liệu OpenAPI / Swagger UI**:
+4. **Truy cập tài liệu OpenAPI / Swagger UI**:
    > 🌐 **`http://localhost:8000/docs`** (Giao diện Swagger tương tác trực tiếp các API)
 
 ---
