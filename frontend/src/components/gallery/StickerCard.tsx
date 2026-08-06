@@ -34,9 +34,10 @@ export const StickerCard: FC<StickerCardProps> = ({
         flexDirection: 'column',
         alignItems: 'center',
         position: 'relative',
-        background: 'rgba(22, 31, 52, 0.6)',
+        background: 'var(--bg-card)',
         backdropFilter: 'blur(10px)',
         border: '1px solid var(--border-subtle)',
+        boxShadow: 'var(--shadow-card)',
         overflow: 'hidden'
       }}
     >
@@ -52,8 +53,8 @@ export const StickerCard: FC<StickerCardProps> = ({
         <button
           onClick={handleFavorite}
           style={{
-            background: 'rgba(15, 23, 42, 0.7)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            background: 'var(--btn-secondary-bg)',
+            border: '1px solid var(--border-subtle)',
             borderRadius: '50%',
             width: '32px',
             height: '32px',
@@ -119,7 +120,7 @@ export const StickerCard: FC<StickerCardProps> = ({
           gap: '8px',
           marginTop: '12px',
           paddingTop: '10px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.06)'
+          borderTop: '1px solid var(--border-subtle)'
         }}>
           <button
             onClick={() => onInspect(sticker)}

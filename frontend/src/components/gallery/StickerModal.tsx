@@ -38,7 +38,7 @@ export const StickerModal: FC<StickerModalProps> = ({
       alignItems: 'center',
       justifyContent: 'center',
       padding: '20px',
-      background: 'rgba(5, 8, 15, 0.85)',
+      background: 'var(--modal-overlay)',
       backdropFilter: 'blur(12px)',
       animation: 'fadeIn 0.2s ease-out'
     }}>
@@ -112,7 +112,7 @@ export const StickerModal: FC<StickerModalProps> = ({
                 fontSize: '0.75rem',
                 padding: '4px 10px',
                 borderRadius: '6px',
-                background: 'rgba(255, 255, 255, 0.06)',
+                background: 'var(--btn-secondary-bg)',
                 color: 'var(--text-muted)'
               }}>
                 #{tag}
@@ -128,7 +128,7 @@ export const StickerModal: FC<StickerModalProps> = ({
           gap: '12px',
           padding: '12px',
           borderRadius: 'var(--radius-sm)',
-          background: 'rgba(255, 255, 255, 0.03)',
+          background: 'var(--input-bg)',
           border: '1px solid var(--border-subtle)',
           marginBottom: '28px',
           textAlign: 'center',

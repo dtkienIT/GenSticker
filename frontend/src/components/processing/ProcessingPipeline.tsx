@@ -99,13 +99,13 @@ export const ProcessingPipeline: FC<ProcessingPipelineProps> = ({ state }) => {
                   background: isCurrent 
                     ? 'rgba(139, 92, 246, 0.12)' 
                     : isCompleted 
-                    ? 'rgba(16, 185, 129, 0.06)' 
-                    : 'rgba(255, 255, 255, 0.02)',
+                    ? 'rgba(16, 185, 129, 0.08)' 
+                    : 'var(--btn-secondary-bg)',
                   border: isCurrent 
                     ? '1px solid var(--accent-purple)' 
                     : isCompleted 
                     ? '1px solid rgba(16, 185, 129, 0.3)' 
-                    : '1px solid rgba(255, 255, 255, 0.05)',
+                    : '1px solid var(--border-subtle)',
                   transition: 'all 0.3s ease',
                   display: 'flex',
                   alignItems: 'center',
@@ -125,7 +125,7 @@ export const ProcessingPipeline: FC<ProcessingPipelineProps> = ({ state }) => {
                     ? 'rgba(16, 185, 129, 0.2)' 
                     : isCurrent 
                     ? 'rgba(139, 92, 246, 0.2)' 
-                    : 'rgba(255, 255, 255, 0.05)',
+                    : 'var(--btn-secondary-bg)',
                   color: isCompleted ? '#10b981' : isCurrent ? '#c084fc' : 'var(--text-muted)'
                 }}>
                   {isCompleted ? (
@@ -143,7 +143,7 @@ export const ProcessingPipeline: FC<ProcessingPipelineProps> = ({ state }) => {
                     <h4 style={{ 
                       fontSize: '0.98rem', 
                       fontWeight: 700, 
-                      color: isCompleted ? '#34d399' : isCurrent ? '#e9d5ff' : 'var(--text-secondary)' 
+                      color: isCompleted ? '#10b981' : isCurrent ? 'var(--accent-purple)' : 'var(--text-primary)' 
                     }}>
                       Bước {idx + 1}: {step.title}
                     </h4>
@@ -179,7 +179,7 @@ export const ProcessingPipeline: FC<ProcessingPipelineProps> = ({ state }) => {
           border: '1px solid rgba(139, 92, 246, 0.2)',
           textAlign: 'center',
           fontSize: '0.88rem',
-          color: '#e9d5ff',
+          color: 'var(--text-primary)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

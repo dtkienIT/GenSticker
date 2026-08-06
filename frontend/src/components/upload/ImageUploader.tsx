@@ -174,7 +174,7 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
                     type="button"
                     onClick={() => handleSampleClick(sample.url, sample.name)}
                     style={{
-                      background: 'rgba(255, 255, 255, 0.05)',
+                      background: 'var(--btn-secondary-bg)',
                       border: '1px solid var(--border-subtle)',
                       borderRadius: 'var(--radius-sm)',
                       padding: '6px 12px',
@@ -206,7 +206,7 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
                 overflow: 'hidden',
                 border: '2px solid var(--accent-purple)',
                 boxShadow: 'var(--shadow-glow)',
-                background: '#000'
+                background: 'var(--bg-secondary)'
               }}>
                 <img 
                   src={previewUrl} 

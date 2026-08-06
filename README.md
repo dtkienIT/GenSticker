@@ -1,29 +1,43 @@
 # 🎨 GenSticker AI - Automatic AI Sticker Pack Generator
 
-**GenSticker AI** là ứng dụng web cho phép người dùng tải lên 1 bức ảnh chân dung/avatar duy nhất và tự động sinh ra trọn **bộ 20 sticker biểu cảm** sắc nét (Vui, Buồn, Phẫn Nộ, Thả Tim, Cày Code, Quẩy Tiệc...) nhờ quy trình xử lý đồ họa AI 5 bước.
+**GenSticker AI** là ứng dụng web & Telegram Bot thông minh cho phép người dùng tải lên 1 bức ảnh chân dung/avatar duy nhất và tự động sinh ra trọn **bộ 20 sticker biểu cảm** sắc nét (Vui, Buồn, Phẫn Nộ, Thả Tim, Cày Code, Quẩy Tiệc...) nhờ quy trình xử lý đồ họa AI 5 bước.
 
-Giao diện ứng dụng được thiết kế theo phong cách **Cyber Dark Glassmorphism** hiện đại, mượt mà và tối ưu trải nghiệm người dùng (UI/UX).
+> 📌 **Branch hiện tại**: Các tính năng mới nhất và mã nguồn đã hoàn thiện được đẩy lên nhánh **`kien_v4`**.
 
 ---
 
-## 🏗 Kiến Trúc Frontend (Architecture)
+## 🔥 Các Tính Năng Nổi Bật (Key Features)
 
-Ứng dụng Frontend được xây dựng bằng **ReactJS (TypeScript) + Vite**, tuân thủ nguyên tắc **Clean Architecture** (Tách biệt hoàn toàn giữa giao diện UI và xử lý nghiệp vụ Business Logic). 
+1. **🎨 Hệ Thống Giao Diện Sáng/Tối (Light & Dark Theme System)**:
+   - **Dark Mode**: Phong cách *Cyber Dark Glassmorphism* (`#0b0f19`) với hiệu ứng Neon rực rỡ (Purple, Pink, Cyan).
+   - **Light Mode**: Phong cách *Pastel Starry Ocean* (`#eef2ff`) tươi sáng, dịu mắt với họa tiết nền lưới chấm sao, card trắng floating nổi bật.
+   - **Custom ThemeToggle**: Nút chuyển mode công tắc trượt hạt đậu mềm mại kết hợp biểu tượng Mặt Trời ☀️ và Mặt Trăng 🌙.
 
-Việc phân tách này giúp mã nguồn vô cùng sạch, dễ bảo trì và có thể **tái sử dụng 90% logic (Hooks, Services, Types, Mock data)** khi chuyển đổi dự án sang **React Native (Expo)** để làm bản Mobile sau này.
+2. **🤖 Telegram Bot 1-Click Export & Thanh Tiến Độ Kép (Dual Progress Tracking)**:
+   - Xuất trọn bộ 20 sticker trực tiếp lên Telegram chỉ với 1 cú click.
+   - Hiển thị **2 thanh tiến độ thời gian thực** ngay trên tin nhắn Telegram (Tiến độ tổng thể bộ sticker + Tiến độ load/upload từng sticker cá nhân).
+   - Cơ chế chống trùng lặp pack 3 lớp (Persistent offset, memory lock, atomic removal).
+
+3. **⚡ FastAPI & Supabase Backend Core**:
+   - Kết nối trực tiếp PostgreSQL và Supabase Storage Bucket `stickers`.
+   - API Auth & Session Persistence.
+   - Tự động fallback đường dẫn pack Telegram khi gặp lỗi `SHORTNAME_OCCUPY_FAILED`.
+
+---
+
+## 🏗 Kiến Trúc Hệ Thống (Architecture)
 
 ```
-GenSticker Web Architecture:
-[ UI Layer (Components & AuthModal) ] 
-       │
-       ▼ (gọi)
-[ Custom Hooks (useImageUpload, useStickerGenerator, useAuth) ]
-       │
-       ▼ (gọi)
-[ Service Layer (StickerService, AuthService) ]
-       │
-       ▼ (trả về)
-[ Data Types / Session Persistence (localStorage, Types & Mock Pipeline) ]
+GenSticker Web & Backend Architecture:
+[ React 19 Frontend (Vite + TypeScript) ] 
+       │  ├── Theme Engine (useTheme & ThemeToggle)
+       │  ├── AuthModal & TelegramExportModal
+       │  └── Custom Hooks (useImageUpload, useStickerGenerator)
+       ▼ (REST API / Async HTTP)
+[ FastAPI Backend Engine (Python 3.11+) ]
+       │  ├── Telegram Service (Dual Progress Polling)
+       │  ├── Sticker AI Pipeline (5-Step Graphics Engine)
+       │  └── Supabase Integration (Auth, Storage & Postgres)
 ```
 
 ---
@@ -32,95 +46,63 @@ GenSticker Web Architecture:
 
 ```text
 GenSticker/
-├── frontend/                     # Thư mục mã nguồn Frontend Web
-│   ├── public/                   # Tài nguyên tĩnh (Favicon, Icons)
+├── backend/                      # Mã nguồn FastAPI Backend Service
+│   ├── app/
+│   │   ├── api/                  # Routers API (auth, stickers, health)
+│   │   ├── services/             # Telegram service, Supabase service & AI pipeline
+│   │   ├── database.py           # Kết nối Supabase SDK & Postgres
+│   │   └── config.py             # Cấu hình biến môi trường
+│   ├── run.py                    # Khởi chạy Uvicorn Backend server
+│   └── README.md                 # Tài liệu hướng dẫn Backend
+├── frontend/                     # Mã nguồn React Frontend Web App
 │   ├── src/
-│   │   ├── components/           # Các UI Components được chia nhỏ
-│   │   │   ├── common/           # Component dùng chung (Header, Footer, ProgressBar)
-│   │   │   ├── upload/           # Giao diện kéo thả tải ảnh (ImageUploader, StyleSelector)
-│   │   │   ├── processing/       # Giao diện tiến trình AI 5 bước (ProcessingPipeline)
-│   │   │   └── gallery/          # Giao diện bộ sưu tập kết quả (StickerGrid, StickerCard, StickerModal)
-│   │   ├── hooks/                # Quản lý State Machine & Logic nghiệp vụ
-│   │   │   ├── useImageUpload.ts # Logic validate file, preview ảnh & drag-drop
-│   │   │   └── useStickerGenerator.ts # State machine quản lý pipeline sinh sticker
-│   │   ├── services/             # Lớp dịch vụ API / Mock async processing
-│   │   │   └── stickerService.ts # Giả lập tiến trình AI 5 bước & tải file HD
-│   │   ├── mock/                 # Dữ liệu giả lập 20 sticker & 8 phong cách nghệ thuật
-│   │   │   └── mockStickers.ts
-│   │   ├── types/                # Định nghĩa kiểu dữ liệu TypeScript (Interfaces)
-│   │   │   └── sticker.ts
-│   │   ├── App.tsx               # Component chính điều phối các màn hình
-│   │   ├── index.css             # Design System (CSS Variables, Glassmorphism, Animations)
-│   │   └── main.tsx              # Entry point React Vite
-│   ├── package.json              # Khai báo Dependencies
-│   └── vite.config.ts            # Cấu hình Vite bundler
-├── .gitignore                    # Cấu hình git ignore (loại trừ .venv, node_modules, .env)
-└── README.md                     # Tài liệu hướng dẫn dự án
+│   │   ├── components/           # Components chia nhỏ (common, upload, processing, gallery)
+│   │   ├── hooks/                # Custom hooks (useTheme, useImageUpload, useStickerGenerator)
+│   │   ├── services/             # Service API client & Telegram export service
+│   │   └── index.css             # CSS Variables (Theme token Sáng/Tối, Glassmorphism)
+│   └── README.md                 # Tài liệu hướng dẫn Frontend
+├── .env.example                  # Mẫu biến môi trường đồng bộ với .env
+├── .env                          # Biến môi trường thực tế (Git ignored)
+└── README.md                     # Tài liệu tổng quan dự án
 ```
 
 ---
 
 ## ⚡ Hướng Dẫn Khởi Chạy Dự Án Cục Bộ (Local Setup)
 
-Dành cho các thành viên trong team sau khi `clone` repository về máy:
+### 1. Cấu Hình Biến Môi Trường (`.env`)
+Tạo file `.env` tại thư mục gốc bằng cách sao chép từ `.env.example`:
+```bash
+cp .env.example .env
+```
+Điền đầy đủ thông tin `SUPABASE_URL`, `SUPABASE_ANON_KEY` và `TELEGRAM_BOT_TOKEN`.
 
-### 1. Yêu cầu môi trường (Prerequisites)
-- **Node.js**: Phiên bản `>= 18.0.0` (khuyên dùng v20 LTS)
-- **npm** hoặc **yarn**
+### 2. Khởi Chạy Backend (FastAPI)
+```bash
+# Di chuyển vào thư mục backend và kích hoạt venv
+.venv\Scripts\activate
 
-### 2. Các bước cài đặt & Chạy ứng dụng
+# Khởi chạy server FastAPI (Port 8000)
+python backend/run.py
+```
+> Swagger UI documentation: **`http://localhost:8000/docs`**
 
-1. **Mở terminal và di chuyển vào thư mục `frontend`**:
-   ```bash
-   cd frontend
-   ```
-
-2. **Cài đặt các gói phụ thuộc (Dependencies)**:
-   ```bash
-   npm install
-   ```
-
-3. **Khởi chạy ứng dụng ở chế độ Development**:
-   ```bash
-   npm run dev
-   ```
-   > 🚀 Ứng dụng sẽ chạy tại địa chỉ: **`http://localhost:5173/`**
-
-4. **Kiểm tra biên dịch & Build bản Production**:
-   ```bash
-   npm run build
-   ```
-   > Lệnh này sẽ chạy kiểm tra TypeScript (`tsc -b`) và đóng gói tài nguyên vào thư mục `dist/`.
+### 3. Khởi Chạy Frontend (React Vite)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+> Web App running at: **`http://localhost:5173/`**
 
 ---
 
-## 🎨 Phong Cách Thiết Kế (Design System)
+## 📝 Nhánh Git & Đóng Góp
 
-- **Theme**: Cyber Dark Mode chủ đạo (`#0b0f19`) kết hợp hiệu ứng neon lấp lánh (Purple `#7c3aed`, Pink `#ec4899`, Cyan `#06b6d4`).
-- **Glassmorphism**: Sử dụng lớp phủ kính mờ `backdrop-filter: blur(12px)` và viền phản quang `rgba(255, 255, 255, 0.1)`.
-- **Typography**: Google Fonts (*Plus Jakarta Sans* & *Outfit*).
-- **Phản hồi tương tác (UX)**:
-  - Thanh tiến trình động hiển thị 5 bước AI chuyên sâu.
-  - Pháo hoa ăn mừng (`canvas-confetti`) khi sinh sticker xong.
-  - Modal soi thông số kỹ thuật (Resolution 1024x1024, PNG Transparent, KB size).
-  - Tìm kiếm & Lọc sticker theo tag/cảm xúc.
-
----
-
-## 🔄 Luồng Hoạt Động (Application Workflow)
-
-1. **Upload Màn Hình**: Người dùng kéo thả ảnh hoặc chọn ảnh mẫu (Chibi, Mèo Máy, Anime).
-2. **Chọn Style**: Chọn 1 trong 8 phong cách nghệ thuật (3D Chibi Cutie, Anime Kawaii, Cyberpunk Neon, Pixel Art...).
-3. **Pipeline Progress**: Bấm nút **"Tạo Bộ 20 Sticker Ngay"** -> Ứng dụng mô phỏng 5 bước AI trong ~12 giây.
-4. **Kết Quả**: Hiển thị bộ 20 Sticker -> Hỗ trợ tải từng sticker HD hoặc tải trọn bộ (.PNG zip/batch).
-
----
-
-## 📝 Đóng Góp & Phát Triển Tiếp Theo
-
-- **Tích hợp Backend API**: Thay thế hàm giả lập trong `src/services/stickerService.ts` bằng lệnh gọi API `axios/fetch` thực tế tới Backend FastAPI/Python.
-- **Phát triển Mobile (React Native)**: Copy các thư mục `types/`, `hooks/`, `services/`, `mock/` sang dự án Expo để xây dựng ứng dụng di động iOS/Android.
-
----
+Mọi thay đổi mới nhất được cam kết và đẩy lên nhánh:
+```bash
+git checkout kien_v4
+git pull origin kien_v4
+```
 
 *Phát triển bởi đội ngũ GenSticker AI Team.*

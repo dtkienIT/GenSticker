@@ -1,14 +1,17 @@
-# 🚀 GenSticker AI - Frontend Web App (ReactJS + TypeScript)
+# 🚀 GenSticker AI - Frontend Web App (React 19 + TypeScript)
 
 Thư mục này chứa toàn bộ mã nguồn **Frontend Web Application** cho dự án **GenSticker AI**.
+
+---
 
 ## 🛠 Công Nghệ Sử Dụng
 
 - **Core Framework**: React 19 + TypeScript
 - **Build Tool**: Vite (HMR siêu nhanh)
-- **Styling**: Vanilla CSS (Design System phong cách Cyber Dark Glassmorphism)
+- **Styling**: Vanilla CSS (Design System phong cách Cyber Dark Glassmorphism & Pastel Starry Light Mode)
 - **Icons**: `lucide-react`
 - **Effects**: `canvas-confetti`
+- **Theme System**: Custom `useTheme` hook với `localStorage` persistence & công tắc trượt `ThemeToggle`.
 
 ---
 
@@ -31,10 +34,10 @@ npm run build
 
 - `src/types/`: Khai báo kiểu TypeScript (`StickerItem`, `GenerationState`, `ProcessStep`, `StickerStyle`).
 - `src/mock/`: Dữ liệu giả lập 20 sticker & 5 bước pipeline xử lý AI.
-- `src/services/`: Lớp dịch vụ `StickerService` đóng gói logic async và tải file.
-- `src/hooks/`: Custom hooks (`useImageUpload`, `useStickerGenerator`) xử lý logic độc lập với UI.
-- `src/components/`: Component giao diện chia thành `common`, `upload`, `processing`, `gallery`.
-- `src/index.css`: Bảng màu CSS Variables & hiệu ứng Glassmorphism.
+- `src/services/`: Lớp dịch vụ `StickerService` đóng gói logic async, Telegram export, và tải file.
+- `src/hooks/`: Custom hooks (`useTheme`, `useImageUpload`, `useStickerGenerator`) xử lý logic độc lập với UI.
+- `src/components/`: Component giao diện chia thành `common`, `upload`, `processing`, `gallery`, `auth`.
+- `src/index.css`: Bảng màu CSS Variables (Dark & Light tokens) & hiệu ứng Glassmorphism.
 
 ---
 
