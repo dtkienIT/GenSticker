@@ -51,7 +51,7 @@ export const AuthModal: FC<AuthModalProps> = ({
       alignItems: 'center',
       justifyContent: 'center',
       padding: '20px',
-      background: 'rgba(5, 8, 15, 0.88)',
+      background: 'var(--modal-overlay)',
       backdropFilter: 'blur(16px)',
       animation: 'fadeIn 0.25s ease-out'
     }}>
@@ -200,7 +200,7 @@ export const AuthModal: FC<AuthModalProps> = ({
                     width: '100%',
                     padding: '12px 14px 12px 42px',
                     borderRadius: 'var(--radius-sm)',
-                    background: 'rgba(255, 255, 255, 0.05)',
+                    background: 'var(--input-bg)',
                     border: '1px solid var(--border-subtle)',
                     color: 'var(--text-primary)',
                     fontSize: '0.9rem',
@@ -228,7 +228,7 @@ export const AuthModal: FC<AuthModalProps> = ({
                   width: '100%',
                   padding: '12px 14px 12px 42px',
                   borderRadius: 'var(--radius-sm)',
-                  background: 'rgba(255, 255, 255, 0.05)',
+                  background: 'var(--input-bg)',
                   border: '1px solid var(--border-subtle)',
                   color: 'var(--text-primary)',
                   fontSize: '0.9rem',
@@ -255,7 +255,7 @@ export const AuthModal: FC<AuthModalProps> = ({
                   width: '100%',
                   padding: '12px 42px 12px 42px',
                   borderRadius: 'var(--radius-sm)',
-                  background: 'rgba(255, 255, 255, 0.05)',
+                  background: 'var(--input-bg)',
                   border: '1px solid var(--border-subtle)',
                   color: 'var(--text-primary)',
                   fontSize: '0.9rem',
@@ -321,8 +321,8 @@ export const AuthModal: FC<AuthModalProps> = ({
             width: '100%',
             justifyContent: 'center',
             padding: '12px',
-            borderColor: 'rgba(139, 92, 246, 0.3)',
-            color: '#e9d5ff'
+            borderColor: 'var(--border-glow)',
+            color: 'var(--text-primary)'
           }}
         >
           <CheckCircle2 size={18} color="#10b981" />

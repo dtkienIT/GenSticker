@@ -127,7 +127,7 @@ export const TelegramExportModal: FC<TelegramExportModalProps> = ({
       alignItems: 'center',
       justifyContent: 'center',
       padding: '20px',
-      background: 'rgba(5, 8, 16, 0.85)',
+      background: 'var(--modal-overlay)',
       backdropFilter: 'blur(12px)',
       animation: 'fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
     }}>

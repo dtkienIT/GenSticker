@@ -7,7 +7,7 @@ export const Footer: FC = () => {
       borderTop: '1px solid var(--border-subtle)', 
       marginTop: '80px', 
       padding: '32px 24px', 
-      background: 'rgba(11, 15, 25, 0.8)',
+      background: 'var(--footer-bg)',
       backdropFilter: 'blur(10px)'
     }}>
       <div style={{ 
