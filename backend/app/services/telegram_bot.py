@@ -273,23 +273,29 @@ class TelegramBot:
             total = min(len(sticker_titles), 20) if sticker_titles else 20
             has_real_images = len(sticker_images) > 0
 
-            # Notify user
+            # Send initial progress message (we'll update it)
+            first_title = sticker_titles[0] if sticker_titles else "Sticker 1"
             async with httpx.AsyncClient(timeout=10) as client:
-                await client.post(f"{self.base_url}/sendMessage", json={
+                msg_resp = await client.post(f"{self.base_url}/sendMessage", json={
                     "chat_id": chat_id,
-                    "text": f"⏳ Đang tạo bộ sticker \"{pack_title}\" cho bạn... ({total} sticker)\n\n⚡ Vui lòng đợi khoảng 15-30 giây..."
+                    "text": self._build_progress_text(pack_title, 0, total, 1, first_title, 10, "Đang xử lý ảnh..."),
+                    "parse_mode": "HTML"
                 })
+                msg_data = msg_resp.json()
+                progress_msg_id = msg_data.get("result", {}).get("message_id")
 
             # Step 1: Upload first sticker file
             if has_real_images and len(sticker_images) > 0:
                 first_png = self._decode_base64_image(sticker_images[0])
             else:
-                first_title = sticker_titles[0] if sticker_titles else "Sticker 1"
                 first_png = generate_sticker_png(0, EMOJI_LIST[0], first_title)
             first_file_id = await self._upload_sticker_file(user_id, first_png)
 
             if not first_file_id:
                 raise Exception("Không thể upload file sticker đầu tiên lên Telegram")
+
+            # Update progress: Sticker 1 at 60% (Uploaded)
+            await self._update_progress(chat_id, progress_msg_id, pack_title, 0, total, 1, first_title, 60, "Đang tạo sticker set...")
 
             # Step 2: Create sticker set with first sticker
             stickers_json = json.dumps([{
@@ -331,13 +337,20 @@ class TelegramBot:
 
                 raise Exception(f"Telegram API error: {error_desc}")
 
+            # Sticker 1 complete -> overall 1/total
+            await self._update_progress(chat_id, progress_msg_id, pack_title, 1, total, 1, first_title, 100, "Đã xong!")
+
             # Step 3: Add remaining stickers one by one
             for i in range(1, total):
                 emoji = EMOJI_LIST[i % len(EMOJI_LIST)]
+                title = sticker_titles[i] if i < len(sticker_titles) else f"Sticker {i + 1}"
+
+                # Update progress: Starting Sticker i+1
+                await self._update_progress(chat_id, progress_msg_id, pack_title, i, total, i + 1, title, 30, "Đang xử lý...")
+
                 if has_real_images and i < len(sticker_images):
                     png_data = self._decode_base64_image(sticker_images[i])
                 else:
-                    title = sticker_titles[i] if i < len(sticker_titles) else f"Sticker {i + 1}"
                     png_data = generate_sticker_png(i, emoji, title)
 
                 file_id = await self._upload_sticker_file(user_id, png_data)
@@ -364,7 +377,10 @@ class TelegramBot:
                     if not add_result.get("ok"):
                         logger.warning(f"addStickerToSet {i} failed: {add_result.get('description')}")
 
-                await asyncio.sleep(0.4)
+                # Update progress: Sticker i+1 complete
+                await self._update_progress(chat_id, progress_msg_id, pack_title, i + 1, total, i + 1, title, 100, "Đã hoàn tất!")
+
+                await asyncio.sleep(0.3)
 
             # Success!
             pack_url = f"https://t.me/addstickers/{pack_name}"
@@ -398,6 +414,73 @@ class TelegramBot:
 
         finally:
             TelegramBot._processing_packs.discard(pack_id)
+
+    @staticmethod
+    def _build_progress_text(
+        pack_title: str,
+        current: int,
+        total: int,
+        current_sticker_num: int = 0,
+        current_sticker_title: str = "",
+        sticker_pct: int = 0,
+        status_text: str = ""
+    ) -> str:
+        """Build HTML formatted text with two visual progress bars (overall + current sticker)."""
+        overall_pct = int((current / total) * 100) if total > 0 else 0
+        overall_filled = int((current / total) * 10) if total > 0 else 0
+        overall_bar = "█" * overall_filled + "░" * (10 - overall_filled)
+
+        lines = [
+            f"⏳ <b>Đang tạo bộ sticker \"{pack_title}\"...</b>\n",
+            f"📊 <b>Tiến độ tổng thể:</b>",
+            f"[<code>{overall_bar}</code>] {overall_pct}% ({current}/{total} sticker)",
+        ]
+
+        if current_sticker_num > 0 and current < total:
+            sticker_filled = int((sticker_pct / 100) * 10)
+            sticker_bar = "█" * sticker_filled + "░" * (10 - sticker_filled)
+            title_str = f" \"{current_sticker_title}\"" if current_sticker_title else ""
+            status_str = f" • <i>{status_text}</i>" if status_text else ""
+            lines.extend([
+                f"\n🖼 <b>Sticker {current_sticker_num}/{total}{title_str}:</b>",
+                f"[<code>{sticker_bar}</code>] {sticker_pct}%{status_str}"
+            ])
+
+        lines.append("\n⚡ Vui lòng đợi trong giây lát...")
+        return "\n".join(lines)
+
+    async def _update_progress(
+        self,
+        chat_id: int,
+        message_id: Optional[int],
+        pack_title: str,
+        current: int,
+        total: int,
+        current_sticker_num: int = 0,
+        current_sticker_title: str = "",
+        sticker_pct: int = 0,
+        status_text: str = ""
+    ):
+        """Update progress message in Telegram using editMessageText."""
+        if not message_id:
+            return
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                await client.post(
+                    f"{self.base_url}/editMessageText",
+                    json={
+                        "chat_id": chat_id,
+                        "message_id": message_id,
+                        "text": self._build_progress_text(
+                            pack_title, current, total,
+                            current_sticker_num, current_sticker_title,
+                            sticker_pct, status_text
+                        ),
+                        "parse_mode": "HTML"
+                    }
+                )
+        except Exception as e:
+            logger.warning(f"Failed to update progress message: {e}")
 
     @staticmethod
     def _decode_base64_image(b64_str: str) -> bytes:
