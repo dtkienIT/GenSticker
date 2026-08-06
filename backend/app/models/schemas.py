@@ -63,3 +63,22 @@ class StickerJobResponse(BaseModel):
   steps: List[ProcessStepProgress]
   stickers: Optional[List[StickerItemResponse]] = None
   created_at: datetime
+
+# --- Telegram Export Schemas ---
+class TelegramExportRequest(BaseModel):
+  pack_title: str = Field(..., min_length=2, max_length=64)
+  pack_name: Optional[str] = None
+  style_name: Optional[str] = "3D Chibi Cutie"
+  sticker_ids: Optional[List[str]] = None
+  sticker_images: Optional[List[str]] = None  # base64 PNG data from frontend
+
+class TelegramExportResponse(BaseModel):
+  success: bool
+  pack_title: str
+  pack_name: str
+  pack_url: str
+  telegram_deeplink: str
+  qr_code_url: str
+  total_stickers: int
+  message: str
+

@@ -23,6 +23,13 @@ app.add_middleware(
 # Mount API router under /api/v1
 app.include_router(api_router)
 
+@app.on_event("startup")
+async def startup_event():
+  """Start Telegram Bot polling on app startup."""
+  if settings.TELEGRAM_BOT_TOKEN:
+    from app.services.telegram_bot import TelegramBot
+    await TelegramBot.ensure_polling_started()
+
 @app.get("/")
 def root():
   return {
@@ -30,3 +37,4 @@ def root():
     "docs": "/docs",
     "health": "/api/v1/health"
   }
+

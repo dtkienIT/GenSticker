@@ -3,7 +3,8 @@ import type { FC } from 'react';
 import type { StickerItem, GenerationState } from '../../types/sticker';
 import { StickerCard } from './StickerCard';
 import { StickerModal } from './StickerModal';
-import { DownloadCloud, Search, Sparkles, Filter, RefreshCw } from 'lucide-react';
+import { TelegramExportModal } from './TelegramExportModal';
+import { DownloadCloud, Search, Sparkles, Filter, RefreshCw, Send } from 'lucide-react';
 import { StickerService } from '../../services/stickerService';
 
 interface StickerGridProps {
@@ -20,6 +21,7 @@ export const StickerGrid: FC<StickerGridProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('all');
   const [inspectedSticker, setInspectedSticker] = useState<StickerItem | null>(null);
+  const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
 
   const allTags = useMemo(() => {
     const tagsSet = new Set<string>();
@@ -83,7 +85,7 @@ export const StickerGrid: FC<StickerGridProps> = ({
           </div>
 
           {/* Action buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <button
               onClick={onReset}
               className="btn-secondary"
@@ -93,11 +95,23 @@ export const StickerGrid: FC<StickerGridProps> = ({
             </button>
 
             <button
-              onClick={handleDownloadAll}
+              onClick={() => setIsTelegramModalOpen(true)}
               className="btn-primary"
+              style={{
+                background: 'linear-gradient(135deg, #229ED9 0%, #0088cc 100%)',
+                boxShadow: '0 4px 20px rgba(34, 158, 217, 0.4)'
+              }}
             >
-              <DownloadCloud size={20} />
-              <span>Tải Tất Cả 20 Sticker (.PNG)</span>
+              <Send size={18} />
+              <span>Thêm Vào Telegram</span>
+            </button>
+
+            <button
+              onClick={handleDownloadAll}
+              className="btn-secondary"
+            >
+              <DownloadCloud size={18} />
+              <span>Tải Tất Cả 20 Sticker</span>
             </button>
           </div>
 
@@ -207,6 +221,15 @@ export const StickerGrid: FC<StickerGridProps> = ({
         onToggleFavorite={onToggleFavorite}
       />
 
+      {/* Telegram Export Modal */}
+      <TelegramExportModal
+        stickers={state.stickers}
+        isOpen={isTelegramModalOpen}
+        onClose={() => setIsTelegramModalOpen(false)}
+        styleName={state.stickers[0]?.styleName}
+      />
+
     </div>
   );
 };
+

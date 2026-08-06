@@ -20,6 +20,10 @@ class Settings(BaseSettings):
   # Local storage fallback
   ASSET_ROOT: str = os.getenv("ASSET_ROOT", "./data/assets")
 
+  # Telegram Bot Credentials
+  TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
+  TELEGRAM_BOT_USERNAME: str = os.getenv("TELEGRAM_BOT_USERNAME", "GenStickerAIBot")
+
   class Config:
     env_file = ".env"
     extra = "ignore"
