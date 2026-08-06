@@ -45,6 +45,12 @@ npx.cmd expo export --platform android --output-dir dist/android-smoke
 
 Physical Android verification is still required for Photos permission behavior, the operating-system share sheet, offline operation, process restart, and visual alpha-channel inspection.
 
+## Deploy the web app on Vercel
+
+The repository includes [`vercel.json`](./vercel.json) for Vercel drop-to-deploy. Drop the project folder into Vercel, or import the repository, and Vercel will run `npm ci`, build the static PWA with `npm run build`, and publish `dist/`.
+
+The production build uses the pinned browser-cache model mode and downloads the verified model artifacts from the v1.0.1 GitHub release on first use. Local development keeps using the localhost model server; use `npm run web:export -- --mock` for a model-free web smoke build.
+
 ## Architecture boundary
 
 Screens depend on the `OnDeviceStickerGenerator`, `PromptSafetyEvaluator`, `StickerAssetRepository`, and `PlatformAssetExporter` ports. The future Android runtime must implement those contracts without moving inference logic into routes or stores.

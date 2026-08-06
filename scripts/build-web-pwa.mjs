@@ -3,6 +3,9 @@ import { spawnSync } from 'node:child_process';
 import { generateSW } from 'workbox-build';
 
 const mock = process.argv.includes('--mock');
+const vercel = process.argv.includes('--vercel');
+const publishedModelBaseUrl =
+  'https://github.com/dtkienIT/GenSticker/releases/download/model-lcm-sd15-v1.0.1/';
 function run(program, args, environment = process.env) {
   const windows = process.platform === 'win32';
   const result = spawnSync(
@@ -33,7 +36,11 @@ run(
     : {
         ...process.env,
         EXPO_PUBLIC_STICKER_RUNTIME: 'web',
-        EXPO_PUBLIC_WEB_MODEL_SOURCE: process.env.EXPO_PUBLIC_WEB_MODEL_SOURCE ?? 'local',
+        EXPO_PUBLIC_WEB_MODEL_SOURCE:
+          process.env.EXPO_PUBLIC_WEB_MODEL_SOURCE ?? (vercel ? 'cache' : 'local'),
+        EXPO_PUBLIC_WEB_MODEL_BASE_URL:
+          process.env.EXPO_PUBLIC_WEB_MODEL_BASE_URL ??
+          (vercel ? publishedModelBaseUrl : 'http://127.0.0.1:8790/'),
       },
 );
 await copyFile('assets/images/icon.png', 'dist/pwa-icon.png');
