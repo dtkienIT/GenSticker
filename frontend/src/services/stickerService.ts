@@ -59,13 +59,40 @@ export class StickerService {
     return resultStickers;
   }
 
-  static downloadSticker(sticker: StickerItem) {
-    const link = document.createElement('a');
-    link.href = sticker.imageUrl;
-    link.download = `GenSticker-${sticker.title.replace(/\s+/g, '_')}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  static downloadSticker(sticker: StickerItem, targetSize: number = 1024) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = targetSize;
+      canvas.height = targetSize;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, targetSize, targetSize);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        // Draw image filling the target canvas symmetrically
+        ctx.drawImage(img, 0, 0, targetSize, targetSize);
+
+        const a = document.createElement('a');
+        a.download = `GenSticker_${sticker.title.replace(/\s+/g, '_')}_1024x1024.png`;
+        a.href = canvas.toDataURL('image/png');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    };
+
+    // Robust encoding conversion for data SVG
+    if (sticker.imageUrl.startsWith('data:image/svg+xml;utf8,')) {
+      const svgText = decodeURIComponent(sticker.imageUrl.replace('data:image/svg+xml;utf8,', ''));
+      const base64 = btoa(unescape(encodeURIComponent(svgText)));
+      img.src = `data:image/svg+xml;base64,${base64}`;
+    } else {
+      img.src = sticker.imageUrl;
+    }
   }
 
   static async downloadAllStickers(stickers: StickerItem[]) {

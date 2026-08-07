@@ -110,10 +110,10 @@ const createStickerSvg = (
   accessorySvg: string, 
   caption: string
 ): string => {
-  const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" width="100%" height="100%">
+  const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="512" height="512">
     <defs>
       <filter id="white-stroke" x="-20%" y="-20%" width="140%" height="140%">
-        <feMorphology in="SourceAlpha" operator="dilate" radius="7" result="expanded"/>
+        <feMorphology in="SourceAlpha" operator="dilate" radius="6" result="expanded"/>
         <feFlood flood-color="white" result="white"/>
         <feComposite in="white" in2="expanded" operator="in" result="stroke"/>
         <feMerge>
@@ -127,11 +127,11 @@ const createStickerSvg = (
       </linearGradient>
     </defs>
     <g filter="url(#white-stroke)">
-      <circle cx="100" cy="95" r="75" fill="url(#grad-${bgColor.replace('#','')})" />
+      <circle cx="100" cy="85" r="65" fill="url(#grad-${bgColor.replace('#','')})" />
       ${faceSvg}
       ${accessorySvg}
-      <rect x="30" y="165" width="140" height="36" rx="18" fill="%23ffffff" stroke="%23e2e8f0" stroke-width="3" />
-      <text x="100" y="189" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="15" fill="%230f172a" text-anchor="middle">${caption}</text>
+      <rect x="25" y="152" width="150" height="34" rx="17" fill="%23ffffff" stroke="%23e2e8f0" stroke-width="3" />
+      <text x="100" y="174" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="14" fill="%230f172a" text-anchor="middle">${caption}</text>
     </g>
   </svg>`;
 

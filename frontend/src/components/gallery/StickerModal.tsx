@@ -1,19 +1,18 @@
 import { useState } from 'react';
 import type { FC } from 'react';
 import type { StickerItem } from '../../types/sticker';
-import { X, Download, Heart, Share2, Sparkles, Check, Send } from 'lucide-react';
+import { X, Download, Share2, Sparkles, Check } from 'lucide-react';
 import { StickerService } from '../../services/stickerService';
 
 interface StickerModalProps {
   sticker: StickerItem | null;
   onClose: () => void;
-  onToggleFavorite: (id: string) => void;
+  onToggleFavorite?: (id: string) => void;
 }
 
 export const StickerModal: FC<StickerModalProps> = ({
   sticker,
   onClose,
-  onToggleFavorite,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -160,59 +159,12 @@ export const StickerModal: FC<StickerModalProps> = ({
           </button>
 
           <button
-            onClick={() => {
-              // Create a 512x512 download for Telegram single sticker
-              const canvas = document.createElement('canvas');
-              canvas.width = 512;
-              canvas.height = 512;
-              const ctx = canvas.getContext('2d');
-              const img = new Image();
-              img.crossOrigin = 'anonymous';
-              img.onload = () => {
-                ctx?.drawImage(img, 0, 0, 512, 512);
-                const a = document.createElement('a');
-                a.download = `Telegram_Sticker_${sticker.title.replace(/\s+/g, '_')}_512x512.png`;
-                a.href = canvas.toDataURL('image/png');
-                a.click();
-              };
-              img.src = sticker.imageUrl;
-            }}
-            className="btn-secondary"
-            style={{ 
-              background: 'rgba(14, 165, 233, 0.15)',
-              borderColor: 'rgba(14, 165, 233, 0.4)',
-              color: '#38bdf8',
-              padding: '12px 18px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-            title="Tải chuẩn Telegram 512x512"
-          >
-            <Send size={18} />
-            <span>512x512 Telegram</span>
-          </button>
-
-          <button
             onClick={handleCopyLink}
             className="btn-secondary"
             style={{ padding: '12px 18px' }}
             title="Sao chép Data Link"
           >
             {copied ? <Check size={18} color="#10b981" /> : <Share2 size={18} />}
-          </button>
-
-          <button
-            onClick={() => onToggleFavorite(sticker.id)}
-            className="btn-secondary"
-            style={{ 
-              padding: '12px 18px',
-              borderColor: sticker.isFavorite ? '#ec4899' : 'var(--border-subtle)',
-              color: sticker.isFavorite ? '#ec4899' : 'var(--text-primary)' 
-            }}
-            title="Yêu thích"
-          >
-            <Heart size={18} fill={sticker.isFavorite ? '#ec4899' : 'none'} />
           </button>
         </div>
 

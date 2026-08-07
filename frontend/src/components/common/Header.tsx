@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import type { User } from '../../types/auth';
 import type { Theme } from '../../hooks/useTheme';
-import { Sparkles, Layers, Globe, LogIn, LogOut, User as UserIcon } from 'lucide-react';
+import { Sparkles, Layers, LogIn, LogOut, User as UserIcon } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
@@ -146,17 +146,6 @@ export const Header: FC<HeaderProps> = ({
 
           {/* Light/Dark Theme Toggle Pill Switch */}
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-
-          <a 
-            href="https://github.com" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="btn-secondary"
-            style={{ padding: '8px', borderRadius: '50%' }}
-            title="GitHub Repository"
-          >
-            <Globe size={18} />
-          </a>
         </div>
       </div>
     </header>
