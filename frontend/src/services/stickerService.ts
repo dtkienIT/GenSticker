@@ -1,5 +1,6 @@
 import type { StickerItem, StickerStyleId, ProcessStep } from '../types/sticker';
-import { MOCK_20_STICKERS, INITIAL_PIPELINE_STEPS, STICKER_STYLES } from '../mock/mockStickers';
+import { STICKER_STYLES } from '../mock/mockStickers';
+import { AuthService } from './authService';
 
 export interface StickerGenerationParams {
   imageFile: File;
@@ -7,56 +8,216 @@ export interface StickerGenerationParams {
   onStepProgress?: (stepIndex: number, step: ProcessStep, overallProgress: number) => void;
 }
 
+interface BackendStep {
+  id: number;
+  step_name: string;
+  description: string;
+  status: 'pending' | 'processing' | 'completed' | 'error';
+  progress: number;
+}
+
+interface BackendSticker {
+  id: string;
+  title: string;
+  emotion: string;
+  tags: string[];
+  image_url: string;
+  style_id: string;
+  is_favorite: boolean;
+  width: number;
+  height: number;
+  file_size_kb: number;
+}
+
+interface BackendJobResponse {
+  job_id: string;
+  status: 'processing' | 'completed' | 'error';
+  current_step: number;
+  progress_percentage: number;
+  steps: BackendStep[];
+  stickers?: BackendSticker[];
+  error_message?: string;
+  preview_image_url?: string;
+  preview_image_urls?: string[];
+  quality_status?: 'reviewing' | 'accepted' | 'rejected';
+}
+
+export class StickerGenerationError extends Error {
+  readonly jobId: string;
+  readonly previewImageUrl: string | null;
+  readonly previewImageUrls: string[];
+  readonly qualityStatus: 'reviewing' | 'accepted' | 'rejected' | null;
+
+  constructor(message: string, job: BackendJobResponse) {
+    super(message);
+    this.name = 'StickerGenerationError';
+    this.jobId = job.job_id;
+    this.previewImageUrl = job.preview_image_url || null;
+    this.previewImageUrls = job.preview_image_urls || (job.preview_image_url ? [job.preview_image_url] : []);
+    this.qualityStatus = job.quality_status || null;
+  }
+}
+
 export class StickerService {
+  private static readonly ACTIVE_JOB_KEY = 'gensticker.activeJobId';
+
+  static clearActiveJob() {
+    sessionStorage.removeItem(StickerService.ACTIVE_JOB_KEY);
+  }
+
   static async generateStickers({
     imageFile,
     styleId,
     onStepProgress,
-  }: StickerGenerationParams): Promise<StickerItem[]> {
-    console.log(`Starting mock generation for file: ${imageFile.name} with style: ${styleId}`);
+  }: StickerGenerationParams): Promise<{ stickers: StickerItem[]; previewImageUrls: string[] }> {
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+    const accessToken = AuthService.getAccessToken();
+    if (!accessToken) {
+      throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+    }
+    const form = new FormData();
+    form.append('file', imageFile);
+    form.append('style_id', styleId);
 
-    const steps = JSON.parse(JSON.stringify(INITIAL_PIPELINE_STEPS)) as ProcessStep[];
-    const totalSteps = steps.length;
-
-    for (let i = 0; i < totalSteps; i++) {
-      const step = steps[i];
-      step.status = 'processing';
-      step.progress = 10;
-      
-      const currentOverallProgress = Math.round((i / totalSteps) * 100);
-      onStepProgress?.(i, step, currentOverallProgress);
-
-      const stepDuration = step.estimatedTimeSec * 1000;
-      const intervalMs = 200;
-      const totalTicks = stepDuration / intervalMs;
-      
-      for (let tick = 1; tick <= totalTicks; tick++) {
-        await new Promise((resolve) => setTimeout(resolve, intervalMs));
-        const subProgress = Math.min(100, Math.round((tick / totalTicks) * 100));
-        step.progress = subProgress;
-
-        const overall = Math.min(
-          99,
-          Math.round(((i + subProgress / 100) / totalSteps) * 100)
-        );
-        onStepProgress?.(i, step, overall);
-      }
-
-      step.status = 'completed';
-      step.progress = 100;
-      onStepProgress?.(i, step, Math.round(((i + 1) / totalSteps) * 100));
+    const startResponse = await fetch(`${apiBase}/stickers/generate`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+      body: form,
+    });
+    if (!startResponse.ok) {
+      if (startResponse.status === 401) AuthService.logout();
+      throw new Error(await StickerService.readApiError(startResponse));
     }
 
-    const selectedStyleObj = STICKER_STYLES.find((s) => s.id === styleId);
-    const styleName = selectedStyleObj ? selectedStyleObj.name : 'Custom AI';
+    const started = await startResponse.json() as BackendJobResponse;
+    sessionStorage.setItem(StickerService.ACTIVE_JOB_KEY, started.job_id);
+    return StickerService.pollJob(started, styleId, onStepProgress);
+  }
 
-    const resultStickers: StickerItem[] = MOCK_20_STICKERS.map((st) => ({
-      ...st,
+  static async retryJob(
+    jobId: string,
+    styleId: StickerStyleId,
+    onStepProgress?: (stepIndex: number, step: ProcessStep, overallProgress: number) => void,
+  ): Promise<{ stickers: StickerItem[]; previewImageUrls: string[] }> {
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+    const accessToken = AuthService.getAccessToken();
+    if (!accessToken) throw new Error('Authentication required.');
+    const response = await fetch(`${apiBase}/stickers/jobs/${jobId}/retry`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) throw new Error(await StickerService.readApiError(response));
+    const job = await response.json() as BackendJobResponse;
+    sessionStorage.setItem(StickerService.ACTIVE_JOB_KEY, job.job_id);
+    return StickerService.pollJob(job, styleId, onStepProgress);
+  }
+
+  static async resumeActiveJob(
+    styleId: StickerStyleId,
+  ): Promise<{ stickers: StickerItem[]; previewImageUrls: string[] } | null> {
+    const jobId = sessionStorage.getItem(StickerService.ACTIVE_JOB_KEY);
+    const accessToken = AuthService.getAccessToken();
+    if (!jobId || !accessToken) return null;
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+    const response = await fetch(`${apiBase}/stickers/jobs/${jobId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (response.status === 404) {
+      sessionStorage.removeItem(StickerService.ACTIVE_JOB_KEY);
+      return null;
+    }
+    if (!response.ok) throw new Error(await StickerService.readApiError(response));
+    return StickerService.pollJob(await response.json() as BackendJobResponse, styleId);
+  }
+
+  private static async pollJob(
+    started: BackendJobResponse,
+    styleId: StickerStyleId,
+    onStepProgress?: (stepIndex: number, step: ProcessStep, overallProgress: number) => void,
+  ): Promise<{ stickers: StickerItem[]; previewImageUrls: string[] }> {
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+    const accessToken = AuthService.getAccessToken();
+    if (!accessToken) throw new Error('Authentication required.');
+    StickerService.emitBackendProgress(started, onStepProgress);
+    const deadline = Date.now() + 12 * 60 * 1000;
+    let job = started;
+    while (job.status === 'processing') {
+      if (Date.now() > deadline) {
+        throw new Error('Generation timed out. Please try again with a clearer portrait.');
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch(`${apiBase}/stickers/jobs/${job.job_id}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!response.ok) {
+        if (response.status === 401) AuthService.logout();
+        throw new Error(await StickerService.readApiError(response));
+      }
+      job = await response.json() as BackendJobResponse;
+      StickerService.emitBackendProgress(job, onStepProgress);
+    }
+    if (job.status === 'error') {
+      throw new StickerGenerationError(
+        job.error_message || 'Sticker generation failed.',
+        job,
+      );
+    }
+    if (!job.stickers || job.stickers.length !== 20) {
+      throw new Error('Backend returned an incomplete sticker pack.');
+    }
+    sessionStorage.removeItem(StickerService.ACTIVE_JOB_KEY);
+    return {
+      stickers: job.stickers.map((sticker) => StickerService.toStickerItem(sticker, styleId)),
+      previewImageUrls: job.preview_image_urls || (job.preview_image_url ? [job.preview_image_url] : []),
+    };
+  }
+
+  private static emitBackendProgress(
+    job: BackendJobResponse,
+    onStepProgress?: (stepIndex: number, step: ProcessStep, overallProgress: number) => void,
+  ) {
+    const activeIndex = Math.max(0, Math.min(job.steps.length - 1, job.current_step - 1));
+    const orderedIndices = job.steps
+      .map((_, index) => index)
+      .sort((left, right) => Number(left === activeIndex) - Number(right === activeIndex));
+    orderedIndices.forEach((index) => {
+      const backendStep = job.steps[index];
+      const step: ProcessStep = {
+        id: String(backendStep.id),
+        title: backendStep.step_name,
+        description: backendStep.description,
+        status: backendStep.status === 'pending' ? 'idle' : backendStep.status,
+        progress: backendStep.progress,
+        estimatedTimeSec: 1,
+      };
+      onStepProgress?.(index, step, job.progress_percentage);
+    });
+  }
+
+  private static toStickerItem(sticker: BackendSticker, styleId: StickerStyleId): StickerItem {
+    const style = STICKER_STYLES.find((item) => item.id === styleId);
+    return {
+      id: sticker.id,
+      title: sticker.title,
+      imageUrl: sticker.image_url,
       style: styleId,
-      styleName: styleName,
-    }));
+      styleName: style?.name || 'Custom AI',
+      tags: sticker.tags,
+      emotion: sticker.emotion,
+      likes: 0,
+      isFavorite: sticker.is_favorite,
+      sizeKb: sticker.file_size_kb,
+      dimensions: `${sticker.width}x${sticker.height}`,
+    };
+  }
 
-    return resultStickers;
+  private static async readApiError(response: Response): Promise<string> {
+    try {
+      const payload = await response.json() as { detail?: string };
+      return payload.detail || `Backend request failed (${response.status}).`;
+    } catch {
+      return `Backend request failed (${response.status}).`;
+    }
   }
 
   static downloadSticker(sticker: StickerItem, targetSize: number = 1024) {

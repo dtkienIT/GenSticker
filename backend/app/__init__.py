@@ -1,0 +1,1 @@
+"""GenSticker FastAPI application package."""

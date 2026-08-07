@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from app.models.schemas import UserLoginRequest, UserRegisterRequest, AuthTokenResponse, UserResponse
 from app.services.supabase_service import SupabaseService
-import uuid
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -15,7 +14,12 @@ async def login(payload: UserLoginRequest):
   if res and hasattr(res, "user") and res.user:
     user_data = res.user
     session_obj = getattr(res, "session", None)
-    token = session_obj.access_token if session_obj and hasattr(session_obj, "access_token") else f"user_jwt_{uuid.uuid4().hex[:16]}"
+    token = session_obj.access_token if session_obj and hasattr(session_obj, "access_token") else None
+    if not token:
+      raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="A verified login session could not be created."
+      )
     
     return AuthTokenResponse(
       access_token=token,
@@ -57,7 +61,12 @@ async def register(payload: UserRegisterRequest):
   user_obj = getattr(res, "user", res) if res else None
   if user_obj and hasattr(user_obj, "id"):
     session_obj = getattr(res, "session", None)
-    token = session_obj.access_token if session_obj and hasattr(session_obj, "access_token") else f"user_jwt_{uuid.uuid4().hex[:16]}"
+    token = session_obj.access_token if session_obj and hasattr(session_obj, "access_token") else None
+    if not token:
+      raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Please verify your email before signing in."
+      )
     
     return AuthTokenResponse(
       access_token=token,

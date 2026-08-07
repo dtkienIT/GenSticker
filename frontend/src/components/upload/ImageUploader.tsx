@@ -56,13 +56,19 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
     }
   };
 
-  const handleSampleClick = (sampleUrl: string, sampleName: string) => {
-    fetch(sampleUrl)
-      .then((res) => res.blob())
-      .then((blob) => {
-        const sampleFile = new File([blob], `${sampleName}.svg`, { type: 'image/svg+xml' });
-        handleFileSelect(sampleFile);
-      });
+  const handleSampleClick = async (sampleUrl: string, sampleName: string) => {
+    const image = new Image();
+    image.src = sampleUrl;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) return;
+    handleFileSelect(new File([blob], `${sampleName}.png`, { type: 'image/png' }));
   };
 
   const handleGenerateClick = () => {
@@ -123,7 +129,13 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
               type="file" 
               accept="image/png, image/jpeg, image/webp" 
               onChange={onFileInputChange}
-              style={{ display: 'none' }}
+              style={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                opacity: 0,
+                pointerEvents: 'none',
+              }}
             />
 
             <div style={{

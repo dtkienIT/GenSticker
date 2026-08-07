@@ -4,6 +4,7 @@ import { Footer } from './components/common/Footer';
 import { ImageUploader } from './components/upload/ImageUploader';
 import { ProcessingPipeline } from './components/processing/ProcessingPipeline';
 import { StickerGrid } from './components/gallery/StickerGrid';
+import { GenerationComparison } from './components/gallery/GenerationComparison';
 import { AuthModal } from './components/auth/AuthModal';
 import { useStickerGenerator } from './hooks/useStickerGenerator';
 import { useAuth } from './hooks/useAuth';
@@ -17,6 +18,7 @@ export function App() {
     state,
     setSelectedStyle,
     startGeneration,
+    retryGeneration,
     resetGenerator,
     toggleFavorite,
   } = useStickerGenerator();
@@ -53,7 +55,6 @@ export function App() {
         onOpenAuth={openAuthModal}
         onLogout={logout}
         onReset={resetGenerator} 
-        hasActiveSession={state.status !== 'idle'} 
       />
 
       {/* Main Container */}
@@ -77,7 +78,7 @@ export function App() {
 
         {/* State: Completed (20 Stickers Grid Gallery) */}
         {state.status === 'completed' && (
-          <StickerGrid 
+          <StickerGrid
             state={state}
             onReset={resetGenerator}
             onToggleFavorite={toggleFavorite}
@@ -86,7 +87,7 @@ export function App() {
 
         {/* State: Error */}
         {state.status === 'error' && (
-          <div className="glass-panel" style={{ maxWidth: '600px', margin: '60px auto', padding: '40px', textAlign: 'center' }}>
+          <div className="glass-panel" style={{ maxWidth: state.qualityStatus === 'rejected' && state.previewImageUrl ? '1100px' : '600px', margin: '60px auto', padding: '40px', textAlign: 'center' }}>
             <div style={{
               width: '64px',
               height: '64px',
@@ -101,13 +102,25 @@ export function App() {
               <AlertCircle size={32} />
             </div>
 
-            <h3 style={{ fontSize: '1.4rem', fontWeight: 800 }}>Rất Tiếc, Có Lỗi Xảy Ra</h3>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800 }}>
+              {state.qualityStatus === 'rejected' && state.previewImageUrl ? 'Các Bảng Sticker OpenAI Đã Tạo' : 'Rất Tiếc, Có Lỗi Xảy Ra'}
+            </h3>
             <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '0.92rem' }}>
               {state.errorMessage}
             </p>
 
+            {state.previewImageUrls.length > 0 && (
+              <div style={{ marginTop: '24px', textAlign: 'left' }}>
+                <GenerationComparison
+                  originalImage={state.originalImage}
+                  previewImageUrls={state.previewImageUrls}
+                  qualityStatus={state.qualityStatus}
+                />
+              </div>
+            )}
+
             <button
-              onClick={resetGenerator}
+              onClick={state.qualityStatus === 'rejected' && state.jobId ? retryGeneration : resetGenerator}
               className="btn-primary"
               style={{ marginTop: '24px' }}
             >

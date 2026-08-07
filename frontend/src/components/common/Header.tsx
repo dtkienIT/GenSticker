@@ -11,7 +11,6 @@ interface HeaderProps {
   onOpenAuth: (mode?: 'login' | 'register') => void;
   onLogout: () => void;
   onReset?: () => void;
-  hasActiveSession?: boolean;
 }
 
 export const Header: FC<HeaderProps> = ({
@@ -21,7 +20,6 @@ export const Header: FC<HeaderProps> = ({
   onOpenAuth,
   onLogout,
   onReset,
-  hasActiveSession,
 }) => {
   return (
     <header className="glass-panel" style={{ borderRadius: 0, borderTop: 0, borderLeft: 0, borderRight: 0, position: 'sticky', top: 0, zIndex: 50 }}>

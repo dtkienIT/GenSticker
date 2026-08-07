@@ -36,7 +36,7 @@ export const ProcessingPipeline: FC<ProcessingPipelineProps> = ({ state }) => {
           Đang Sinh Bộ Sticker Cho Bạn...
         </h2>
         <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginTop: '6px' }}>
-          Vui lòng đợi vài giây để hệ thống thực hiện 5 bước xử lý đồ họa AI chuyên sâu.
+          Vui lòng đợi vài phút để hệ thống thực hiện 5 bước xử lý đồ họa AI chuyên sâu.
         </p>
       </div>
 
