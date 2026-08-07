@@ -119,20 +119,9 @@ export const TelegramExportModal: FC<TelegramExportModalProps> = ({
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 1000,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
-      background: 'var(--modal-overlay)',
-      backdropFilter: 'blur(12px)',
-      animation: 'fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
-    }}>
+    <div className="modal-overlay-backdrop">
       <div 
-        className="glass-panel"
+        className="glass-panel responsive-modal-card"
         style={{
           width: '100%',
           maxWidth: '640px',

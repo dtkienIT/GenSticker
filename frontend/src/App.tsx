@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
 import { ImageUploader } from './components/upload/ImageUploader';
@@ -19,6 +20,11 @@ export function App() {
     resetGenerator,
     toggleFavorite,
   } = useStickerGenerator();
+
+  // Scroll to top of window whenever page view state changes (idle, processing, completed, error)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [state.status]);
 
   const {
     user,
@@ -51,7 +57,7 @@ export function App() {
       />
 
       {/* Main Container */}
-      <main style={{ flex: 1, padding: '40px 24px', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
+      <main className="main-content">
         
         {/* State: Idle (Upload & Configuration) */}
         {state.status === 'idle' && (

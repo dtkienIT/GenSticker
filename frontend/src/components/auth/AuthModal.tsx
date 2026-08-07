@@ -43,24 +43,13 @@ export const AuthModal: FC<AuthModalProps> = ({
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 1000,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
-      background: 'var(--modal-overlay)',
-      backdropFilter: 'blur(16px)',
-      animation: 'fadeIn 0.25s ease-out'
-    }}>
+    <div className="modal-overlay-backdrop">
       <div 
-        className="glass-panel" 
+        className="glass-panel responsive-modal-card" 
         style={{
           width: '100%',
           maxWidth: '440px',
-          padding: '36px 32px',
+          padding: '32px 24px',
           position: 'relative',
           border: '1px solid rgba(139, 92, 246, 0.4)',
           boxShadow: '0 0 40px rgba(124, 58, 237, 0.3)'

@@ -81,33 +81,21 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
       
       {/* Hero Header Section */}
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '6px 16px',
-          borderRadius: '99px',
-          background: 'rgba(139, 92, 246, 0.12)',
-          border: '1px solid rgba(139, 92, 246, 0.3)',
-          color: '#c084fc',
-          fontSize: '0.85rem',
-          fontWeight: 600,
-          marginBottom: '16px'
-        }}>
+        <div className="responsive-hero-badge">
           <Sparkles size={16} />
           <span>Tự Động Sinh 20 Sticker Cảm Xúc Bằng AI Engine</span>
         </div>
 
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.03em' }}>
+        <h1 className="responsive-hero-title">
           Tải Ảnh Lên & <span className="text-gradient">Tạo Bộ Sticker AI</span>
         </h1>
-        <p style={{ fontSize: '1.05rem', color: 'var(--text-secondary)', marginTop: '10px', maxWidth: '640px', margin: '10px auto 0' }}>
+        <p style={{ fontSize: '0.98rem', color: 'var(--text-secondary)', marginTop: '10px', maxWidth: '640px', margin: '10px auto 0' }}>
           Chỉ cần 1 bức ảnh chân dung hoặc nhân vật, hệ thống AI sẽ tự động tách nền, tạo nét vẽ và sinh trọn bộ 20 sticker biểu cảm sắc nét.
         </p>
       </div>
 
       {/* Main Glass Panel Uploader */}
-      <div className="glass-panel" style={{ padding: '32px' }}>
+      <div className="glass-panel responsive-panel">
         
         {!previewUrl ? (
           /* Drag and Drop Zone */
@@ -119,7 +107,7 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
             style={{
               border: isDragging ? '2px dashed var(--accent-purple)' : '2px dashed rgba(255, 255, 255, 0.15)',
               borderRadius: 'var(--radius-md)',
-              padding: '48px 24px',
+              padding: '36px 16px',
               textAlign: 'center',
               cursor: 'pointer',
               background: isDragging ? 'rgba(139, 92, 246, 0.1)' : 'rgba(255, 255, 255, 0.02)',
@@ -139,35 +127,35 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
             />
 
             <div style={{
-              width: '64px',
-              height: '64px',
+              width: '56px',
+              height: '56px',
               borderRadius: '50%',
               background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%)',
               border: '1px solid rgba(139, 92, 246, 0.4)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginBottom: '16px'
+              marginBottom: '14px'
             }} className="animate-float">
-              <UploadCloud size={32} color="#c084fc" />
+              <UploadCloud size={28} color="#c084fc" />
             </div>
 
-            <h4 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '6px' }}>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '6px' }}>
               Kéo thả ảnh vào đây, hoặc <span className="text-gradient">bấm để chọn file</span>
             </h4>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
               Hỗ trợ PNG, JPG, WEBP (Tối đa 15MB) - Khuyên dùng ảnh rõ nét khuôn mặt
             </p>
 
             {/* Quick Sample Avatars */}
             <div 
               onClick={(e) => e.stopPropagation()}
-              style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid var(--border-subtle)', width: '100%', maxWidth: '440px' }}
+              style={{ marginTop: '24px', paddingTop: '18px', borderTop: '1px solid var(--border-subtle)', width: '100%', maxWidth: '480px' }}
             >
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '12px', fontWeight: 600 }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '10px', fontWeight: 600 }}>
                 Hoặc thử nhanh với ảnh mẫu:
               </p>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 {SAMPLE_AVATARS.map((sample, idx) => (
                   <button
                     key={idx}
@@ -183,12 +171,12 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      fontSize: '0.8rem',
+                      fontSize: '0.78rem',
                       transition: 'all 0.2s ease'
                     }}
                     className="glass-card-interactive"
                   >
-                    <img src={sample.url} alt={sample.name} style={{ width: '24px', height: '24px' }} />
+                    <img src={sample.url} alt={sample.name} style={{ width: '22px', height: '22px' }} />
                     <span>{sample.name}</span>
                   </button>
                 ))}

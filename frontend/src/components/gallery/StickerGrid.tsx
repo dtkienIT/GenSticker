@@ -50,16 +50,16 @@ export const StickerGrid: FC<StickerGridProps> = ({
     <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
       
       {/* Top Banner & Batch Actions */}
-      <div className="glass-panel" style={{ padding: '32px', marginBottom: '32px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}>
+      <div className="glass-panel responsive-panel" style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
           
           {/* Header left */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             {state.originalImage && (
               <div style={{
-                width: '72px',
-                height: '72px',
-                borderRadius: '16px',
+                width: '60px',
+                height: '60px',
+                borderRadius: '14px',
                 overflow: 'hidden',
                 border: '2px solid var(--accent-purple)',
                 boxShadow: 'var(--shadow-glow)',
@@ -74,23 +74,23 @@ export const StickerGrid: FC<StickerGridProps> = ({
             )}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h2 style={{ fontSize: '1.75rem', fontWeight: 800 }} className="text-gradient">
+                <h2 style={{ fontSize: 'clamp(1.2rem, 4vw, 1.75rem)', fontWeight: 800 }} className="text-gradient">
                   Bộ 20 Sticker Hoàn Tất! 🎉
                 </h2>
               </div>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
                 Phong cách: <strong>{state.stickers[0]?.styleName}</strong> • Định dạng PNG Transparent HD
               </p>
             </div>
           </div>
 
           {/* Action buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <div className="responsive-action-bar">
             <button
               onClick={onReset}
               className="btn-secondary"
             >
-              <RefreshCw size={16} />
+              <Sparkles size={16} color="#c084fc" />
               <span>Tạo Bộ Mới</span>
             </button>
 
@@ -119,14 +119,14 @@ export const StickerGrid: FC<StickerGridProps> = ({
 
         {/* Search & Tag Filter Bar */}
         <div style={{
-          marginTop: '28px',
-          paddingTop: '20px',
+          marginTop: '24px',
+          paddingTop: '18px',
           borderTop: '1px solid var(--border-subtle)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '16px'
+          gap: '14px'
         }}>
           
           {/* Search Input */}
@@ -190,11 +190,7 @@ export const StickerGrid: FC<StickerGridProps> = ({
 
       {/* Grid of 20 Sticker Cards */}
       {filteredStickers.length > 0 ? (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-          gap: '18px'
-        }}>
+        <div className="responsive-sticker-grid">
           {filteredStickers.map((sticker) => (
             <StickerCard 
               key={sticker.id}

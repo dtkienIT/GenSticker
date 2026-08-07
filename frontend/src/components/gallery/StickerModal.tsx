@@ -29,20 +29,9 @@ export const StickerModal: FC<StickerModalProps> = ({
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 100,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
-      background: 'var(--modal-overlay)',
-      backdropFilter: 'blur(12px)',
-      animation: 'fadeIn 0.2s ease-out'
-    }}>
+    <div className="modal-overlay-backdrop">
       <div 
-        className="glass-panel" 
+        className="glass-panel responsive-modal-card" 
         style={{
           width: '100%',
           maxWidth: '560px',
@@ -68,7 +57,8 @@ export const StickerModal: FC<StickerModalProps> = ({
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            zIndex: 10
           }}
         >
           <X size={20} />
@@ -78,34 +68,34 @@ export const StickerModal: FC<StickerModalProps> = ({
         <div style={{
           background: 'radial-gradient(circle at center, rgba(139, 92, 246, 0.2) 0%, transparent 70%)',
           borderRadius: 'var(--radius-md)',
-          padding: '32px 20px',
+          padding: '24px 16px',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          marginBottom: '24px'
+          marginBottom: '20px'
         }}>
           <img 
             src={sticker.imageUrl} 
             alt={sticker.title} 
             className="sticker-effect"
-            style={{ width: '180px', height: '180px', objectFit: 'contain' }}
+            style={{ width: '160px', height: '160px', objectFit: 'contain' }}
           />
         </div>
 
         {/* Title & Metadata */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '99px', background: 'rgba(139, 92, 246, 0.15)', color: '#c084fc', fontSize: '0.8rem', fontWeight: 600, marginBottom: '8px' }}>
             <Sparkles size={14} />
             <span>Phong cách: {sticker.styleName}</span>
           </div>
 
-          <h3 style={{ fontSize: '1.6rem', fontWeight: 800 }}>{sticker.title}</h3>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+          <h3 style={{ fontSize: '1.4rem', fontWeight: 800 }}>{sticker.title}</h3>
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
             Cảm xúc: <strong>{sticker.emotion}</strong>
           </p>
 
           {/* Tags */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginTop: '12px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginTop: '10px', flexWrap: 'wrap' }}>
             {sticker.tags.map((tag, idx) => (
               <span key={idx} style={{
                 fontSize: '0.75rem',
@@ -121,7 +111,7 @@ export const StickerModal: FC<StickerModalProps> = ({
         </div>
 
         {/* Technical Specs */}
-        <div style={{
+        <div className="modal-tech-specs" style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr 1fr',
           gap: '12px',
@@ -129,7 +119,7 @@ export const StickerModal: FC<StickerModalProps> = ({
           borderRadius: 'var(--radius-sm)',
           background: 'var(--input-bg)',
           border: '1px solid var(--border-subtle)',
-          marginBottom: '28px',
+          marginBottom: '24px',
           textAlign: 'center',
           fontSize: '0.8rem'
         }}>

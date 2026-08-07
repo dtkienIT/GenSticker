@@ -24,11 +24,7 @@ export const StyleSelector: FC<StyleSelectorProps> = ({
         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>8 Phong Cách Độc Đáo</span>
       </div>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-        gap: '14px'
-      }}>
+      <div className="responsive-style-grid">
         {STICKER_STYLES.map((style) => {
           const isSelected = style.id === selectedStyle;
           return (
