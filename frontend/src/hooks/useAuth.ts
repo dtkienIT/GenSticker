@@ -62,6 +62,21 @@ export function useAuth() {
     }
   }, []);
 
+  const quickDemoLogin = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const demoUser = await AuthService.quickDemoLogin();
+      setUser(demoUser);
+      setIsAuthModalOpen(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Đăng nhập Demo thất bại.';
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const logout = useCallback(() => {
     AuthService.logout();
     setUser(null);
@@ -79,7 +94,7 @@ export function useAuth() {
     setAuthMode,
     login,
     register,
+    quickDemoLogin,
     logout,
   };
 }
-

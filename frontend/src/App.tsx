@@ -38,6 +38,7 @@ export function App() {
     setAuthMode,
     login,
     register,
+    quickDemoLogin,
     logout,
   } = useAuth();
 
@@ -128,6 +129,7 @@ export function App() {
         onSwitchMode={setAuthMode}
         onLogin={login}
         onRegister={register}
+        onQuickDemoLogin={quickDemoLogin}
       />
 
       {/* Footer */}

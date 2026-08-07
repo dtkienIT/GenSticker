@@ -109,5 +109,8 @@ export class AuthService {
     localStorage.removeItem(STORAGE_KEY_USER);
     localStorage.removeItem(STORAGE_KEY_TOKEN);
   }
-}
 
+  static async quickDemoLogin(): Promise<User> {
+    return AuthService.login('demo@gensticker.ai', 'Demo@2026!');
+  }
+}
