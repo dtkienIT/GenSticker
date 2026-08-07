@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import type { GenerationState, StickerStyleId, ProcessStep } from '../types/sticker';
+import type { GenerationState, StickerStyleId, ProcessStep, StickerItem } from '../types/sticker';
 import { INITIAL_PIPELINE_STEPS } from '../mock/mockStickers';
 import { StickerService } from '../services/stickerService';
 
@@ -79,6 +79,15 @@ export function useStickerGenerator() {
     }
   }, [state.selectedStyle]);
 
+  const loadStickerPack = useCallback((stickers: StickerItem[]) => {
+    setState((prev) => ({
+      ...prev,
+      status: 'completed',
+      stickers: stickers,
+      overallProgress: 100,
+    }));
+  }, []);
+
   const resetGenerator = useCallback(() => {
     setState({
       status: 'idle',
@@ -106,6 +115,7 @@ export function useStickerGenerator() {
     state,
     setSelectedStyle,
     startGeneration,
+    loadStickerPack,
     resetGenerator,
     toggleFavorite,
   };

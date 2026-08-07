@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import type { User } from '../../types/auth';
 import type { Theme } from '../../hooks/useTheme';
-import { Sparkles, Layers, LogIn, LogOut, User as UserIcon } from 'lucide-react';
+import { Sparkles, Layers, LogIn, LogOut, User as UserIcon, History } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
@@ -12,6 +12,8 @@ interface HeaderProps {
   onLogout: () => void;
   onReset?: () => void;
   hasActiveSession?: boolean;
+  onOpenHistory?: () => void;
+  historyCount?: number;
 }
 
 export const Header: FC<HeaderProps> = ({
@@ -22,6 +24,8 @@ export const Header: FC<HeaderProps> = ({
   onLogout,
   onReset,
   hasActiveSession,
+  onOpenHistory,
+  historyCount = 0,
 }) => {
   return (
     <header className="glass-panel" style={{ borderRadius: 0, borderTop: 0, borderLeft: 0, borderRight: 0, position: 'sticky', top: 0, zIndex: 50 }}>
@@ -72,6 +76,37 @@ export const Header: FC<HeaderProps> = ({
             <Layers size={14} color="#06b6d4" />
             <span>20 Stickers / Batch</span>
           </div>
+
+          {/* History belongs to the signed-in account, so guests should not see it. */}
+          {user && (
+            <button
+              onClick={onOpenHistory}
+              className="btn-secondary"
+              style={{ padding: '6px 12px', fontSize: '0.82rem', position: 'relative', display: 'flex', alignItems: 'center', gap: '6px' }}
+              title="Xem lịch sử các bộ sticker đã tạo"
+            >
+              <History size={15} color="var(--accent-purple)" />
+              <span className="btn-text-desktop">Lịch Sử</span>
+              {historyCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #ec4899 100%)',
+                  color: 'white',
+                  fontSize: '0.65rem',
+                  fontWeight: 800,
+                  borderRadius: '99px',
+                  padding: '1px 5px',
+                  minWidth: '16px',
+                  textAlign: 'center',
+                  boxShadow: '0 2px 6px rgba(124, 58, 237, 0.4)'
+                }}>
+                  {historyCount}
+                </span>
+              )}
+            </button>
+          )}
 
           {/* User Auth Section */}
           {user ? (

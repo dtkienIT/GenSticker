@@ -1,7 +1,11 @@
-from fastapi import APIRouter, HTTPException, status
-from app.models.schemas import UserLoginRequest, UserRegisterRequest, AuthTokenResponse, UserResponse
+from app.models.schemas import (
+  AuthTokenResponse,
+  UserLoginRequest,
+  UserRegisterRequest,
+  UserResponse,
+)
 from app.services.supabase_service import SupabaseService
-import uuid
+from fastapi import APIRouter, HTTPException, status
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -15,7 +19,12 @@ async def login(payload: UserLoginRequest):
   if res and hasattr(res, "user") and res.user:
     user_data = res.user
     session_obj = getattr(res, "session", None)
-    token = session_obj.access_token if session_obj and hasattr(session_obj, "access_token") else f"user_jwt_{uuid.uuid4().hex[:16]}"
+    if not session_obj or not getattr(session_obj, "access_token", None):
+      raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Không thể tạo phiên đăng nhập hợp lệ. Vui lòng thử lại."
+      )
+    token = session_obj.access_token
     
     return AuthTokenResponse(
       access_token=token,
@@ -57,7 +66,18 @@ async def register(payload: UserRegisterRequest):
   user_obj = getattr(res, "user", res) if res else None
   if user_obj and hasattr(user_obj, "id"):
     session_obj = getattr(res, "session", None)
-    token = session_obj.access_token if session_obj and hasattr(session_obj, "access_token") else f"user_jwt_{uuid.uuid4().hex[:16]}"
+    if not session_obj or not getattr(session_obj, "access_token", None):
+      login_res = await SupabaseService.authenticate_user(payload.email, payload.password)
+      if login_res and getattr(login_res, "user", None) and getattr(login_res, "session", None):
+        user_obj = login_res.user
+        session_obj = login_res.session
+
+    if not session_obj or not getattr(session_obj, "access_token", None):
+      raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Tài khoản đã được tạo nhưng chưa thể đăng nhập tự động. Vui lòng đăng nhập lại."
+      )
+    token = session_obj.access_token
     
     return AuthTokenResponse(
       access_token=token,

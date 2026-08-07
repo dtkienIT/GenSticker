@@ -120,8 +120,8 @@ export const AuthModal: FC<AuthModalProps> = ({
               borderRadius: '99px',
               border: 'none',
               background: mode === 'login' ? 'var(--accent-purple)' : 'transparent',
-              color: mode === 'login' ? 'white' : 'var(--text-secondary)',
-              fontWeight: mode === 'login' ? 700 : 500,
+              color: mode === 'login' ? 'white' : 'var(--text-primary)',
+              fontWeight: mode === 'login' ? 700 : 600,
               fontSize: '0.88rem',
               cursor: 'pointer',
               transition: 'all 0.2s ease'
@@ -138,8 +138,8 @@ export const AuthModal: FC<AuthModalProps> = ({
               borderRadius: '99px',
               border: 'none',
               background: mode === 'register' ? 'var(--accent-purple)' : 'transparent',
-              color: mode === 'register' ? 'white' : 'var(--text-secondary)',
-              fontWeight: mode === 'register' ? 700 : 500,
+              color: mode === 'register' ? 'white' : 'var(--text-primary)',
+              fontWeight: mode === 'register' ? 700 : 600,
               fontSize: '0.88rem',
               cursor: 'pointer',
               transition: 'all 0.2s ease'
@@ -155,13 +155,14 @@ export const AuthModal: FC<AuthModalProps> = ({
             marginBottom: '20px',
             padding: '12px 14px',
             borderRadius: 'var(--radius-sm)',
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.4)',
-            color: '#fca5a5',
+            background: 'var(--alert-error-bg)',
+            border: '1px solid var(--alert-error-border)',
+            color: 'var(--alert-error-text)',
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            fontSize: '0.85rem'
+            fontSize: '0.86rem',
+            fontWeight: 600
           }}>
             <AlertCircle size={18} style={{ flexShrink: 0 }} />
             <span>{error}</span>
@@ -174,7 +175,7 @@ export const AuthModal: FC<AuthModalProps> = ({
           {/* Full Name Input (Register mode only) */}
           {mode === 'register' && (
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px', color: 'var(--text-secondary)' }}>
+              <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
                 Họ và tên
               </label>
               <div style={{ position: 'relative' }}>
@@ -190,8 +191,8 @@ export const AuthModal: FC<AuthModalProps> = ({
                     padding: '12px 14px 12px 42px',
                     borderRadius: 'var(--radius-sm)',
                     background: 'var(--input-bg)',
-                    border: '1px solid var(--border-subtle)',
-                    color: 'var(--text-primary)',
+                    border: '1px solid var(--input-border)',
+                    color: 'var(--input-text)',
                     fontSize: '0.9rem',
                     outline: 'none'
                   }}
@@ -202,7 +203,7 @@ export const AuthModal: FC<AuthModalProps> = ({
 
           {/* Email Input */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px', color: 'var(--text-secondary)' }}>
+            <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
               Địa chỉ Email
             </label>
             <div style={{ position: 'relative' }}>
@@ -218,8 +219,8 @@ export const AuthModal: FC<AuthModalProps> = ({
                   padding: '12px 14px 12px 42px',
                   borderRadius: 'var(--radius-sm)',
                   background: 'var(--input-bg)',
-                  border: '1px solid var(--border-subtle)',
-                  color: 'var(--text-primary)',
+                  border: '1px solid var(--input-border)',
+                  color: 'var(--input-text)',
                   fontSize: '0.9rem',
                   outline: 'none'
                 }}
@@ -229,7 +230,7 @@ export const AuthModal: FC<AuthModalProps> = ({
 
           {/* Password Input */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px', color: 'var(--text-secondary)' }}>
+            <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
               Mật khẩu
             </label>
             <div style={{ position: 'relative' }}>
@@ -245,8 +246,8 @@ export const AuthModal: FC<AuthModalProps> = ({
                   padding: '12px 42px 12px 42px',
                   borderRadius: 'var(--radius-sm)',
                   background: 'var(--input-bg)',
-                  border: '1px solid var(--border-subtle)',
-                  color: 'var(--text-primary)',
+                  border: '1px solid var(--input-border)',
+                  color: 'var(--input-text)',
                   fontSize: '0.9rem',
                   outline: 'none'
                 }}

@@ -1,12 +1,31 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status
-from typing import List
-from app.models.schemas import StickerStyleOption, StickerJobResponse
+from app.models.schemas import StickerJobResponse, StickerStyleOption
 from app.services.sticker_pipeline import StickerPipelineService
 from app.services.supabase_service import SupabaseService
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 router = APIRouter(prefix="/stickers", tags=["Stickers Engine"])
+bearer_scheme = HTTPBearer(auto_error=False)
 
-STYLES_LIST: List[StickerStyleOption] = [
+
+def require_current_user_id(
+  credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme)
+) -> str:
+  if not credentials or credentials.scheme.lower() != "bearer":
+    raise HTTPException(
+      status_code=status.HTTP_401_UNAUTHORIZED,
+      detail="Vui lòng đăng nhập để tiếp tục."
+    )
+
+  user = SupabaseService.get_user_from_access_token(credentials.credentials)
+  if not user or not getattr(user, "id", None):
+    raise HTTPException(
+      status_code=status.HTTP_401_UNAUTHORIZED,
+      detail="Phiên đăng nhập không hợp lệ hoặc đã hết hạn."
+    )
+  return str(user.id)
+
+STYLES_LIST: list[StickerStyleOption] = [
   StickerStyleOption(id="3d-chibi", name="3D Chibi Cutie", description="Phong cách 3D nhân vật tròn trịa, mắt to ngây thơ, ánh sáng mềm mại.", preview_color="#7c3aed", badge="HOT 🔥"),
   StickerStyleOption(id="anime-kawaii", name="Anime Kawaii", description="Nét vẽ Manga Nhật Bản dễ thương, tông màu pastel ngọt ngào.", preview_color="#ec4899", badge="Popular ✨"),
   StickerStyleOption(id="cyberpunk", name="Cyberpunk Neon", description="Phong cách tương lai với ánh đèn neon phát sáng và hiệu ứng holographic.", preview_color="#06b6d4", badge="Cyber ⚡"),
@@ -17,7 +36,7 @@ STYLES_LIST: List[StickerStyleOption] = [
   StickerStyleOption(id="watercolor", name="Watercolor Soft", description="Màu nước mềm mại, vết loang màu nghệ thuật và mộng mơ.", preview_color="#3b82f6")
 ]
 
-@router.get("/styles", response_model=List[StickerStyleOption])
+@router.get("/styles", response_model=list[StickerStyleOption])
 def get_sticker_styles():
   """
   Returns list of supported sticker styles
@@ -27,10 +46,11 @@ def get_sticker_styles():
 @router.post("/generate", response_model=StickerJobResponse)
 async def generate_stickers(
   file: UploadFile = File(...),
-  style_id: str = Form("3d-chibi")
+  style_id: str = Form("3d-chibi"),
+  user_id: str = Depends(require_current_user_id)
 ):
   """
-  Accepts user image upload + style_id, uploads to Supabase Storage, and triggers AI pipeline job
+  Accepts an authenticated user's image + style_id, uploads to Supabase Storage, and triggers AI pipeline job
   """
   # Read image bytes
   file_bytes = await file.read()
@@ -42,7 +62,7 @@ async def generate_stickers(
   print(f"Uploaded source image to Supabase: {public_url}")
 
   # Create AI Generation Job
-  job = StickerPipelineService.create_job(style_id=style_id)
+  job = StickerPipelineService.create_job(style_id=style_id, user_id=user_id)
   return job
 
 @router.get("/jobs/{job_id}", response_model=StickerJobResponse)
@@ -56,11 +76,22 @@ def get_job_status(job_id: str):
   return job
 
 @router.get("/history")
-def get_sticker_history(user_id: str | None = None):
+def get_sticker_history(user_id: str = Depends(require_current_user_id)):
   """
   Fetches saved sticker generation history for a user from Supabase Database
   """
-  if not user_id:
-    return []
   return SupabaseService.get_user_sticker_packs(user_id)
 
+
+@router.delete("/history/{pack_id}")
+def delete_sticker_history(
+  pack_id: str,
+  user_id: str = Depends(require_current_user_id)
+):
+  """Soft-deletes one sticker pack owned by the authenticated user."""
+  if not SupabaseService.soft_delete_user_sticker_pack(user_id, pack_id):
+    raise HTTPException(
+      status_code=status.HTTP_404_NOT_FOUND,
+      detail="Không tìm thấy bộ sticker trong lịch sử của bạn."
+    )
+  return {"id": pack_id, "is_deleted": True}

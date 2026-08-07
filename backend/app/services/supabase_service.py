@@ -1,8 +1,25 @@
 import uuid
-from app.database import supabase, supabase_admin
+from datetime import datetime, timezone
+
 from app.config import settings
+from app.database import supabase, supabase_admin
+
 
 class SupabaseService:
+  @staticmethod
+  def get_user_from_access_token(access_token: str):
+    """Validates a Supabase access token and returns its authenticated user."""
+    client = supabase or supabase_admin
+    if not client or not access_token:
+      return None
+
+    try:
+      response = client.auth.get_user(access_token)
+      return response.user if response and hasattr(response, "user") else None
+    except Exception as e:
+      print(f"Invalid Supabase access token: {e}")
+      return None
+
   @staticmethod
   def upload_image_to_storage(file_bytes: bytes, file_name: str, content_type: str = "image/png") -> str:
     """
@@ -19,7 +36,7 @@ class SupabaseService:
 
     try:
       # Upload to bucket
-      response = client.storage.from_(bucket_name).upload(
+      client.storage.from_(bucket_name).upload(
         path=unique_path,
         file=file_bytes,
         file_options={"content-type": content_type, "x-upsert": "true"}
@@ -145,23 +162,20 @@ class SupabaseService:
       return None
 
     try:
-      cover_url = stickers[0].get("image_url", "") if stickers else None
-
       # 1. Insert sticker_pack record
       pack_data = {
-        "title": title,
-        "prompt": prompt,
-        "style_id": style_id,
-        "style_name": style_name,
-        "status": "completed",
-        "cover_url": cover_url,
-        "total_stickers": len(stickers)
+        "title": title or "Bộ Sticker Chibi",
+        "style_name": style_name or "3D Chibi Cutie",
+        "total_stickers": len(stickers) if stickers else 20
       }
       if user_id:
-        pack_data["user_id"] = user_id
+        import re
+        if re.match(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$', user_id):
+          pack_data["user_id"] = user_id
 
       res_pack = client.table("sticker_packs").insert(pack_data).execute()
-      if not res_pack.data:
+
+      if not res_pack or not res_pack.data:
         print("⚠️ Could not insert sticker pack")
         return None
 
@@ -177,10 +191,6 @@ class SupabaseService:
           "emotion": st.get("emotion", "happy"),
           "tags": st.get("tags", []),
           "image_url": st.get("image_url", ""),
-          "width": st.get("width", 1024),
-          "height": st.get("height", 1024),
-          "file_size_kb": st.get("file_size_kb", 150),
-          "is_favorite": st.get("is_favorite", False)
         })
 
       if sticker_records:
@@ -201,8 +211,19 @@ class SupabaseService:
     if not client:
       return []
 
+    if not user_id:
+      return []
+
     try:
-      res = client.table("sticker_packs").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+      res = (
+        client.table("sticker_packs")
+        .select("*")
+        .eq("user_id", user_id)
+        .eq("is_deleted", False)
+        .order("created_at", desc=True)
+        .execute()
+      )
+
       packs = res.data or []
       for p in packs:
         stk_res = client.table("stickers").select("*").eq("pack_id", p["id"]).execute()
@@ -212,4 +233,24 @@ class SupabaseService:
       print(f"⚠️ Error fetching user sticker packs: {e}")
       return []
 
+  @staticmethod
+  def soft_delete_user_sticker_pack(user_id: str, pack_id: str) -> bool:
+    """Hides one sticker pack owned by the authenticated user without deleting its rows."""
+    client = supabase_admin or supabase
+    if not client or not user_id or not pack_id:
+      return False
 
+    try:
+      deleted_at = datetime.now(timezone.utc).isoformat()
+      response = (
+        client.table("sticker_packs")
+        .update({"is_deleted": True, "deleted_at": deleted_at})
+        .eq("id", pack_id)
+        .eq("user_id", user_id)
+        .eq("is_deleted", False)
+        .execute()
+      )
+      return bool(response.data)
+    except Exception as e:
+      print(f"⚠️ Error soft-deleting sticker pack: {e}")
+      return False

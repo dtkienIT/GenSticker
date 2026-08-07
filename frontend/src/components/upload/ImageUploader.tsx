@@ -246,13 +246,14 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
             marginTop: '16px',
             padding: '12px 16px',
             borderRadius: 'var(--radius-sm)',
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.4)',
-            color: '#fca5a5',
+            background: 'var(--alert-error-bg)',
+            border: '1px solid var(--alert-error-border)',
+            color: 'var(--alert-error-text)',
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            fontSize: '0.88rem'
+            fontSize: '0.88rem',
+            fontWeight: 600
           }}>
             <AlertCircle size={18} />
             <span>{error}</span>

@@ -65,7 +65,7 @@ DEFAULT_20_STICKERS = [
 
 class StickerPipelineService:
   @staticmethod
-  def create_job(style_id: str) -> StickerJobResponse:
+  def create_job(style_id: str, user_id: Optional[str] = None) -> StickerJobResponse:
     job_id = f"job_{uuid.uuid4().hex[:10]}"
     
     steps = [
@@ -91,7 +91,7 @@ class StickerPipelineService:
     job_store[job_id] = job_response
     
     # Trigger background pipeline runner
-    asyncio.create_task(StickerPipelineService._run_pipeline_async(job_id, style_id))
+    asyncio.create_task(StickerPipelineService._run_pipeline_async(job_id, style_id, user_id))
     
     return job_response
 
@@ -100,7 +100,7 @@ class StickerPipelineService:
     return job_store.get(job_id)
 
   @staticmethod
-  async def _run_pipeline_async(job_id: str, style_id: str):
+  async def _run_pipeline_async(job_id: str, style_id: str, user_id: Optional[str] = None):
     """Simulate async 5-step AI pipeline execution"""
     job = job_store.get(job_id)
     if not job:
@@ -136,6 +136,7 @@ class StickerPipelineService:
 
     # Generate 20 stickers result
     generated_stickers: List[StickerItemResponse] = []
+    style_name = style_id.replace("-", " ").title()
     for stk in DEFAULT_20_STICKERS:
       svg_data = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="100" cy="100" r="90" fill="{stk["color"]}"/><circle cx="70" cy="80" r="12" fill="white"/><circle cx="130" cy="80" r="12" fill="white"/><circle cx="70" cy="80" r="6" fill="%230f172a"/><circle cx="130" cy="80" r="6" fill="%230f172a"/><path d="M 65 130 Q 100 160 135 130" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/><text x="100" y="45" font-size="28" text-anchor="middle">{stk["badge"]}</text></svg>'
       
@@ -147,6 +148,7 @@ class StickerPipelineService:
           tags=stk["tags"],
           image_url=f"data:image/svg+xml;utf8,{svg_data}",
           style_id=style_id,
+          style_name=style_name,
           is_favorite=False,
           width=1024,
           height=1024,
@@ -161,11 +163,11 @@ class StickerPipelineService:
       from app.services.supabase_service import SupabaseService
       stk_dicts = [stk.model_dump() for stk in generated_stickers]
       SupabaseService.save_sticker_pack(
-        user_id=None,
-        title="Bộ Sticker AI",
+        user_id=user_id,
+        title=f"Bộ Sticker {style_name}",
         prompt=None,
         style_id=style_id,
-        style_name=style_id.replace("-", " ").title(),
+        style_name=style_name,
         stickers=stk_dicts
       )
     except Exception as save_err:

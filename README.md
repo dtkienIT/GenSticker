@@ -8,22 +8,33 @@
 
 ## 🔥 Các Tính Năng Nổi Bật (Key Features)
 
-1. **🎨 Hệ Thống Giao Diện Sáng/Tối (Light & Dark Theme System)**:
+1. **🎨 Hệ Thống Giao Diện Sáng/Tối Đậm Nét (High-Contrast Light & Dark Theme)**:
    - **Dark Mode**: Phong cách *Cyber Dark Glassmorphism* (`#0b0f19`) với hiệu ứng Neon rực rỡ (Purple, Pink, Cyan).
-   - **Light Mode**: Phong cách *Pastel Starry Ocean* (`#eef2ff`) tươi sáng, dịu mắt với họa tiết nền lưới chấm sao, card trắng floating nổi bật.
+   - **Light Mode**: Phong cách *Pastel Starry Ocean* (`#eef2ff`) với độ tương phản cao (High Contrast). Chữ đậm nét, màu thông báo lỗi đỏ sẫm (#991b1b), khung viền input slate rõ nét, dễ đọc trên mọi màn hình.
    - **Custom ThemeToggle**: Nút chuyển mode công tắc trượt hạt đậu mềm mại kết hợp biểu tượng Mặt Trời ☀️ và Mặt Trăng 🌙.
 
-2. **🤖 Telegram Bot 1-Click Export & Thanh Tiến Độ Kép (Dual Progress Tracking)**:
+2. **🔐 Hệ Thống Xác Thực Supabase Auth Bảo Mật (Strict Auth & Duplicate Check)**:
+   - Kiểm tra định dạng email hợp lệ & kiểm tra trùng lặp email thời gian thực qua Supabase Admin API trước khi đăng ký.
+   - Chặn hoàn toàn đăng nhập tài khoản chưa đăng ký. Trả về mã lỗi chuẩn HTTP `409 Conflict`, `422 Unprocessable Entity` và `401 Unauthorized`.
+   - Khôi phục nút **"Đăng Nhập Nhanh (Demo VIP User)"** chạy bằng API xác thực thật (`demo@gensticker.ai`).
+
+3. **🤖 Telegram Bot 1-Click Export & Thanh Tiến Độ Kép (Dual Progress Tracking)**:
    - Xuất trọn bộ 20 sticker trực tiếp lên Telegram chỉ với 1 cú click.
    - Hiển thị **2 thanh tiến độ thời gian thực** ngay trên tin nhắn Telegram (Tiến độ tổng thể bộ sticker + Tiến độ load/upload từng sticker cá nhân).
    - Cơ chế chống trùng lặp pack 3 lớp (Persistent offset, memory lock, atomic removal).
 
-3. **⚡ FastAPI & Supabase Backend Core**:
+4. **🕘 Lịch Sử Sticker Theo Tài Khoản & Quản Lý Xóa**:
+   - Chỉ tải và hiển thị lịch sử sau khi người dùng đăng nhập; khách chưa đăng nhập sẽ được yêu cầu đăng nhập và không nhìn thấy dữ liệu cũ.
+   - Nút **"Xem Lại"** khôi phục đúng bộ sticker đã lưu. Dữ liệu ảnh từ API được chuẩn hóa để xem, tải HD và xuất Telegram đều dùng đúng URL.
+   - Cho phép xóa từng bộ không muốn giữ với hộp thoại xác nhận. Hệ thống dùng **soft delete** (`is_deleted`, `deleted_at`) nên không xóa nhầm dữ liệu vật lý.
+   - Mọi thao tác tạo, xem và xóa lịch sử đều lấy chủ sở hữu từ Supabase JWT; client không thể tự truyền `user_id` của tài khoản khác.
+
+5. **⚡ FastAPI & Supabase Backend Core**:
    - Kết nối trực tiếp PostgreSQL và Supabase Storage Bucket `stickers`.
    - Quản lý người dùng qua **Supabase Auth** với cơ chế tự động xác thực email (Auto-confirm).
-   - Tự động lưu vết dữ liệu các bộ sticker đã tạo vào cơ sở dữ liệu PostgreSQL (`public.sticker_packs` & `public.stickers`) để mở rộng tính năng Xem lịch sử trong tương lai.
-   - API tra cứu lịch sử bộ sticker `/api/v1/stickers/history`.
-   - Tự động fallback đường dẫn pack Telegram khi gặp lỗi `SHORTNAME_OCCUPY_FAILED`.
+   - Tự động lưu bộ sticker đã tạo vào PostgreSQL (`public.sticker_packs` & `public.stickers`) theo đúng tài khoản đang đăng nhập.
+   - API lịch sử có bảo vệ Bearer token: `GET /api/v1/stickers/history` và `DELETE /api/v1/stickers/history/{pack_id}`.
+
 
 ---
 
@@ -33,13 +44,15 @@
 GenSticker Web & Backend Architecture:
 [ React 19 Frontend (Vite + TypeScript) ] 
        │  ├── Theme Engine (useTheme & ThemeToggle)
-       │  ├── AuthModal & TelegramExportModal
+       │  ├── AuthModal, HistoryModal & TelegramExportModal
+       │  ├── History DTO Normalizer (snake_case → camelCase)
        │  └── Custom Hooks (useImageUpload, useStickerGenerator)
        ▼ (REST API / Async HTTP)
 [ FastAPI Backend Engine (Python 3.11+) ]
+       │  ├── Supabase JWT Authentication Guard
        │  ├── Telegram Service (Dual Progress Polling)
        │  ├── Sticker AI Pipeline (5-Step Graphics Engine)
-       │  └── Supabase Integration (Auth, Storage & Postgres)
+       │  └── Supabase Integration (Auth, Storage, History & Postgres)
 ```
 
 ---
@@ -54,12 +67,13 @@ GenSticker/
 │   │   ├── services/             # Telegram service, Supabase service & AI pipeline
 │   │   ├── database.py           # Kết nối Supabase SDK & Postgres
 │   │   └── config.py             # Cấu hình biến môi trường
+│   ├── migrations/               # Migration CSDL, gồm soft delete lịch sử sticker
 │   ├── run.py                    # Khởi chạy Uvicorn Backend server
 │   ├── requirements.txt          # Danh sách thư viện Python
 │   └── README.md                 # Tài liệu hướng dẫn Backend
 ├── frontend/                     # Mã nguồn React Frontend Web App
 │   ├── src/
-│   │   ├── components/           # Components chia nhỏ (common, upload, processing, gallery)
+│   │   ├── components/           # Components (auth, common, history, upload, processing, gallery)
 │   │   ├── hooks/                # Custom hooks (useTheme, useImageUpload, useStickerGenerator)
 │   │   ├── services/             # Service API client & Telegram export service
 │   │   └── index.css             # CSS Variables (Theme token Sáng/Tối, Glassmorphism)
@@ -78,12 +92,22 @@ Dành cho người mới clone dự án về máy:
 
 ### 1. Cấu Hình Biến Môi Trường (`.env`)
 Tạo file `.env` tại thư mục gốc bằng cách sao chép từ `.env.example`:
-```bash
-cp .env.example .env
+```powershell
+Copy-Item .env.example .env
 ```
-Điền đầy đủ thông tin `SUPABASE_URL`, `SUPABASE_ANON_KEY` và `TELEGRAM_BOT_TOKEN`.
+Điền tối thiểu `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` và `TELEGRAM_BOT_TOKEN`.
 
-### 2. Khởi Tạo Môi Trường & Chạy Backend (FastAPI)
+### 2. Áp Dụng Migration Lịch Sử
+
+Chạy file [`backend/migrations/001_add_sticker_pack_soft_delete.sql`](backend/migrations/001_add_sticker_pack_soft_delete.sql) trong **Supabase SQL Editor**, hoặc dùng PostgreSQL CLI:
+
+```powershell
+psql "$env:DATABASE_URL" -f backend/migrations/001_add_sticker_pack_soft_delete.sql
+```
+
+Migration có thể chạy lại an toàn và bổ sung trạng thái xóa mềm cho `public.sticker_packs`.
+
+### 3. Khởi Tạo Môi Trường & Chạy Backend (FastAPI)
 ```powershell
 # a. Tạo và kích hoạt môi trường ảo Python .venv
 python -m venv .venv
@@ -98,14 +122,18 @@ python backend/run.py
 ```
 > Swagger UI documentation: **`http://localhost:8000/docs`**
 
-### 3. Cài Đặt & Khởi Chạy Frontend (React Vite)
-Open a new terminal window:
-```bash
+### 4. Cài Đặt & Khởi Chạy Frontend (React Vite)
+
+Mở một terminal mới:
+
+```powershell
 cd frontend
 npm install
 npm run dev
 ```
 > Web App running at: **`http://localhost:5173/`**
+
+> Lưu ý: tạo sticker và lịch sử là tính năng theo tài khoản. Người dùng cần đăng nhập để tạo, xem lại hoặc xóa một bộ sticker.
 
 ---
 

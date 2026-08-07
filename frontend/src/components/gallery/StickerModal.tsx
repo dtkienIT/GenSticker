@@ -48,8 +48,8 @@ export const StickerModal: FC<StickerModalProps> = ({
             position: 'absolute',
             top: '16px',
             right: '16px',
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: 'none',
+            background: 'var(--btn-secondary-bg)',
+            border: '1px solid var(--border-subtle)',
             borderRadius: '50%',
             width: '36px',
             height: '36px',
@@ -84,7 +84,7 @@ export const StickerModal: FC<StickerModalProps> = ({
 
         {/* Title & Metadata */}
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '99px', background: 'rgba(139, 92, 246, 0.15)', color: '#c084fc', fontSize: '0.8rem', fontWeight: 600, marginBottom: '8px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '99px', background: 'var(--badge-purple-bg)', color: 'var(--badge-purple-text)', border: '1px solid var(--badge-purple-border)', fontSize: '0.8rem', fontWeight: 600, marginBottom: '8px' }}>
             <Sparkles size={14} />
             <span>Phong cách: {sticker.styleName}</span>
           </div>

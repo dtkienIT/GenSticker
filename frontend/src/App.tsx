@@ -1,13 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
 import { ImageUploader } from './components/upload/ImageUploader';
 import { ProcessingPipeline } from './components/processing/ProcessingPipeline';
 import { StickerGrid } from './components/gallery/StickerGrid';
 import { AuthModal } from './components/auth/AuthModal';
+import { HistoryModal } from './components/history/HistoryModal';
 import { useStickerGenerator } from './hooks/useStickerGenerator';
 import { useAuth } from './hooks/useAuth';
 import { useTheme } from './hooks/useTheme';
+import { StickerService, type StickerPackHistoryItem } from './services/stickerService';
+import type { StickerItem } from './types/sticker';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export function App() {
@@ -17,9 +20,15 @@ export function App() {
     state,
     setSelectedStyle,
     startGeneration,
+    loadStickerPack,
     resetGenerator,
     toggleFavorite,
   } = useStickerGenerator();
+
+  const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
+  const [historyPacks, setHistoryPacks] = useState<StickerPackHistoryItem[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState<boolean>(false);
+  const historyRequestIdRef = useRef(0);
 
   // Scroll to top of window whenever page view state changes (idle, processing, completed, error)
   useEffect(() => {
@@ -42,6 +51,58 @@ export function App() {
     logout,
   } = useAuth();
 
+  const loadHistory = useCallback(async () => {
+    const requestId = ++historyRequestIdRef.current;
+
+    if (!user?.id) {
+      setHistoryPacks([]);
+      setIsHistoryLoading(false);
+      return;
+    }
+
+    setIsHistoryLoading(true);
+    try {
+      const packs = await StickerService.getUserHistory();
+      if (requestId === historyRequestIdRef.current) {
+        setHistoryPacks(packs);
+      }
+    } finally {
+      if (requestId === historyRequestIdRef.current) {
+        setIsHistoryLoading(false);
+      }
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setIsHistoryOpen(false);
+    }
+    void loadHistory();
+  }, [isAuthenticated, loadHistory, state.status]);
+
+  const handleLogout = () => {
+    historyRequestIdRef.current += 1;
+    setHistoryPacks([]);
+    setIsHistoryLoading(false);
+    setIsHistoryOpen(false);
+    logout();
+  };
+
+  const handleSelectHistoryPack = (stickers: StickerItem[]) => {
+    loadStickerPack(stickers);
+  };
+
+  const handleExportHistoryTelegram = (_title: string, _styleName?: string, stickers?: StickerItem[]) => {
+    if (stickers && stickers.length > 0) {
+      loadStickerPack(stickers);
+    }
+  };
+
+  const handleDeleteHistoryPack = async (packId: string) => {
+    await StickerService.deleteHistoryPack(packId);
+    setHistoryPacks((packs) => packs.filter((pack) => pack.id !== packId));
+  };
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
@@ -51,9 +112,18 @@ export function App() {
         theme={theme}
         onToggleTheme={toggleTheme}
         onOpenAuth={openAuthModal}
-        onLogout={logout}
+        onLogout={handleLogout}
         onReset={resetGenerator} 
         hasActiveSession={state.status !== 'idle'} 
+        onOpenHistory={() => {
+          if (!isAuthenticated) {
+            openAuthModal('login');
+            return;
+          }
+          void loadHistory();
+          setIsHistoryOpen(true);
+        }}
+        historyCount={historyPacks.length}
       />
 
       {/* Main Container */}
@@ -118,6 +188,17 @@ export function App() {
         )}
 
       </main>
+
+      {/* History Modal */}
+      <HistoryModal
+        isOpen={isAuthenticated && isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        historyPacks={historyPacks}
+        isLoading={isHistoryLoading}
+        onSelectPack={handleSelectHistoryPack}
+        onExportTelegram={handleExportHistoryTelegram}
+        onDeletePack={handleDeleteHistoryPack}
+      />
 
       {/* Authentication Modal */}
       <AuthModal
