@@ -54,3 +54,13 @@ def get_job_status(job_id: str):
   if not job:
     raise HTTPException(status_code=404, detail="Không tìm thấy tiến trình sinh sticker.")
   return job
+
+@router.get("/history")
+def get_sticker_history(user_id: str | None = None):
+  """
+  Fetches saved sticker generation history for a user from Supabase Database
+  """
+  if not user_id:
+    return []
+  return SupabaseService.get_user_sticker_packs(user_id)
+

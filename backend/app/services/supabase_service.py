@@ -1,5 +1,5 @@
 import uuid
-from app.database import supabase
+from app.database import supabase, supabase_admin
 from app.config import settings
 
 class SupabaseService:
@@ -9,7 +9,8 @@ class SupabaseService:
     Uploads a file to Supabase Storage bucket 'stickers'.
     Returns public URL of the uploaded image.
     """
-    if not supabase:
+    client = supabase_admin or supabase
+    if not client:
       print("⚠️ Supabase client not available, fallback to mock URL")
       return f"https://api.dicebear.com/7.x/bottts/svg?seed={file_name}"
     
@@ -18,7 +19,7 @@ class SupabaseService:
 
     try:
       # Upload to bucket
-      response = supabase.storage.from_(bucket_name).upload(
+      response = client.storage.from_(bucket_name).upload(
         path=unique_path,
         file=file_bytes,
         file_options={"content-type": content_type, "x-upsert": "true"}
@@ -63,7 +64,101 @@ class SupabaseService:
           }
         }
       })
+      # Auto-confirm email for MVP dev if admin client is available
+      if supabase_admin and response and hasattr(response, "user") and response.user:
+        try:
+          supabase_admin.auth.admin.update_user_by_id(response.user.id, {"email_confirm": True})
+        except Exception as admin_err:
+          print(f"⚠️ Auto confirm email note: {admin_err}")
+          
       return response
     except Exception as e:
       print(f"Error Supabase register: {e}")
       return None
+
+  @staticmethod
+  def save_sticker_pack(
+    user_id: str | None,
+    title: str,
+    prompt: str | None,
+    style_id: str,
+    style_name: str,
+    stickers: list[dict]
+  ) -> dict | None:
+    """
+    Saves a completed sticker pack and its stickers to Supabase Database
+    """
+    client = supabase_admin or supabase
+    if not client:
+      print("⚠️ Supabase client not available for saving pack")
+      return None
+
+    try:
+      cover_url = stickers[0].get("image_url", "") if stickers else None
+
+      # 1. Insert sticker_pack record
+      pack_data = {
+        "title": title,
+        "prompt": prompt,
+        "style_id": style_id,
+        "style_name": style_name,
+        "status": "completed",
+        "cover_url": cover_url,
+        "total_stickers": len(stickers)
+      }
+      if user_id:
+        pack_data["user_id"] = user_id
+
+      res_pack = client.table("sticker_packs").insert(pack_data).execute()
+      if not res_pack.data:
+        print("⚠️ Could not insert sticker pack")
+        return None
+
+      pack_record = res_pack.data[0]
+      pack_id = pack_record["id"]
+
+      # 2. Insert individual stickers
+      sticker_records = []
+      for st in stickers:
+        sticker_records.append({
+          "pack_id": pack_id,
+          "title": st.get("title", "Sticker"),
+          "emotion": st.get("emotion", "happy"),
+          "tags": st.get("tags", []),
+          "image_url": st.get("image_url", ""),
+          "width": st.get("width", 1024),
+          "height": st.get("height", 1024),
+          "file_size_kb": st.get("file_size_kb", 150),
+          "is_favorite": st.get("is_favorite", False)
+        })
+
+      if sticker_records:
+        client.table("stickers").insert(sticker_records).execute()
+
+      print(f"✅ Saved sticker pack '{title}' with ID: {pack_id}")
+      return pack_record
+    except Exception as e:
+      print(f"⚠️ Error saving sticker pack to DB: {e}")
+      return None
+
+  @staticmethod
+  def get_user_sticker_packs(user_id: str) -> list[dict]:
+    """
+    Fetches past sticker packs for a user from Supabase Database
+    """
+    client = supabase_admin or supabase
+    if not client:
+      return []
+
+    try:
+      res = client.table("sticker_packs").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+      packs = res.data or []
+      for p in packs:
+        stk_res = client.table("stickers").select("*").eq("pack_id", p["id"]).execute()
+        p["stickers"] = stk_res.data or []
+      return packs
+    except Exception as e:
+      print(f"⚠️ Error fetching user sticker packs: {e}")
+      return []
+
+

@@ -20,7 +20,9 @@
 
 3. **⚡ FastAPI & Supabase Backend Core**:
    - Kết nối trực tiếp PostgreSQL và Supabase Storage Bucket `stickers`.
-   - API Auth & Session Persistence.
+   - Quản lý người dùng qua **Supabase Auth** với cơ chế tự động xác thực email (Auto-confirm).
+   - Tự động lưu vết dữ liệu các bộ sticker đã tạo vào cơ sở dữ liệu PostgreSQL (`public.sticker_packs` & `public.stickers`) để mở rộng tính năng Xem lịch sử trong tương lai.
+   - API tra cứu lịch sử bộ sticker `/api/v1/stickers/history`.
    - Tự động fallback đường dẫn pack Telegram khi gặp lỗi `SHORTNAME_OCCUPY_FAILED`.
 
 ---

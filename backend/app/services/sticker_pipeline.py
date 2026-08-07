@@ -155,3 +155,18 @@ class StickerPipelineService:
       )
 
     job.stickers = generated_stickers
+
+    # Persist completed pack & stickers to Supabase Database
+    try:
+      from app.services.supabase_service import SupabaseService
+      stk_dicts = [stk.model_dump() for stk in generated_stickers]
+      SupabaseService.save_sticker_pack(
+        user_id=None,
+        title="Bộ Sticker AI",
+        prompt=None,
+        style_id=style_id,
+        style_name=style_id.replace("-", " ").title(),
+        stickers=stk_dicts
+      )
+    except Exception as save_err:
+      print(f"⚠️ Note auto-saving pack to DB: {save_err}")

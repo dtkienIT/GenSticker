@@ -72,4 +72,5 @@ backend/
 - `GET  /api/v1/stickers/styles` : Lấy danh sách 8 phong cách sticker AI.
 - `POST /api/v1/stickers/generate` : Upload ảnh & kích hoạt tiến trình sinh 20 sticker.
 - `GET  /api/v1/stickers/jobs/{job_id}` : Polling tiến trình AI 5 bước (0% -> 100%).
+- `GET  /api/v1/stickers/history` : Lấy danh sách lịch sử các bộ sticker đã tạo của user từ Supabase Postgres.
 - `POST /api/v1/stickers/telegram-export` : Tạo request xuất sticker set sang Telegram Bot với thanh tiến độ thời gian thực.

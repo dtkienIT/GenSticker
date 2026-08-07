@@ -5,6 +5,7 @@ from app.config import settings
 
 # Initialize Supabase Py client
 supabase: Client | None = None
+supabase_admin: Client | None = None
 
 if settings.SUPABASE_URL and settings.SUPABASE_ANON_KEY:
   try:
@@ -12,6 +13,13 @@ if settings.SUPABASE_URL and settings.SUPABASE_ANON_KEY:
     print("✅ Supabase client initialized successfully!")
   except Exception as e:
     print(f"⚠️ Warning: Could not initialize Supabase client: {e}")
+
+if settings.SUPABASE_URL and settings.SUPABASE_SERVICE_ROLE_KEY:
+  try:
+    supabase_admin = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
+    print("✅ Supabase admin client initialized successfully!")
+  except Exception as e:
+    print(f"⚠️ Warning: Could not initialize Supabase admin client: {e}")
 
 # SQLAlchemy Engine setup (for PostgreSQL direct connection)
 Base = declarative_base()
