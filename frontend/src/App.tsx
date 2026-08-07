@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
+import { MeteorBackground } from './components/common/MeteorBackground';
 import { ImageUploader } from './components/upload/ImageUploader';
 import { ProcessingPipeline } from './components/processing/ProcessingPipeline';
 import { StickerGrid } from './components/gallery/StickerGrid';
@@ -92,19 +93,14 @@ export function App() {
     loadStickerPack(stickers);
   };
 
-  const handleExportHistoryTelegram = (_title: string, _styleName?: string, stickers?: StickerItem[]) => {
-    if (stickers && stickers.length > 0) {
-      loadStickerPack(stickers);
-    }
-  };
-
   const handleDeleteHistoryPack = async (packId: string) => {
     await StickerService.deleteHistoryPack(packId);
     setHistoryPacks((packs) => packs.filter((pack) => pack.id !== packId));
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="app-shell">
+      <MeteorBackground />
       
       {/* Navbar */}
       <Header 
@@ -196,7 +192,6 @@ export function App() {
         historyPacks={historyPacks}
         isLoading={isHistoryLoading}
         onSelectPack={handleSelectHistoryPack}
-        onExportTelegram={handleExportHistoryTelegram}
         onDeletePack={handleDeleteHistoryPack}
       />
 

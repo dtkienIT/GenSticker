@@ -22,6 +22,7 @@ backend/
 │   └── services/             # Logic xử lý dịch vụ & AI Pipeline
 │       ├── supabase_service.py # Upload file lên Supabase Storage 'stickers'
 │       ├── telegram_service.py # Xử lý Telegram Bot, Polling & Dual Progress Bars
+│       ├── telegram_bot.py     # Telegram Bot polling, atomic _claim_pending_pack & chống trùng lặp
 │       └── sticker_pipeline.py # State machine tiến trình AI 5 bước
 ├── migrations/               # Migration PostgreSQL/Supabase
 │   └── 001_add_sticker_pack_soft_delete.sql # Trạng thái xóa mềm cho lịch sử
@@ -85,5 +86,9 @@ Trước khi chạy backend, sao chép `.env.example` thành `.env` ở thư m�
 - `GET  /api/v1/stickers/history` : Lấy các bộ sticker chưa xóa của tài khoản trong Bearer token.
 - `DELETE /api/v1/stickers/history/{pack_id}` : Xóa mềm một bộ sticker nếu bộ đó thuộc tài khoản đang đăng nhập.
 - `POST /api/v1/telegram/export` : Tạo request xuất sticker set sang Telegram Bot với thanh tiến độ thời gian thực.
+
+### 🛡 Cải Tiến Concurrency Telegram Bot
+
+`telegram_bot.py` sử dụng hàm **`_claim_pending_pack(pack_id)`** thay vì pop trực tiếp từ dict, đảm bảo atomic claim khi nhiều Telegram update đến đồng thời. Kết hợp với `_processing_packs` set lock, hệ thống chặn hoàn toàn xử lý trùng lặp pack.
 
 Ba API `generate`, `history` và `DELETE history/{pack_id}` yêu cầu header `Authorization: Bearer <supabase_access_token>`. Backend xác thực token và tự lấy `user_id`; không nhận quyền sở hữu lịch sử từ query/body của client.

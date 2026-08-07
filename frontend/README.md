@@ -10,11 +10,12 @@ Thư mục này chứa toàn bộ mã nguồn **Frontend Web Application** cho d
 - **Build Tool**: Vite (HMR siêu nhanh)
 - **Styling**: Vanilla CSS (Design System phong cách Cyber Dark Glassmorphism & Modern High-Contrast Light Mode)
 - **Icons**: `lucide-react`
-- **Effects**: `canvas-confetti`
+- **Effects**: `canvas-confetti`, `MeteorBackground` (10 sao băng bay chéo liên tục ở Dark Mode)
 - **Theme System**: Custom `useTheme` hook với `localStorage` persistence, bảng màu High-Contrast cho Light Mode & công tắc trượt `ThemeToggle`.
 - **Auth Flow**: Supabase Auth Integration với Real API Login, Register, Duplicate Email Check & Demo VIP Fast Login.
 - **Account History**: Chỉ tải lịch sử sau đăng nhập; đăng xuất sẽ xóa dữ liệu lịch sử khỏi state và đóng modal.
-- **History Actions**: Xem lại đầy đủ sticker đã lưu để tiếp tục tải/xuất Telegram và xóa từng bộ qua hộp thoại xác nhận.
+- **History Actions**: Xem lại đầy đủ sticker đã lưu để tiếp tục tải và xóa từng bộ qua hộp thoại xác nhận.
+- **Telegram Export Guard**: Nút xuất Telegram có cơ chế khóa chống bấm đôi (`useRef` lock) và conditional rendering, tránh gửi nhiều request trùng lặp.
 
 
 ---
@@ -42,7 +43,8 @@ npm run build
 - `src/services/`: Lớp dịch vụ `StickerService` đóng gói API có Bearer token, chuẩn hóa dữ liệu lịch sử, Telegram export và tải file.
 - `src/hooks/`: Custom hooks (`useTheme`, `useImageUpload`, `useStickerGenerator`) xử lý logic độc lập với UI.
 - `src/components/`: Component giao diện chia thành `common`, `upload`, `processing`, `gallery`, `auth`, `history`.
-- `src/index.css`: Bảng màu CSS Variables (Dark & Light tokens) & hiệu ứng Glassmorphism.
+  - `common/MeteorBackground.tsx`: 10 sao băng CSS với custom properties (vị trí, tốc độ, góc bay) – hiển thị ở Dark Mode.
+- `src/index.css`: Bảng màu CSS Variables (Dark & Light tokens), hiệu ứng Glassmorphism & hoạt ảnh sao băng `@keyframes meteor-fly`.
 
 ## 🕘 Luồng Lịch Sử Sticker
 

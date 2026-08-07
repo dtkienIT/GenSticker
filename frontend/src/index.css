@@ -45,6 +45,16 @@
   --badge-purple-text: #c084fc;
   --badge-purple-border: rgba(139, 92, 246, 0.3);
 
+  /* Animated sky background */
+  --star-dot: rgba(226, 232, 240, 0.45);
+  --star-dot-soft: rgba(129, 140, 248, 0.28);
+  --star-dot-bright: rgba(255, 255, 255, 0.9);
+  --meteor-head: rgba(255, 255, 255, 0.98);
+  --meteor-tail: rgba(196, 181, 253, 0.82);
+  --meteor-glow: rgba(139, 92, 246, 0.75);
+  --sky-haze-primary: rgba(30, 64, 175, 0.08);
+  --sky-haze-secondary: rgba(124, 58, 237, 0.1);
+
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
@@ -92,6 +102,15 @@
   --badge-purple-bg: #eef2ff;
   --badge-purple-text: #4f46e5;
   --badge-purple-border: #c7d2fe;
+
+  --star-dot: rgba(51, 65, 85, 0.28);
+  --star-dot-soft: rgba(79, 70, 229, 0.2);
+  --star-dot-bright: rgba(30, 64, 175, 0.58);
+  --meteor-head: rgba(15, 23, 42, 0.92);
+  --meteor-tail: rgba(79, 70, 229, 0.72);
+  --meteor-glow: rgba(99, 102, 241, 0.45);
+  --sky-haze-primary: rgba(147, 197, 253, 0.14);
+  --sky-haze-secondary: rgba(196, 181, 253, 0.16);
 }
 
 
@@ -121,9 +140,141 @@ body {
   background-image: 
     radial-gradient(circle at 12% 18%, rgba(224, 231, 255, 0.9) 0%, transparent 40%),
     radial-gradient(circle at 88% 20%, rgba(237, 233, 254, 0.95) 0%, transparent 45%),
-    radial-gradient(circle at 50% 85%, rgba(204, 251, 241, 0.7) 0%, transparent 50%),
-    radial-gradient(rgba(99, 102, 241, 0.14) 1.2px, transparent 1.2px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 32px 32px;
+    radial-gradient(circle at 50% 85%, rgba(204, 251, 241, 0.7) 0%, transparent 50%);
+  background-size: 100% 100%, 100% 100%, 100% 100%;
+}
+
+/* Fixed decorative sky shared by every app state. */
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.meteor-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  contain: paint;
+  background:
+    radial-gradient(circle at 8% 10%, var(--sky-haze-primary) 0%, transparent 34%),
+    radial-gradient(circle at 88% 12%, var(--sky-haze-secondary) 0%, transparent 36%);
+  transition: background 0.35s ease;
+}
+
+.meteor-background::before,
+.meteor-background::after {
+  content: '';
+  position: absolute;
+  inset: -10%;
+  background-repeat: repeat;
+}
+
+.meteor-background::before {
+  opacity: 0.72;
+  background-image:
+    radial-gradient(circle at 18px 24px, var(--star-dot-bright) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 52px 71px, var(--star-dot) 0 0.8px, transparent 1.35px),
+    radial-gradient(circle at 31px 43px, var(--star-dot-soft) 0 0.7px, transparent 1.2px);
+  background-size: 137px 151px, 89px 103px, 57px 71px;
+  background-position: 7px 13px, 29px 41px, 11px 27px;
+  animation: star-field-drift 85s linear infinite;
+}
+
+.meteor-background::after {
+  opacity: 0.48;
+  background-image:
+    radial-gradient(circle at 41px 29px, var(--star-dot-bright) 0 1.35px, transparent 1.9px),
+    radial-gradient(circle at 77px 61px, var(--star-dot-soft) 0 0.9px, transparent 1.45px);
+  background-size: 223px 197px, 181px 239px;
+  background-position: 17px 37px, 53px 19px;
+  animation: star-field-twinkle 6.5s ease-in-out infinite alternate;
+}
+
+.meteor-background__shooting-stars {
+  position: absolute;
+  inset: 0;
+}
+
+.meteor-background__meteor {
+  position: absolute;
+  top: var(--meteor-top);
+  left: var(--meteor-left);
+  width: var(--meteor-length);
+  height: 1.5px;
+  border-radius: 999px;
+  opacity: 0;
+  background: linear-gradient(90deg, var(--meteor-head) 0%, var(--meteor-tail) 18%, transparent 100%);
+  filter: drop-shadow(0 0 5px var(--meteor-glow));
+  transform-origin: left center;
+  will-change: transform, opacity;
+  animation: meteor-travel var(--meteor-duration) linear var(--meteor-delay) infinite;
+}
+
+.meteor-background__meteor::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--meteor-head);
+  box-shadow: 0 0 8px 2px var(--meteor-glow);
+  transform: translateY(-50%);
+}
+
+@keyframes star-field-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-57px, 71px, 0); }
+}
+
+@keyframes star-field-twinkle {
+  from { opacity: 0.28; }
+  to { opacity: 0.58; }
+}
+
+@keyframes meteor-travel {
+  0%, 57% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(var(--meteor-angle)) scaleX(0.4);
+  }
+  60% {
+    opacity: 0.95;
+  }
+  73% {
+    opacity: 0.72;
+  }
+  82%, 100% {
+    opacity: 0;
+    transform: translate3d(var(--meteor-travel-x), var(--meteor-travel-y), 0) rotate(var(--meteor-angle)) scaleX(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .meteor-background__meteor:nth-child(n + 7) {
+    display: none;
+  }
+
+  .meteor-background::before {
+    opacity: 0.58;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meteor-background::before,
+  .meteor-background::after {
+    animation: none;
+  }
+
+  .meteor-background__meteor {
+    display: none;
+  }
 }
 
 /* Glassmorphism utility */

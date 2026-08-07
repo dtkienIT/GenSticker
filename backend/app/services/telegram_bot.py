@@ -15,7 +15,9 @@ import io
 import json
 import os
 import logging
-from typing import Dict, Optional
+import tempfile
+import threading
+from typing import Optional
 from PIL import Image, ImageDraw, ImageFont
 import httpx
 
@@ -27,6 +29,7 @@ logger = logging.getLogger("telegram_bot")
 DATA_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "data"))
 PENDING_PACKS_FILE = os.path.join(DATA_DIR, "pending_telegram_packs.json")
 LAST_UPDATE_ID_FILE = os.path.join(DATA_DIR, "telegram_last_update_id.txt")
+_PENDING_PACKS_LOCK = threading.Lock()
 
 EMOJI_LIST = ['👍', '💖', '🧐', '🤬', '😴', '🤣', '😭', '😎', '💻', '🙏',
               '😱', '🥳', '☕', '🔥', '❓', '🏆', '✨', '🤦\u200d♂️', '🫰', '🎂']
@@ -74,13 +77,37 @@ def _load_pending_packs() -> dict:
 
 
 def _save_pending_packs(data: dict):
-    """Save pending packs to JSON file."""
+    """Atomically save pending packs so readers never observe partial JSON."""
+    temp_path = None
     try:
         os.makedirs(os.path.dirname(PENDING_PACKS_FILE), exist_ok=True)
-        with open(PENDING_PACKS_FILE, "w", encoding="utf-8") as f:
+        fd, temp_path = tempfile.mkstemp(
+            prefix="pending_telegram_packs_",
+            suffix=".tmp",
+            dir=os.path.dirname(PENDING_PACKS_FILE),
+        )
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
+        os.replace(temp_path, PENDING_PACKS_FILE)
+        temp_path = None
     except Exception as e:
         logger.error(f"Failed to save pending packs: {e}")
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+
+
+def _claim_pending_pack(pack_id: str) -> Optional[dict]:
+    """Atomically remove and return one pending pack."""
+    with _PENDING_PACKS_LOCK:
+        all_packs = _load_pending_packs()
+        pack_data = all_packs.pop(pack_id, None)
+        if pack_data:
+            _save_pending_packs(all_packs)
+        return pack_data
 
 
 def generate_sticker_png(index: int, emoji: str, title: str) -> bytes:
@@ -139,6 +166,7 @@ class TelegramBot:
     _polling_task: Optional[asyncio.Task] = None
     _last_update_id: int = 0
     _processing_packs: set = set()  # Dedup guard for concurrent requests
+    _processing_users: set[int] = set()  # Only one sticker-set job per Telegram user
 
     @classmethod
     def get_instance(cls) -> 'TelegramBot':
@@ -242,18 +270,20 @@ class TelegramBot:
 
     async def _create_sticker_set_for_user(self, chat_id: int, user_id: int, first_name: str, pack_id: str):
         """Create a real sticker set on Telegram for the user."""
-        # In-memory dedup guard: skip if this pack is already being processed
-        if pack_id in TelegramBot._processing_packs:
-            logger.warning(f"⚠️ Pack {pack_id} already being processed, skipping duplicate")
+        # Telegram can reject concurrent sticker-set mutations from the same user.
+        # Reject rapid duplicate starts before consuming the pending pack so the
+        # active job can finish cleanly and no second job is lost mid-flight.
+        if pack_id in TelegramBot._processing_packs or user_id in TelegramBot._processing_users:
+            logger.warning(f"⚠️ User {user_id} already has a sticker pack being processed")
+            await self._send_already_processing_notice(chat_id, first_name)
             return
+
         TelegramBot._processing_packs.add(pack_id)
+        TelegramBot._processing_users.add(user_id)
 
         try:
-            # Load from file-based store and IMMEDIATELY remove to prevent duplicates
-            all_packs = _load_pending_packs()
-            pack_data = all_packs.pop(pack_id, None)
-            if pack_data:
-                _save_pending_packs(all_packs)
+            # Atomically claim the pack only after concurrency guards pass.
+            pack_data = _claim_pending_pack(pack_id)
 
             if not pack_data:
                 async with httpx.AsyncClient(timeout=10) as client:
@@ -325,7 +355,7 @@ class TelegramBot:
                     async with httpx.AsyncClient(timeout=10) as client:
                         await client.post(f"{self.base_url}/sendMessage", json={
                             "chat_id": chat_id,
-                            "text": f"✅ Bộ sticker đã tồn tại rồi!\n\nBấm bên dưới để thêm vào Telegram:",
+                            "text": "✅ Bộ sticker đã tồn tại rồi!\n\nBấm bên dưới để thêm vào Telegram:",
                             "reply_markup": {
                                 "inline_keyboard": [[{
                                     "text": "📦 Thêm Sticker Set",
@@ -414,6 +444,22 @@ class TelegramBot:
 
         finally:
             TelegramBot._processing_packs.discard(pack_id)
+            TelegramBot._processing_users.discard(user_id)
+
+    async def _send_already_processing_notice(self, chat_id: int, first_name: str):
+        """Tell a user to wait instead of starting overlapping Telegram jobs."""
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                await client.post(f"{self.base_url}/sendMessage", json={
+                    "chat_id": chat_id,
+                    "text": (
+                        f"⏳ {first_name}, bot đang tạo một bộ sticker cho bạn.\n\n"
+                        f"Vui lòng chờ thông báo hoàn tất rồi quay lại GenSticker để xuất bộ tiếp theo. "
+                        f"Bạn không cần bấm START liên tục."
+                    )
+                })
+        except Exception as e:
+            logger.warning(f"Failed to send already-processing notice: {e}")
 
     @staticmethod
     def _build_progress_text(
@@ -432,7 +478,7 @@ class TelegramBot:
 
         lines = [
             f"⏳ <b>Đang tạo bộ sticker \"{pack_title}\"...</b>\n",
-            f"📊 <b>Tiến độ tổng thể:</b>",
+            "📊 <b>Tiến độ tổng thể:</b>",
             f"[<code>{overall_bar}</code>] {overall_pct}% ({current}/{total} sticker)",
         ]
 
@@ -499,9 +545,10 @@ class TelegramBot:
     @classmethod
     def store_pending_pack(cls, pack_id: str, pack_data: dict):
         """Store a pending pack to file for persistence across reloads."""
-        all_packs = _load_pending_packs()
-        all_packs[pack_id] = pack_data
-        _save_pending_packs(all_packs)
+        with _PENDING_PACKS_LOCK:
+            all_packs = _load_pending_packs()
+            all_packs[pack_id] = pack_data
+            _save_pending_packs(all_packs)
         logger.info(f"📦 Stored pending pack: {pack_id}")
 
     @classmethod

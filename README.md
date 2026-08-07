@@ -21,7 +21,8 @@
 3. **🤖 Telegram Bot 1-Click Export & Thanh Tiến Độ Kép (Dual Progress Tracking)**:
    - Xuất trọn bộ 20 sticker trực tiếp lên Telegram chỉ với 1 cú click.
    - Hiển thị **2 thanh tiến độ thời gian thực** ngay trên tin nhắn Telegram (Tiến độ tổng thể bộ sticker + Tiến độ load/upload từng sticker cá nhân).
-   - Cơ chế chống trùng lặp pack 3 lớp (Persistent offset, memory lock, atomic removal).
+   - Cơ chế chống trùng lặp pack 3 lớp (Persistent offset, memory lock, atomic removal) + **Atomic `_claim_pending_pack`** đảm bảo an toàn luồng khi nhiều Telegram update đến cùng lúc.
+   - **Chống bấm đôi (Double-Launch Lock)**: Frontend khóa nút xuất Telegram bằng `useRef` lock, ngăn người dùng kích hoạt đồng thời nhiều lần request export.
 
 4. **🕘 Lịch Sử Sticker Theo Tài Khoản & Quản Lý Xóa**:
    - Chỉ tải và hiển thị lịch sử sau khi người dùng đăng nhập; khách chưa đăng nhập sẽ được yêu cầu đăng nhập và không nhìn thấy dữ liệu cũ.
@@ -29,7 +30,12 @@
    - Cho phép xóa từng bộ không muốn giữ với hộp thoại xác nhận. Hệ thống dùng **soft delete** (`is_deleted`, `deleted_at`) nên không xóa nhầm dữ liệu vật lý.
    - Mọi thao tác tạo, xem và xóa lịch sử đều lấy chủ sở hữu từ Supabase JWT; client không thể tự truyền `user_id` của tài khoản khác.
 
-5. **⚡ FastAPI & Supabase Backend Core**:
+5. **🌠 Hiệu Ứng Nền Sao Băng Động (Meteor Shower Background)**:
+   - Component `MeteorBackground` render 10 sao băng bay chéo liên tục trên nền tối, tạo hiệu ứng không gian sống động.
+   - Mỗi sao băng được cấu hình riêng biệt về vị trí, độ dài, tốc độ và độ trễ qua CSS custom properties.
+   - Tự động ẩn trong Light Mode, chỉ hiển thị ở Dark Mode để giữ phong cách *Cyber Dark Glassmorphism*.
+
+6. **⚡ FastAPI & Supabase Backend Core**:
    - Kết nối trực tiếp PostgreSQL và Supabase Storage Bucket `stickers`.
    - Quản lý người dùng qua **Supabase Auth** với cơ chế tự động xác thực email (Auto-confirm).
    - Tự động lưu bộ sticker đã tạo vào PostgreSQL (`public.sticker_packs` & `public.stickers`) theo đúng tài khoản đang đăng nhập.
@@ -43,6 +49,7 @@
 ```
 GenSticker Web & Backend Architecture:
 [ React 19 Frontend (Vite + TypeScript) ] 
+       │  ├── MeteorBackground (Shooting Star Animation Layer)
        │  ├── Theme Engine (useTheme & ThemeToggle)
        │  ├── AuthModal, HistoryModal & TelegramExportModal
        │  ├── History DTO Normalizer (snake_case → camelCase)
@@ -50,7 +57,7 @@ GenSticker Web & Backend Architecture:
        ▼ (REST API / Async HTTP)
 [ FastAPI Backend Engine (Python 3.11+) ]
        │  ├── Supabase JWT Authentication Guard
-       │  ├── Telegram Service (Dual Progress Polling)
+       │  ├── Telegram Service (Dual Progress Polling + Atomic Claim)
        │  ├── Sticker AI Pipeline (5-Step Graphics Engine)
        │  └── Supabase Integration (Auth, Storage, History & Postgres)
 ```
@@ -74,6 +81,7 @@ GenSticker/
 ├── frontend/                     # Mã nguồn React Frontend Web App
 │   ├── src/
 │   │   ├── components/           # Components (auth, common, history, upload, processing, gallery)
+│   │   │   └── common/MeteorBackground.tsx   # Hiệu ứng sao băng nền trang
 │   │   ├── hooks/                # Custom hooks (useTheme, useImageUpload, useStickerGenerator)
 │   │   ├── services/             # Service API client & Telegram export service
 │   │   └── index.css             # CSS Variables (Theme token Sáng/Tối, Glassmorphism)

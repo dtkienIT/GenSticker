@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FC } from 'react';
 import type { StickerPackHistoryItem } from '../../services/stickerService';
 import type { StickerItem } from '../../types/sticker';
-import { History, X, Clock, Layers, Sparkles, Send, Eye, Calendar, Trash2, AlertTriangle, LoaderCircle } from 'lucide-react';
+import { History, X, Clock, Layers, Sparkles, Eye, Calendar, Trash2, AlertTriangle, LoaderCircle } from 'lucide-react';
 
 interface HistoryModalProps {
   isOpen: boolean;
@@ -10,7 +10,6 @@ interface HistoryModalProps {
   historyPacks: StickerPackHistoryItem[];
   isLoading?: boolean;
   onSelectPack: (stickers: StickerItem[], title: string) => void;
-  onExportTelegram: (title: string, styleName?: string, stickers?: StickerItem[]) => void;
   onDeletePack: (packId: string) => Promise<void>;
 }
 
@@ -20,7 +19,6 @@ export const HistoryModal: FC<HistoryModalProps> = ({
   historyPacks,
   isLoading = false,
   onSelectPack,
-  onExportTelegram,
   onDeletePack,
 }) => {
   const [deleteCandidate, setDeleteCandidate] = useState<StickerPackHistoryItem | null>(null);
@@ -349,25 +347,6 @@ export const HistoryModal: FC<HistoryModalProps> = ({
                           <span>Xem Lại</span>
                         </button>
                       )}
-
-                      <button
-                        onClick={() => {
-                          onExportTelegram(pack.title, pack.style_name, pack.stickers);
-                          handleClose();
-                        }}
-                        disabled={Boolean(deletingPackId)}
-                        className="btn-primary"
-                        style={{
-                          padding: '8px 14px',
-                          fontSize: '0.82rem',
-                          borderRadius: '10px',
-                          background: 'linear-gradient(135deg, #229ED9 0%, #0088cc 100%)',
-                          boxShadow: '0 4px 12px rgba(34, 158, 217, 0.3)'
-                        }}
-                      >
-                        <Send size={15} />
-                        <span>Xuất Telegram</span>
-                      </button>
 
                       <button
                         onClick={() => {

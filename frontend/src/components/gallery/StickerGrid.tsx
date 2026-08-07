@@ -218,14 +218,14 @@ export const StickerGrid: FC<StickerGridProps> = ({
       />
 
       {/* Telegram Export Modal */}
-      <TelegramExportModal
-        stickers={state.stickers}
-        isOpen={isTelegramModalOpen}
-        onClose={() => setIsTelegramModalOpen(false)}
-        styleName={state.stickers[0]?.styleName}
-      />
+      {isTelegramModalOpen && (
+        <TelegramExportModal
+          stickers={state.stickers}
+          onClose={() => setIsTelegramModalOpen(false)}
+          styleName={state.stickers[0]?.styleName}
+        />
+      )}
 
     </div>
   );
 };
-

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { FC } from 'react';
 import type { StickerItem } from '../../types/sticker';
 import { StickerService } from '../../services/stickerService';
@@ -17,7 +17,6 @@ import confetti from 'canvas-confetti';
 
 interface TelegramExportModalProps {
   stickers: StickerItem[];
-  isOpen: boolean;
   onClose: () => void;
   styleName?: string;
 }
@@ -26,13 +25,14 @@ const EMOJI_LIST = ['👍', '💖', '🧐', '🤬', '😴', '🤣', '😭', '�
 
 export const TelegramExportModal: FC<TelegramExportModalProps> = ({
   stickers,
-  isOpen,
   onClose,
   styleName = '3D Chibi Cutie'
 }) => {
   const [packTitle, setPackTitle] = useState(`GenSticker - ${styleName}`);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [hasOpenedTelegram, setHasOpenedTelegram] = useState(false);
+  const telegramLaunchLockedRef = useRef(false);
   const [exportResult, setExportResult] = useState<{
     deeplink: string;
     webUrl: string;
@@ -41,10 +41,10 @@ export const TelegramExportModal: FC<TelegramExportModalProps> = ({
     packName: string;
   } | null>(null);
 
-  if (!isOpen) return null;
-
   const handleExport = async () => {
     setIsLoading(true);
+    setHasOpenedTelegram(false);
+    telegramLaunchLockedRef.current = false;
     try {
       // Convert all SVG sticker images to base64 PNG 512x512 via canvas
       const stickerImages: string[] = [];
@@ -313,8 +313,28 @@ export const TelegramExportModal: FC<TelegramExportModalProps> = ({
                 </div>
               </div>
 
-              {/* QR Code - Prominent */}
-              <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              {/* QR Code and launch actions */}
+              {hasOpenedTelegram ? (
+                <div
+                  role="status"
+                  style={{
+                    padding: '18px',
+                    borderRadius: '14px',
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    border: '1px solid rgba(16, 185, 129, 0.35)',
+                    color: 'var(--text-primary)',
+                    textAlign: 'center',
+                    lineHeight: 1.55,
+                    fontSize: '0.88rem'
+                  }}
+                >
+                  <strong style={{ display: 'block', color: '#059669', marginBottom: '5px' }}>
+                    Đã mở Telegram — bot đang xử lý
+                  </strong>
+                  Vui lòng chờ bot gửi nút <strong>ADD STICKERS</strong> rồi mới xuất bộ tiếp theo. Bạn không cần bấm START liên tục.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                 <div style={{
                   padding: '12px',
                   background: 'white',
@@ -340,6 +360,14 @@ export const TelegramExportModal: FC<TelegramExportModalProps> = ({
                     href={exportResult.webUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(event) => {
+                      if (telegramLaunchLockedRef.current) {
+                        event.preventDefault();
+                        return;
+                      }
+                      telegramLaunchLockedRef.current = true;
+                      setHasOpenedTelegram(true);
+                    }}
                     className="btn-primary"
                     style={{
                       width: '100%',
@@ -398,6 +426,7 @@ export const TelegramExportModal: FC<TelegramExportModalProps> = ({
                   </p>
                 </div>
               </div>
+              )}
             </div>
           ) : (
             <button
