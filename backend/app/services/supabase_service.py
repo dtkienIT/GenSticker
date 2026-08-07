@@ -50,12 +50,33 @@ class SupabaseService:
   @staticmethod
   async def register_user(email: str, pass_word: str, full_name: str):
     """
-    Registers a new user with Supabase Auth
+    Registers a new user with Supabase Auth.
+    Validates email format and checks for duplicate email.
     """
+    import re
+
     if not supabase:
       return None
 
-    # Try Admin user creation first to bypass email rate limits & auto-confirm
+    # 1. Validate email format
+    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_regex, email):
+      raise ValueError("Email không đúng định dạng.")
+
+    # 2. Check duplicate email via Admin API
+    if supabase_admin:
+      try:
+        existing = supabase_admin.auth.admin.list_users()
+        if existing and hasattr(existing, '__iter__'):
+          for u in existing:
+            if hasattr(u, 'email') and u.email and u.email.lower() == email.lower():
+              raise ValueError("Email này đã được đăng ký. Vui lòng sử dụng email khác hoặc đăng nhập.")
+      except ValueError:
+        raise  # Re-raise our validation errors
+      except Exception as list_err:
+        print(f"⚠️ Could not check existing users: {list_err}")
+
+    # 3. Try Admin user creation first to bypass email rate limits & auto-confirm
     if supabase_admin:
       try:
         res = supabase_admin.auth.admin.create_user({
@@ -69,10 +90,12 @@ class SupabaseService:
         if res and (hasattr(res, "id") or hasattr(res, "user")):
           return res
       except Exception as admin_err:
+        err_msg = str(admin_err).lower()
+        if "already" in err_msg or "duplicate" in err_msg or "exists" in err_msg:
+          raise ValueError("Email này đã được đăng ký. Vui lòng sử dụng email khác hoặc đăng nhập.")
         print(f"⚠️ Admin create user note: {admin_err}")
 
-
-    # Fallback to standard sign_up
+    # 4. Fallback to standard sign_up
     try:
       response = supabase.auth.sign_up({
         "email": email,
@@ -83,13 +106,22 @@ class SupabaseService:
           }
         }
       })
+      # Check if sign_up returned an existing user (Supabase may return user without session)
+      if response and hasattr(response, "user") and response.user:
+        # If user already has identities, it's truly new. Empty identities = duplicate.
+        identities = getattr(response.user, "identities", None)
+        if identities is not None and len(identities) == 0:
+          raise ValueError("Email này đã được đăng ký. Vui lòng sử dụng email khác hoặc đăng nhập.")
+
       if supabase_admin and response and hasattr(response, "user") and response.user:
         try:
           supabase_admin.auth.admin.update_user_by_id(response.user.id, {"email_confirm": True})
         except Exception as admin_err:
           print(f"⚠️ Auto confirm email note: {admin_err}")
-          
+
       return response
+    except ValueError:
+      raise  # Re-raise our validation errors
     except Exception as e:
       print(f"Error Supabase register: {e}")
       return None

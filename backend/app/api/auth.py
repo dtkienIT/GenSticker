@@ -37,8 +37,23 @@ async def register(payload: UserRegisterRequest):
   """
   Register user via Supabase Auth
   """
-  res = await SupabaseService.register_user(payload.email, payload.password, payload.name)
-  
+  # Validate email format on server side
+  import re
+  email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+  if not re.match(email_regex, payload.email):
+    raise HTTPException(
+      status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+      detail="Email không đúng định dạng. Vui lòng kiểm tra lại."
+    )
+
+  try:
+    res = await SupabaseService.register_user(payload.email, payload.password, payload.name)
+  except ValueError as ve:
+    raise HTTPException(
+      status_code=status.HTTP_409_CONFLICT,
+      detail=str(ve)
+    )
+
   user_obj = getattr(res, "user", res) if res else None
   if user_obj and hasattr(user_obj, "id"):
     session_obj = getattr(res, "session", None)
@@ -56,8 +71,5 @@ async def register(payload: UserRegisterRequest):
 
   raise HTTPException(
     status_code=status.HTTP_400_BAD_REQUEST,
-    detail="Đăng ký thất bại. Email này có thể đã được đăng ký hoặc thông tin không hợp lệ."
+    detail="Đăng ký thất bại. Vui lòng thử lại."
   )
-
-
-
