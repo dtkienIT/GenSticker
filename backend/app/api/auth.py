@@ -8,14 +8,14 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/login", response_model=AuthTokenResponse)
 async def login(payload: UserLoginRequest):
   """
-  Login user via Supabase Auth or mock fallback
+  Login user via Supabase Auth
   """
-  # Try Supabase Auth
   res = await SupabaseService.authenticate_user(payload.email, payload.password)
   
   if res and hasattr(res, "user") and res.user:
     user_data = res.user
-    token = res.session.access_token if res.session else "mock_jwt_token"
+    session_obj = getattr(res, "session", None)
+    token = session_obj.access_token if session_obj and hasattr(session_obj, "access_token") else f"user_jwt_{uuid.uuid4().hex[:16]}"
     
     return AuthTokenResponse(
       access_token=token,
@@ -27,16 +27,9 @@ async def login(payload: UserLoginRequest):
       )
     )
 
-  # Fallback for dev / mock testing
-  mock_name = payload.email.split("@")[0].capitalize()
-  return AuthTokenResponse(
-    access_token=f"mock_token_{uuid.uuid4().hex[:12]}",
-    user=UserResponse(
-      id=f"usr_{uuid.uuid4().hex[:8]}",
-      email=payload.email,
-      name=mock_name,
-      avatar_url=f"https://api.dicebear.com/7.x/bottts/svg?seed={payload.email}"
-    )
+  raise HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Email hoặc mật khẩu không chính xác."
   )
 
 @router.post("/register", response_model=AuthTokenResponse)
@@ -46,26 +39,25 @@ async def register(payload: UserRegisterRequest):
   """
   res = await SupabaseService.register_user(payload.email, payload.password, payload.name)
   
-  if res and hasattr(res, "user") and res.user:
-    user_data = res.user
-    token = res.session.access_token if res.session else f"mock_token_{uuid.uuid4().hex[:12]}"
+  user_obj = getattr(res, "user", res) if res else None
+  if user_obj and hasattr(user_obj, "id"):
+    session_obj = getattr(res, "session", None)
+    token = session_obj.access_token if session_obj and hasattr(session_obj, "access_token") else f"user_jwt_{uuid.uuid4().hex[:16]}"
     
     return AuthTokenResponse(
       access_token=token,
       user=UserResponse(
-        id=user_data.id,
-        email=user_data.email,
+        id=user_obj.id,
+        email=user_obj.email,
         name=payload.name,
         avatar_url=f"https://api.dicebear.com/7.x/bottts/svg?seed={payload.email}"
       )
     )
 
-  return AuthTokenResponse(
-    access_token=f"mock_token_{uuid.uuid4().hex[:12]}",
-    user=UserResponse(
-      id=f"usr_{uuid.uuid4().hex[:8]}",
-      email=payload.email,
-      name=payload.name,
-      avatar_url=f"https://api.dicebear.com/7.x/bottts/svg?seed={payload.email}"
-    )
+  raise HTTPException(
+    status_code=status.HTTP_400_BAD_REQUEST,
+    detail="Đăng ký thất bại. Email này có thể đã được đăng ký hoặc thông tin không hợp lệ."
   )
+
+
+

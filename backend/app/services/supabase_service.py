@@ -54,6 +54,25 @@ class SupabaseService:
     """
     if not supabase:
       return None
+
+    # Try Admin user creation first to bypass email rate limits & auto-confirm
+    if supabase_admin:
+      try:
+        res = supabase_admin.auth.admin.create_user({
+          "email": email,
+          "password": pass_word,
+          "email_confirm": True,
+          "user_metadata": {
+            "full_name": full_name
+          }
+        })
+        if res and (hasattr(res, "id") or hasattr(res, "user")):
+          return res
+      except Exception as admin_err:
+        print(f"⚠️ Admin create user note: {admin_err}")
+
+
+    # Fallback to standard sign_up
     try:
       response = supabase.auth.sign_up({
         "email": email,
@@ -64,7 +83,6 @@ class SupabaseService:
           }
         }
       })
-      # Auto-confirm email for MVP dev if admin client is available
       if supabase_admin and response and hasattr(response, "user") and response.user:
         try:
           supabase_admin.auth.admin.update_user_by_id(response.user.id, {"email_confirm": True})
@@ -75,6 +93,7 @@ class SupabaseService:
     except Exception as e:
       print(f"Error Supabase register: {e}")
       return None
+
 
   @staticmethod
   def save_sticker_pack(
