@@ -62,12 +62,6 @@ export function useAuth() {
     }
   }, []);
 
-  const quickDemoLogin = useCallback(() => {
-    const demoUser = AuthService.quickDemoLogin();
-    setUser(demoUser);
-    setIsAuthModalOpen(false);
-  }, []);
-
   const logout = useCallback(() => {
     AuthService.logout();
     setUser(null);
@@ -85,7 +79,7 @@ export function useAuth() {
     setAuthMode,
     login,
     register,
-    quickDemoLogin,
     logout,
   };
 }
+

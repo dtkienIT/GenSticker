@@ -109,17 +109,5 @@ export class AuthService {
     localStorage.removeItem(STORAGE_KEY_USER);
     localStorage.removeItem(STORAGE_KEY_TOKEN);
   }
-
-  static quickDemoLogin(): User {
-    const demoUser: User = {
-      id: 'usr_demo_vip',
-      email: 'demo.user@gensticker.ai',
-      name: 'Vip Creator',
-      avatarUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%237c3aed"/><circle cx="35" cy="40" r="8" fill="white"/><circle cx="65" cy="40" r="8" fill="white"/><circle cx="35" cy="40" r="4" fill="%231e1b4b"/><circle cx="65" cy="40" r="4" fill="%231e1b4b"/><path d="M 35 65 Q 50 80 65 65" stroke="white" stroke-width="5" fill="none" stroke-linecap="round"/></svg>',
-      createdAt: new Date().toISOString(),
-    };
-
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(demoUser));
-    return demoUser;
-  }
 }
+

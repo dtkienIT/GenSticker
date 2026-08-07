@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { FC, FormEvent } from 'react';
 import type { AuthMode } from '../../types/auth';
-import { X, Mail, Lock, User as UserIcon, Eye, EyeOff, Sparkles, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Mail, Lock, User as UserIcon, Eye, EyeOff, Sparkles, ArrowRight, AlertCircle } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -12,7 +12,6 @@ interface AuthModalProps {
   onSwitchMode: (mode: AuthMode) => void;
   onLogin: (email: string, pass: string) => Promise<unknown>;
   onRegister: (name: string, email: string, pass: string) => Promise<unknown>;
-  onQuickDemoLogin: () => void;
 }
 
 export const AuthModal: FC<AuthModalProps> = ({
@@ -24,7 +23,6 @@ export const AuthModal: FC<AuthModalProps> = ({
   onSwitchMode,
   onLogin,
   onRegister,
-  onQuickDemoLogin,
 }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -287,36 +285,6 @@ export const AuthModal: FC<AuthModalProps> = ({
           </button>
         </form>
 
-        {/* Divider */}
-        <div style={{
-          margin: '24px 0 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          color: 'var(--text-muted)',
-          fontSize: '0.78rem'
-        }}>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
-          <span>Hoặc trải nghiệm nhanh</span>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
-        </div>
-
-        {/* Quick Demo Login Button */}
-        <button
-          type="button"
-          onClick={onQuickDemoLogin}
-          className="btn-secondary"
-          style={{
-            width: '100%',
-            justifyContent: 'center',
-            padding: '12px',
-            borderColor: 'var(--border-glow)',
-            color: 'var(--text-primary)'
-          }}
-        >
-          <CheckCircle2 size={18} color="#10b981" />
-          <span>Đăng Nhập Nhanh (Demo VIP User)</span>
-        </button>
 
       </div>
     </div>
