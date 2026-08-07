@@ -87,6 +87,7 @@ export function App() {
     setIsHistoryLoading(false);
     setIsHistoryOpen(false);
     logout();
+    resetGenerator();
   };
 
   const handleSelectHistoryPack = (stickers: StickerItem[]) => {

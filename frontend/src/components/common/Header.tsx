@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import type { User } from '../../types/auth';
 import type { Theme } from '../../hooks/useTheme';
-import { Sparkles, Layers, LogIn, LogOut, User as UserIcon, History } from 'lucide-react';
+import { Sparkles, LogIn, LogOut, User as UserIcon, History } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
@@ -72,11 +72,6 @@ export const Header: FC<HeaderProps> = ({
 
         {/* Right Nav & User Section */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-          <div className="header-batch-pill" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '99px', background: 'rgba(255,255,255,0.05)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            <Layers size={14} color="#06b6d4" />
-            <span>20 Stickers / Batch</span>
-          </div>
-
           {/* History belongs to the signed-in account, so guests should not see it. */}
           {user && (
             <button
@@ -110,7 +105,7 @@ export const Header: FC<HeaderProps> = ({
 
           {/* User Auth Section */}
           {user ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingLeft: '6px', borderLeft: '1px solid var(--border-subtle)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <div className="header-user-info" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{
                   width: '32px',
@@ -148,7 +143,7 @@ export const Header: FC<HeaderProps> = ({
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '6px', borderLeft: '1px solid var(--border-subtle)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button
                 onClick={() => onOpenAuth('login')}
                 className="btn-secondary"
