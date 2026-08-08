@@ -18,27 +18,33 @@
    - Chặn hoàn toàn đăng nhập tài khoản chưa đăng ký. Trả về mã lỗi chuẩn HTTP `409 Conflict`, `422 Unprocessable Entity` và `401 Unauthorized`.
    - Khôi phục nút **"Đăng Nhập Nhanh (Demo VIP User)"** chạy bằng API xác thực thật (`demo@gensticker.ai`).
 
-3. **🤖 Telegram Bot 1-Click Export & Thanh Tiến Độ Kép (Dual Progress Tracking)**:
+3. **🧠 Pipeline AI Sinh 20 Sticker Giữ Nhận Dạng**:
+   - Web app dùng OpenAI Image với khóa chỉ đặt ở backend (`OPENAI_API_KEY`, mặc định `OPENAI_IMAGE_MODEL=gpt-image-1.5`); khóa bí mật không được đưa vào bundle frontend.
+   - Luồng grouped thực hiện **4 lượt tạo ảnh**: 1 ảnh canonical khóa nhận dạng và 3 sheet ngang 4×2. Backend cắt theo từng ô, giữ đúng 20 sticker, loại các ô dự phòng và xử lý nền/viền die-cut.
+   - Job được ràng buộc theo Supabase JWT, có polling tiến độ, tiếp tục job đang chạy, giới hạn tần suất/tải đồng thời và endpoint retry sheet lỗi mà không cần tạo lại canonical.
+   - Sau khi job hoàn tất, backend lưu 20 sticker lên Supabase Storage và `public.sticker_packs` / `public.stickers` theo cơ chế best-effort để xem lại theo tài khoản.
+
+4. **🤖 Telegram Bot 1-Click Export & Thanh Tiến Độ Kép (Dual Progress Tracking)**:
    - Xuất trọn bộ 20 sticker trực tiếp lên Telegram chỉ với 1 cú click.
    - Hiển thị **2 thanh tiến độ thời gian thực** ngay trên tin nhắn Telegram (Tiến độ tổng thể bộ sticker + Tiến độ load/upload từng sticker cá nhân).
    - Cơ chế chống trùng lặp pack 3 lớp (Persistent offset, memory lock, atomic removal) + **Atomic `_claim_pending_pack`** đảm bảo an toàn luồng khi nhiều Telegram update đến cùng lúc.
    - **Chống bấm đôi (Double-Launch Lock)**: Frontend khóa nút xuất Telegram bằng `useRef` lock, ngăn người dùng kích hoạt đồng thời nhiều lần request export.
 
-4. **🕘 Lịch Sử Sticker Theo Tài Khoản & Quản Lý Xóa**:
+5. **🕘 Lịch Sử Sticker Theo Tài Khoản & Quản Lý Xóa**:
    - Chỉ tải và hiển thị lịch sử sau khi người dùng đăng nhập; khách chưa đăng nhập sẽ được yêu cầu đăng nhập và không nhìn thấy dữ liệu cũ.
    - Nút **"Xem Lại"** khôi phục đúng bộ sticker đã lưu. Dữ liệu ảnh từ API được chuẩn hóa để xem, tải HD và xuất Telegram đều dùng đúng URL.
    - Cho phép xóa từng bộ không muốn giữ với hộp thoại xác nhận. Hệ thống dùng **soft delete** (`is_deleted`, `deleted_at`) nên không xóa nhầm dữ liệu vật lý.
    - Mọi thao tác tạo, xem và xóa lịch sử đều lấy chủ sở hữu từ Supabase JWT; client không thể tự truyền `user_id` của tài khoản khác.
 
-5. **🌠 Hiệu Ứng Nền Sao Băng Động (Meteor Shower Background)**:
+6. **🌠 Hiệu Ứng Nền Sao Băng Động (Meteor Shower Background)**:
    - Component `MeteorBackground` render 10 sao băng bay chéo liên tục trên nền tối, tạo hiệu ứng không gian sống động.
    - Mỗi sao băng được cấu hình riêng biệt về vị trí, độ dài, tốc độ và độ trễ qua CSS custom properties.
    - Tự động ẩn trong Light Mode, chỉ hiển thị ở Dark Mode để giữ phong cách *Cyber Dark Glassmorphism*.
 
-6. **⚡ FastAPI & Supabase Backend Core**:
+7. **⚡ FastAPI & Supabase Backend Core**:
    - Kết nối trực tiếp PostgreSQL và Supabase Storage Bucket `stickers`.
    - Quản lý người dùng qua **Supabase Auth** với cơ chế tự động xác thực email (Auto-confirm).
-   - Tự động lưu bộ sticker đã tạo vào PostgreSQL (`public.sticker_packs` & `public.stickers`) theo đúng tài khoản đang đăng nhập.
+   - Lưu lịch sử bộ sticker qua Supabase (`public.sticker_packs` & `public.stickers`) theo đúng tài khoản đang đăng nhập; lỗi persistence không làm mất kết quả AI đang trả cho người dùng.
    - API lịch sử có bảo vệ Bearer token: `GET /api/v1/stickers/history` và `DELETE /api/v1/stickers/history/{pack_id}`.
 
 
@@ -48,18 +54,18 @@
 
 ```
 GenSticker Web & Backend Architecture:
-[ React 19 Frontend (Vite + TypeScript) ] 
-       │  ├── MeteorBackground (Shooting Star Animation Layer)
-       │  ├── Theme Engine (useTheme & ThemeToggle)
-       │  ├── AuthModal, HistoryModal & TelegramExportModal
-       │  ├── History DTO Normalizer (snake_case → camelCase)
-       │  └── Custom Hooks (useImageUpload, useStickerGenerator)
-       ▼ (REST API / Async HTTP)
+[ React 19 Frontend (Vite + TypeScript) ]
+       │  ├── Upload ảnh, Auth, History và Telegram Export
+       │  └── Tạo job, polling tiến độ và retry khi sheet bị từ chối
+       ▼  Bearer JWT + REST API
 [ FastAPI Backend Engine (Python 3.11+) ]
-       │  ├── Supabase JWT Authentication Guard
-       │  ├── Telegram Service (Dual Progress Polling + Atomic Claim)
-       │  ├── Sticker AI Pipeline (5-Step Graphics Engine)
-       │  └── Supabase Integration (Auth, Storage, History & Postgres)
+       │  ├── Supabase JWT Guard + owner-bound jobs
+       │  ├── OpenAI Grouped Pipeline
+       │  │      ├── 1 canonical giữ nhận dạng
+       │  │      ├── 3 sheet 4×2
+       │  │      └── Cắt, kiểm tra và xuất 20 PNG
+       │  ├── Supabase Storage + PostgreSQL History (best-effort)
+       │  └── Telegram Service (Dual Progress + Atomic Claim)
 ```
 
 ---
@@ -74,6 +80,7 @@ GenSticker/
 │   │   ├── services/             # Telegram service, Supabase service & AI pipeline
 │   │   ├── database.py           # Kết nối Supabase SDK & Postgres
 │   │   └── config.py             # Cấu hình biến môi trường
+│   ├── sticker_generation/        # Provider AI, grouped generator, xử lý ảnh và test
 │   ├── migrations/               # Migration CSDL, gồm soft delete lịch sử sticker
 │   ├── run.py                    # Khởi chạy Uvicorn Backend server
 │   ├── requirements.txt          # Danh sách thư viện Python
@@ -103,9 +110,20 @@ Tạo file `.env` tại thư mục gốc bằng cách sao chép từ `.env.examp
 ```powershell
 Copy-Item .env.example .env
 ```
-Điền tối thiểu `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
-`SUPABASE_SERVICE_ROLE_KEY` và `OPENAI_API_KEY`. Khóa OpenAI chỉ được đặt ở
-backend, không dùng biến `VITE_*` để tránh lộ khóa trong bundle frontend.
+Để chạy đầy đủ auth, AI, storage và history, điền `SUPABASE_URL`,
+`SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` và `OPENAI_API_KEY`.
+`DATABASE_URL` chỉ cần cho kết nối PostgreSQL trực tiếp và health check tương ứng.
+Khóa OpenAI chỉ được đặt ở backend, không dùng biến `VITE_*` để tránh lộ khóa
+trong bundle frontend.
+
+Có thể điều chỉnh model và giới hạn job bằng `OPENAI_IMAGE_MODEL`,
+`GENERATION_RATE_LIMIT_PER_HOUR`, `MAX_ACTIVE_GENERATIONS` và `JOB_TTL_SECONDS`.
+Một lượt tạo thật sử dụng dịch vụ OpenAI có thể phát sinh chi phí và cần tài khoản
+còn quota/billing.
+
+> Trạng thái job, giới hạn request và artifact trung gian hiện được giữ trong RAM
+> và thư mục tạm. Restart backend sẽ làm mất job đang chạy; chỉ lịch sử kết quả cuối
+> đã lưu thành công trên Supabase mới tồn tại lâu dài.
 
 ### 2. Áp Dụng Migration Lịch Sử
 
@@ -130,7 +148,7 @@ pip install -r requirements.txt
 # c. Khởi chạy server FastAPI Backend (Port 8000)
 python backend/run.py
 ```
-> Swagger UI documentation: **`http://localhost:8000/docs`**
+> Health check: **`http://localhost:8000/api/v1/health`** · Swagger UI: **`http://localhost:8000/docs`**
 
 ### 4. Cài Đặt & Khởi Chạy Frontend (React Vite)
 
@@ -144,6 +162,38 @@ npm run dev
 > Web App running at: **`http://localhost:5173/`**
 
 > Lưu ý: tạo sticker và lịch sử là tính năng theo tài khoản. Người dùng cần đăng nhập để tạo, xem lại hoặc xóa một bộ sticker.
+
+---
+
+## 🔌 API Pipeline AI Chính
+
+Các endpoint có cột Auth là `JWT` yêu cầu header
+`Authorization: Bearer <Supabase access token>`:
+
+| Method | Endpoint | Auth | Chức năng |
+|---|---|---|---|
+| `GET` | `/api/v1/stickers/styles` | Public | Lấy danh sách style mà frontend hỗ trợ |
+| `POST` | `/api/v1/stickers/generate` | JWT | Gửi multipart `file` + `style_id` và khởi tạo job async |
+| `GET` | `/api/v1/stickers/jobs/{job_id}` | JWT | Poll trạng thái, tiến độ và kết quả của job thuộc tài khoản |
+| `POST` | `/api/v1/stickers/jobs/{job_id}/retry` | JWT | Chạy lại sheet thiếu/lỗi, tái sử dụng canonical và artifact hợp lệ |
+| `GET` | `/api/v1/stickers/history` | JWT | Lấy các bộ sticker chưa bị xóa của tài khoản |
+| `DELETE` | `/api/v1/stickers/history/{pack_id}` | JWT | Xóa mềm một bộ sticker thuộc tài khoản |
+
+---
+
+## ✅ Kiểm Tra Trước Khi Đẩy Code
+
+Chạy từ thư mục gốc của dự án:
+
+```powershell
+$env:PYTHONPATH = (Resolve-Path backend).Path
+.\.venv\Scripts\python.exe -m pytest backend\sticker_generation\tests backend\app\tests -q
+npm.cmd --prefix frontend run lint
+npm.cmd --prefix frontend run build
+```
+
+Bộ test Python dùng provider giả lập và HTTP mock, vì vậy không gọi OpenAI thật
+và không phát sinh phí.
 
 ---
 
