@@ -24,10 +24,12 @@ async def test_openai_provider_sends_multiple_images_and_extracts_result(
     output = b"generated-png"
     seen_body = ""
     seen_headers: httpx.Headers | None = None
+    seen_url = ""
 
     def handler(request: httpx.Request) -> httpx.Response:
-        nonlocal seen_body, seen_headers
+        nonlocal seen_body, seen_headers, seen_url
         seen_headers = request.headers
+        seen_url = str(request.url)
         seen_body = request.content.decode("latin1")
         return httpx.Response(
             200,
@@ -37,6 +39,7 @@ async def test_openai_provider_sends_multiple_images_and_extracts_result(
 
     provider = OpenAIImageProvider(
         api_key="secret-key",
+        base_url="https://direct.shopaikey.com/v1/",
         client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
     )
     result = await provider.generate(
@@ -48,9 +51,12 @@ async def test_openai_provider_sends_multiple_images_and_extracts_result(
     )
 
     assert seen_body.count('name="image[]"') == 2
+    assert seen_url == "https://direct.shopaikey.com/v1/images/edits"
     assert 'name="model"' in seen_body and "gpt-image-1.5" in seen_body
     assert "1536x1024" in seen_body
     assert 'name="input_fidelity"' in seen_body and "high" in seen_body
+    assert 'name="output_format"' in seen_body and "png" in seen_body
+    assert 'name="response_format"' not in seen_body
     assert seen_headers is not None
     assert seen_headers["authorization"] == "Bearer secret-key"
     assert "secret-key" not in seen_body
@@ -61,18 +67,86 @@ async def test_openai_provider_sends_multiple_images_and_extracts_result(
 
 
 @pytest.mark.asyncio
+async def test_openai_provider_uses_singular_image_field_for_one_reference(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "source.png"
+    _write_image(source)
+    seen_body = ""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal seen_body
+        seen_body = request.content.decode("latin1")
+        return httpx.Response(
+            200,
+            json={"data": [{"b64_json": base64.b64encode(b"image").decode("ascii")}]},
+        )
+
+    provider = OpenAIImageProvider(
+        api_key="secret-key",
+        client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+    )
+    await provider.generate(
+        ImageGenerationRequest(prompt="test", reference_images=(source,))
+    )
+
+    assert seen_body.count('name="image"') == 1
+    assert 'name="image[]"' not in seen_body
+
+
+@pytest.mark.asyncio
 async def test_openai_provider_reports_billing_limit(tmp_path: Path) -> None:
     source = tmp_path / "source.png"
     _write_image(source)
 
     def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(429, json={"error": {"message": "private details"}})
+        return httpx.Response(
+            402,
+            json={"error": {"message": "private details"}},
+        )
 
     provider = OpenAIImageProvider(
         api_key="secret-key",
         client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
     )
     with pytest.raises(RuntimeError, match="openai_quota_or_billing_required"):
+        await provider.generate(
+            ImageGenerationRequest(prompt="test", reference_images=(source,))
+        )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("payload", "expected_error"),
+    [
+        ({"error": {"code": "unknown_parameter"}}, "openai_invalid_request"),
+        (
+            {"error": {"type": "insufficient_quota"}},
+            "openai_quota_or_billing_required",
+        ),
+        (
+            {"error": {"code": "organization_spend_limit_exceeded"}},
+            "openai_quota_or_billing_required",
+        ),
+        ({"error": {"code": "rate_limit_exceeded"}}, "openai_rate_limit"),
+    ],
+)
+async def test_openai_provider_classifies_429_errors(
+    tmp_path: Path,
+    payload: dict[str, object],
+    expected_error: str,
+) -> None:
+    source = tmp_path / "source.png"
+    _write_image(source)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(429, json=payload)
+
+    provider = OpenAIImageProvider(
+        api_key="secret-key",
+        client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+    )
+    with pytest.raises(RuntimeError, match=expected_error):
         await provider.generate(
             ImageGenerationRequest(prompt="test", reference_images=(source,))
         )

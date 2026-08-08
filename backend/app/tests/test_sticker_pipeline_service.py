@@ -86,6 +86,11 @@ async def test_pipeline_completes_and_builds_twenty_stickers(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(settings, "OPENAI_API_KEY", "test-key")
+    monkeypatch.setattr(
+        settings,
+        "OPENAI_BASE_URL",
+        "https://direct.shopaikey.com/v1",
+    )
     monkeypatch.setattr(asyncio, "create_task", _discard_task)
     job = StickerPipelineService.create_job(
         owner_id="user-a",
@@ -95,11 +100,13 @@ async def test_pipeline_completes_and_builds_twenty_stickers(
         content_type="image/png",
     )
 
+    provider_options: dict[str, object] = {}
+
     class FakeProvider:
         closed = False
 
-        def __init__(self, **_: object) -> None:
-            pass
+        def __init__(self, **options: object) -> None:
+            provider_options.update(options)
 
         async def close(self) -> None:
             self.closed = True
@@ -140,6 +147,8 @@ async def test_pipeline_completes_and_builds_twenty_stickers(
     assert len(job.preview_image_urls) == 2
     assert job.preview_image_url == job.preview_image_urls[-1]
     assert job.quality_status == "accepted"
+    assert provider_options["api_key"] == "test-key"
+    assert provider_options["base_url"] == "https://direct.shopaikey.com/v1"
 
 
 @pytest.mark.asyncio

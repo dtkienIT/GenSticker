@@ -247,6 +247,7 @@ class StickerPipelineService:
       provider = OpenAIImageProvider(
         api_key=settings.OPENAI_API_KEY,
         model_id=settings.OPENAI_IMAGE_MODEL,
+        base_url=settings.OPENAI_BASE_URL,
       )
       artifact_dir = job_artifacts.get(job_id)
       if artifact_dir is None:
@@ -332,6 +333,7 @@ class StickerPipelineService:
       provider = OpenAIImageProvider(
         api_key=settings.OPENAI_API_KEY,
         model_id=settings.OPENAI_IMAGE_MODEL,
+        base_url=settings.OPENAI_BASE_URL,
       )
       preview_bytes_total = 0
 
@@ -455,12 +457,14 @@ class StickerPipelineService:
   @staticmethod
   def _safe_error(error: Exception) -> str:
     messages = {
-      "openai_quota_or_billing_required": "OpenAI API đã hết quota hoặc chưa bật billing.",
-      "openai_api_key_or_permission_invalid": "OpenAI API key không hợp lệ hoặc không có quyền dùng model ảnh.",
+      "openai_quota_or_billing_required": "Dịch vụ tạo ảnh đã hết credit/quota hoặc chưa bật billing.",
+      "openai_rate_limit": "Dịch vụ tạo ảnh đang giới hạn tần suất. Vui lòng thử lại sau.",
+      "openai_invalid_request": "Dịch vụ tạo ảnh từ chối cấu hình request hiện tại.",
+      "openai_api_key_or_permission_invalid": "API key tạo ảnh không hợp lệ hoặc không có quyền dùng model ảnh.",
       "provider_output_too_large": "Ảnh trả về vượt giới hạn an toàn.",
       "pack_sheet_grid_not_detected": "Bảng ảnh đã được tạo nhưng bố cục không đủ sạch để tự động cắt thành 20 sticker. Bạn vẫn có thể xem ảnh gốc bên dưới.",
-      "preview_image_too_large": "Bảng ảnh OpenAI trả về quá lớn để hiển thị an toàn trên web.",
-      "pack_sheet_invalid_image": "OpenAI không trả về một tệp ảnh hợp lệ để hiển thị.",
+      "preview_image_too_large": "Bảng ảnh trả về quá lớn để hiển thị an toàn trên web.",
+      "pack_sheet_invalid_image": "Dịch vụ tạo ảnh không trả về một tệp ảnh hợp lệ để hiển thị.",
     }
     return messages.get(
       str(error),

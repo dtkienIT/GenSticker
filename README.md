@@ -19,7 +19,7 @@
    - Khôi phục nút **"Đăng Nhập Nhanh (Demo VIP User)"** chạy bằng API xác thực thật (`demo@gensticker.ai`).
 
 3. **🧠 Pipeline AI Sinh 20 Sticker Giữ Nhận Dạng**:
-   - Web app dùng OpenAI Image với khóa chỉ đặt ở backend (`OPENAI_API_KEY`, mặc định `OPENAI_IMAGE_MODEL=gpt-image-1.5`); khóa bí mật không được đưa vào bundle frontend.
+   - Web app dùng API ảnh tương thích OpenAI với khóa chỉ đặt ở backend (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, mặc định `OPENAI_IMAGE_MODEL=gpt-image-1.5`); khóa bí mật không được đưa vào bundle frontend.
    - Luồng grouped thực hiện **4 lượt tạo ảnh**: 1 ảnh canonical khóa nhận dạng và 3 sheet ngang 4×2. Backend cắt theo từng ô, giữ đúng 20 sticker, loại các ô dự phòng và xử lý nền/viền die-cut.
    - Job được ràng buộc theo Supabase JWT, có polling tiến độ, tiếp tục job đang chạy, giới hạn tần suất/tải đồng thời và endpoint retry sheet lỗi mà không cần tạo lại canonical.
    - Sau khi job hoàn tất, backend lưu 20 sticker lên Supabase Storage và `public.sticker_packs` / `public.stickers` theo cơ chế best-effort để xem lại theo tài khoản.
@@ -111,15 +111,17 @@ Tạo file `.env` tại thư mục gốc bằng cách sao chép từ `.env.examp
 Copy-Item .env.example .env
 ```
 Để chạy đầy đủ auth, AI, storage và history, điền `SUPABASE_URL`,
-`SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` và `OPENAI_API_KEY`.
+`SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY` và
+`OPENAI_BASE_URL`.
 `DATABASE_URL` chỉ cần cho kết nối PostgreSQL trực tiếp và health check tương ứng.
-Khóa OpenAI chỉ được đặt ở backend, không dùng biến `VITE_*` để tránh lộ khóa
+Khóa API ảnh chỉ được đặt ở backend, không dùng biến `VITE_*` để tránh lộ khóa
 trong bundle frontend.
 
-Có thể điều chỉnh model và giới hạn job bằng `OPENAI_IMAGE_MODEL`,
+Có thể điều chỉnh nhà cung cấp tương thích OpenAI, model và giới hạn job bằng
+`OPENAI_BASE_URL`, `OPENAI_IMAGE_MODEL`,
 `GENERATION_RATE_LIMIT_PER_HOUR`, `MAX_ACTIVE_GENERATIONS` và `JOB_TTL_SECONDS`.
-Một lượt tạo thật sử dụng dịch vụ OpenAI có thể phát sinh chi phí và cần tài khoản
-còn quota/billing.
+Một lượt tạo thật sử dụng nhà cung cấp API ảnh có thể phát sinh chi phí và cần
+tài khoản còn credit/quota.
 
 > Trạng thái job, giới hạn request và artifact trung gian hiện được giữ trong RAM
 > và thư mục tạm. Restart backend sẽ làm mất job đang chạy; chỉ lịch sử kết quả cuối

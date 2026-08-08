@@ -31,6 +31,10 @@ class Settings(BaseSettings):
 
   # Image generation
   OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+  OPENAI_BASE_URL: str = os.getenv(
+    "OPENAI_BASE_URL",
+    "https://api.openai.com/v1",
+  )
   OPENAI_IMAGE_MODEL: str = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-1.5")
 
   # Telegram Bot Credentials

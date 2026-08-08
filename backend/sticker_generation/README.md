@@ -61,8 +61,9 @@ Vietnamese labels; the consumer can add them deterministically later.
 The provider is isolated behind `ImageProvider`. Included adapters support the
 fal queue API, Gemini native image generation, and OpenAI GPT Image editing.
 Select one with `--provider fal`, `--provider gemini`, or `--provider openai`;
-the catalog and orchestration remain provider-independent. For OpenAI, set
-`OPENAI_API_KEY` and use `--model gpt-image-1.5`.
+the catalog and orchestration remain provider-independent. For OpenAI or a
+compatible endpoint, set `OPENAI_API_KEY`, optionally set `OPENAI_BASE_URL`, and
+use `--model gpt-image-1.5`.
 
 ## Web App Grouped Mode
 

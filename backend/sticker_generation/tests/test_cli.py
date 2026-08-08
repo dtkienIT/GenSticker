@@ -4,6 +4,7 @@ from sticker_generation.cli import (
     _candidate_env_paths,
     _load_fal_key_from_env_file,
     _load_gemini_key_from_env_file,
+    _load_openai_base_url_from_env_file,
     _load_openai_key_from_env_file,
     _model_defaults,
     _resolve_model,
@@ -64,15 +65,23 @@ def test_load_openai_key_without_loading_other_secrets(
 ) -> None:  # type: ignore[no-untyped-def]
     env_file = tmp_path / ".env"
     env_file.write_text(
-        "OTHER_SECRET=hidden\nOPENAI_API_KEY='openai-test-key'\n",
+        "OTHER_SECRET=hidden\n"
+        "OPENAI_API_KEY='openai-test-key'\n"
+        "OPENAI_BASE_URL='https://direct.shopaikey.com/v1'\n",
         encoding="utf-8",
     )
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
     monkeypatch.delenv("OTHER_SECRET", raising=False)
 
     _load_openai_key_from_env_file(env_file)
+    _load_openai_base_url_from_env_file(env_file)
 
     assert __import__("os").environ["OPENAI_API_KEY"] == "openai-test-key"
+    assert (
+        __import__("os").environ["OPENAI_BASE_URL"]
+        == "https://direct.shopaikey.com/v1"
+    )
     assert "OTHER_SECRET" not in __import__("os").environ
 
 

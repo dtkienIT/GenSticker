@@ -54,13 +54,17 @@ class OpenAIImageProvider:
 
         files: list[tuple[str, tuple[str, bytes, str]]] = []
         total_bytes = 0
+        # Match the OpenAI SDK multipart shape for one versus many references.
+        image_field = "image" if len(request.reference_images) == 1 else "image[]"
         for path in request.reference_images:
             filename, data, mime_type = self._read_image(path)
             total_bytes += len(data)
             if total_bytes > self.max_total_reference_bytes:
                 raise ValueError("reference_images_too_large")
-            files.append(("image[]", (filename, data, mime_type)))
+            files.append((image_field, (filename, data, mime_type)))
 
+        # GPT Image returns b64_json by default. Some compatible proxies reject
+        # the otherwise documented response_format field for image edits.
         response = await self.client.post(
             f"{self.base_url}/images/edits",
             headers={"Authorization": f"Bearer {self.api_key}"},
@@ -76,8 +80,22 @@ class OpenAIImageProvider:
             },
             files=files,
         )
-        if response.status_code == 429:
+        if response.status_code == 402:
             raise RuntimeError("openai_quota_or_billing_required")
+        if response.status_code == 429:
+            error_ids = self._error_identifiers(response)
+            if error_ids & {"invalid_request", "invalid_request_error", "unknown_parameter"}:
+                raise RuntimeError("openai_invalid_request")
+            if error_ids & {
+                "billing_hard_limit_reached",
+                "credit_balance_exhausted",
+                "insufficient_quota",
+                "organization_spend_limit_exceeded",
+                "organization_usage_limit_exceeded",
+                "project_spend_limit_exceeded",
+            }:
+                raise RuntimeError("openai_quota_or_billing_required")
+            raise RuntimeError("openai_rate_limit")
         if response.status_code in {401, 403}:
             raise RuntimeError("openai_api_key_or_permission_invalid")
         response.raise_for_status()
@@ -96,6 +114,23 @@ class OpenAIImageProvider:
                 else self._medium_output_cost(request.size)
             ),
         )
+
+    @staticmethod
+    def _error_identifiers(response: httpx.Response) -> set[str]:
+        try:
+            payload = response.json()
+        except ValueError:
+            return set()
+        if not isinstance(payload, dict):
+            return set()
+        error = payload.get("error")
+        if not isinstance(error, dict):
+            return set()
+        return {
+            value
+            for field in ("code", "type")
+            if isinstance((value := error.get(field)), str)
+        }
 
     @staticmethod
     def _medium_output_cost(size: str) -> float:

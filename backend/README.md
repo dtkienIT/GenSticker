@@ -40,8 +40,8 @@ backend/
 
 Trước khi chạy backend, sao chép `.env.example` thành `.env` ở thư mục gốc và
 cấu hình `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
-`SUPABASE_SERVICE_ROLE_KEY` và `OPENAI_API_KEY`; chỉ cấu hình Telegram khi cần
-chức năng xuất pack.
+`SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY` và `OPENAI_BASE_URL`; chỉ cấu hình
+Telegram khi cần chức năng xuất pack.
 
 1. **Khởi tạo và kích hoạt môi trường Virtualenv (Python)**:
    ```powershell

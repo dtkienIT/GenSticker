@@ -65,13 +65,25 @@ async def _run_remote(args: argparse.Namespace) -> None:
         _load_key_from_env_file(env_path, key_name)
         if os.environ.get(key_name):
             break
+    if args.provider == "openai":
+        for env_path in _candidate_env_paths():
+            _load_openai_base_url_from_env_file(env_path)
+            if os.environ.get("OPENAI_BASE_URL"):
+                break
     api_key = os.environ.get(key_name, "")
     model_id = _resolve_model(args.provider, args.model)
     provider: GeminiImageProvider | FalQueueImageProvider | OpenAIImageProvider
     if args.provider == "gemini":
         provider = GeminiImageProvider(api_key=api_key, model_id=model_id)
     elif args.provider == "openai":
-        provider = OpenAIImageProvider(api_key=api_key, model_id=model_id)
+        provider = OpenAIImageProvider(
+            api_key=api_key,
+            model_id=model_id,
+            base_url=os.environ.get(
+                "OPENAI_BASE_URL",
+                "https://api.openai.com/v1",
+            ),
+        )
     else:
         extra_input, estimated_cost = _model_defaults(model_id)
         provider = FalQueueImageProvider(
@@ -140,6 +152,11 @@ def _load_gemini_key_from_env_file(path: Path) -> None:
 def _load_openai_key_from_env_file(path: Path) -> None:
     """Load only OPENAI_API_KEY, without importing unrelated credentials."""
     _load_key_from_env_file(path, "OPENAI_API_KEY")
+
+
+def _load_openai_base_url_from_env_file(path: Path) -> None:
+    """Load only OPENAI_BASE_URL, without importing unrelated credentials."""
+    _load_key_from_env_file(path, "OPENAI_BASE_URL")
 
 
 def _load_key_from_env_file(path: Path, key_name: str) -> None:
