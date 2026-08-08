@@ -4,7 +4,7 @@ import type { StickerItem, GenerationState } from '../../types/sticker';
 import { StickerCard } from './StickerCard';
 import { StickerModal } from './StickerModal';
 import { TelegramExportModal } from './TelegramExportModal';
-import { DownloadCloud, Search, Sparkles, Filter, RefreshCw, Send } from 'lucide-react';
+import { DownloadCloud, Search, Sparkles, Filter, Send } from 'lucide-react';
 import { StickerService } from '../../services/stickerService';
 
 interface StickerGridProps {

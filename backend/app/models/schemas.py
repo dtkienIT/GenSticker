@@ -62,6 +62,10 @@ class StickerJobResponse(BaseModel):
   progress_percentage: int
   steps: List[ProcessStepProgress]
   stickers: Optional[List[StickerItemResponse]] = None
+  error_message: Optional[str] = None
+  preview_image_url: Optional[str] = None
+  preview_image_urls: List[str] = Field(default_factory=list)
+  quality_status: Optional[str] = None  # reviewing | accepted | rejected
   created_at: datetime
 
 # --- Telegram Export Schemas ---

@@ -9,13 +9,12 @@ from fastapi import APIRouter, HTTPException, status
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+
 @router.post("/login", response_model=AuthTokenResponse)
 async def login(payload: UserLoginRequest):
-  """
-  Login user via Supabase Auth
-  """
+  """Login user via Supabase Auth."""
   res = await SupabaseService.authenticate_user(payload.email, payload.password)
-  
+
   if res and hasattr(res, "user") and res.user:
     user_data = res.user
     session_obj = getattr(res, "session", None)
@@ -25,7 +24,7 @@ async def login(payload: UserLoginRequest):
         detail="Không thể tạo phiên đăng nhập hợp lệ. Vui lòng thử lại."
       )
     token = session_obj.access_token
-    
+
     return AuthTokenResponse(
       access_token=token,
       user=UserResponse(
@@ -41,11 +40,10 @@ async def login(payload: UserLoginRequest):
     detail="Email hoặc mật khẩu không chính xác."
   )
 
+
 @router.post("/register", response_model=AuthTokenResponse)
 async def register(payload: UserRegisterRequest):
-  """
-  Register user via Supabase Auth
-  """
+  """Register user via Supabase Auth."""
   # Validate email format on server side
   import re
   email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
@@ -61,7 +59,7 @@ async def register(payload: UserRegisterRequest):
     raise HTTPException(
       status_code=status.HTTP_409_CONFLICT,
       detail=str(ve)
-    )
+    ) from ve
 
   user_obj = getattr(res, "user", res) if res else None
   if user_obj and hasattr(user_obj, "id"):
@@ -78,7 +76,7 @@ async def register(payload: UserRegisterRequest):
         detail="Tài khoản đã được tạo nhưng chưa thể đăng nhập tự động. Vui lòng đăng nhập lại."
       )
     token = session_obj.access_token
-    
+
     return AuthTokenResponse(
       access_token=token,
       user=UserResponse(

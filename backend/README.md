@@ -38,7 +38,10 @@ backend/
 
 ## ⚡ Hướng Dẫn Khởi Chạy Backend Cục Bộ (Cho Máy Mới)
 
-Trước khi chạy backend, sao chép `.env.example` thành `.env` ở thư mục gốc và cấu hình `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` cùng các biến Telegram cần dùng.
+Trước khi chạy backend, sao chép `.env.example` thành `.env` ở thư mục gốc và
+cấu hình `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY` và `OPENAI_API_KEY`; chỉ cấu hình Telegram khi cần
+chức năng xuất pack.
 
 1. **Khởi tạo và kích hoạt môi trường Virtualenv (Python)**:
    ```powershell
@@ -83,6 +86,7 @@ Trước khi chạy backend, sao chép `.env.example` thành `.env` ở thư m�
 - `GET  /api/v1/stickers/styles` : Lấy danh sách 8 phong cách sticker AI.
 - `POST /api/v1/stickers/generate` : Upload ảnh & kích hoạt tiến trình sinh 20 sticker cho tài khoản trong Bearer token.
 - `GET  /api/v1/stickers/jobs/{job_id}` : Polling tiến trình AI 5 bước (0% -> 100%).
+- `POST /api/v1/stickers/jobs/{job_id}/retry` : Chạy lại phần sheet bị từ chối mà vẫn giữ canonical/private artifacts của đúng chủ sở hữu.
 - `GET  /api/v1/stickers/history` : Lấy các bộ sticker chưa xóa của tài khoản trong Bearer token.
 - `DELETE /api/v1/stickers/history/{pack_id}` : Xóa mềm một bộ sticker nếu bộ đó thuộc tài khoản đang đăng nhập.
 - `POST /api/v1/telegram/export` : Tạo request xuất sticker set sang Telegram Bot với thanh tiến độ thời gian thực.

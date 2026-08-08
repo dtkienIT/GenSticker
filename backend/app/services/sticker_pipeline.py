@@ -1,174 +1,468 @@
 import asyncio
+import base64
+import shutil
+import tempfile
 import uuid
-from datetime import datetime
-from typing import Dict, List, Optional
-from app.models.schemas import StickerJobResponse, ProcessStepProgress, StickerItemResponse
+from contextlib import nullcontext
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, Optional
 
-# In-memory job repository for active pipeline state
+from app.config import settings
+from app.models.schemas import ProcessStepProgress, StickerItemResponse, StickerJobResponse
+from app.services.supabase_service import SupabaseService
+from sticker_generation.catalog import DEFAULT_STICKER_CATALOG
+from sticker_generation.grouped import GroupedStickerGenerator
+from sticker_generation.providers.openai_image import OpenAIImageProvider
+
 job_store: Dict[str, StickerJobResponse] = {}
+job_owners: Dict[str, str] = {}
+job_attempts: Dict[str, list[datetime]] = {}
+background_tasks: set[asyncio.Task[None]] = set()
+job_artifacts: Dict[str, Path] = {}
+job_retries: Dict[str, int] = {}
 
-PIPELINE_STEPS_CONFIG = [
-  {
-    "id": 1,
-    "step_name": "Tách nền & Nhận diện khuôn mặt (BiRefNet & SAM2)",
-    "description": "Tự động phân đoạn nhân vật, tách nền với độ phân giải cao và trích xuất Landmark khuôn mặt 3D.",
-    "duration": 2.0
-  },
-  {
-    "id": 2,
-    "step_name": "Trích xuất đặc trưng cảm xúc (PuLID / InstantID Embedding)",
-    "description": "Phân tích 512-d Face Vector để bảo tồn đặc trưng nhận dạng mắt, mũi, miệng của nhân vật.",
-    "duration": 2.5
-  },
-  {
-    "id": 3,
-    "step_name": "Khởi tạo Style Vector & Render LoRA",
-    "description": "Áp dụng mô hình SDXL-Lightning kết hợp LoRA nét vẽ nghệ thuật Chibi 3D / Anime.",
-    "duration": 3.0
-  },
-  {
-    "id": 4,
-    "step_name": "Sinh bộ 20 Sticker cảm xúc đa dạng",
-    "description": "Khởi tạo 20 biến thể biểu cảm: Vui vẻ, Thả tim, Phẫn nộ, Cực ngầu, Cày code, Ngủ ngon...",
-    "duration": 2.5
-  },
-  {
-    "id": 5,
-    "step_name": "Đổ viền Sticker Die-Cut & Tối ưu PNG Transparent HD",
-    "description": "Tạo đường viền trắng nổi 3D, hiệu ứng bóng mờ nhẹ và nén file PNG 1024x1024 sắc nét.",
-    "duration": 2.0
-  }
-]
 
-DEFAULT_20_STICKERS = [
-  {"id": "stk_01", "title": "Siêu Hảo Hạng", "emotion": "Happy & Proud", "tags": ["Vui Vẻ", "Like", "No.1"], "color": "%237c3aed", "badge": "👍"},
-  {"id": "stk_02", "title": "Thả Tim Ngập Tràn", "emotion": "Love & Affection", "tags": ["Thả Tim", "Yêu Thương", "Cute"], "color": "%23ec4899", "badge": "💖"},
-  {"id": "stk_03", "title": "Đang Suy Nghĩ", "emotion": "Thinking", "tags": ["Suy Nghĩ", "Hỏi Đảo"], "color": "%2306b6d4", "badge": "🧐"},
-  {"id": "stk_04", "title": "Cực Kỳ Phẫn Nộ", "emotion": "Angry", "tags": ["Tức Giận", "Nóng Máu", "Fire"], "color": "%23ef4444", "badge": "🤬"},
-  {"id": "stk_05", "title": "Ngủ Ngon Lành", "emotion": "Sleeping & Chill", "tags": ["Gặp Mộng", "Sleep", "Chill"], "color": "%233b82f6", "badge": "😴"},
-  {"id": "stk_06", "title": "Cười Bể Bụng", "emotion": "LOL Laughing", "tags": ["Cười Lớn", "Hài Hước", "LOL"], "color": "%23f59e0b", "badge": "🤣"},
-  {"id": "stk_07", "title": "Khóc Nổi Sông", "emotion": "Crying", "tags": ["Buồn Khóc", "Sầu", "Drama"], "color": "%236366f1", "badge": "😭"},
-  {"id": "stk_08", "title": "Ngầu Như Bồn Cầu", "emotion": "Cool Sunglasses", "tags": ["Ngầu", "Cool", "VIP"], "color": "%2310b981", "badge": "sunglasses"},
-  {"id": "stk_09", "title": "Chăm Chỉ Cày Code", "emotion": "Working Hard", "tags": ["Deadline", "Work", "Coder"], "color": "%238b5cf6", "badge": "💻"},
-  {"id": "stk_10", "title": "Xin Lỗi Được Chưa", "emotion": "Apologetic", "tags": ["Sorry", "Xin Lỗi"], "color": "%23f43f5e", "badge": "🙏"},
-  {"id": "stk_11", "title": "Hoảng Hốt Sợ Hãi", "emotion": "Shocked", "tags": ["Sợ Hãi", "Shock", "OMG"], "color": "%23a855f7", "badge": "😱"},
-  {"id": "stk_12", "title": "Quẩy Tiệc Đêm", "emotion": "Party & Dance", "tags": ["Party", "Dance", "Vui Vẻ"], "color": "%2306b6d4", "badge": "🥳"},
-  {"id": "stk_13", "title": "Nạp Năng Lượng Cà Phê", "emotion": "Coffee Morning", "tags": ["Coffee", "Sáng Bật", "Work"], "color": "%23d97706", "badge": "☕"},
-  {"id": "stk_14", "title": "Dâng Trào Quyết Tâm", "emotion": "Determined", "tags": ["Quyết Tâm", "Cố Lên", "Fight"], "color": "%23dc2626", "badge": "🔥"},
-  {"id": "stk_15", "title": "Đơ Người Không Hiểu", "emotion": "Confused", "tags": ["Confused", "Chịu", "Hả"], "color": "%2364748b", "badge": "❓"},
-  {"id": "stk_16", "title": "Ăn Mừng Chiến Thắng", "emotion": "Victory", "tags": ["Victory", "Winner", "Thắng"], "color": "%2310b981", "badge": "🏆"},
-  {"id": "stk_17", "title": "Bay Bổng Mộng Mơ", "emotion": "Dreaming", "tags": ["Mộng Mơ", "Flying", "Cute"], "color": "%23f472b6", "badge": "✨"},
-  {"id": "stk_18", "title": "Bất Lực Toàn Tập", "emotion": "Facepalm", "tags": ["Bất Lực", "Facepalm", "Trời Ơi"], "color": "%23f97316", "badge": "🤦‍♂️"},
-  {"id": "stk_19", "title": "Thả Tim Bằng Tay", "emotion": "Finger Heart", "tags": ["FingerHeart", "Kpop", "Cute"], "color": "%23ec4899", "badge": "🫰"},
-  {"id": "stk_20", "title": "Chúc Mừng Sinh Nhật", "emotion": "Happy Birthday", "tags": ["Birthday", "Bánh Kem", "Gift"], "color": "%238b5cf6", "badge": "🎂"}
-]
+@dataclass(frozen=True)
+class JobContext:
+  style_id: str
+  filename: str
+  content_type: str
+
+
+job_contexts: Dict[str, JobContext] = {}
+MAX_SHEET_RETRIES = 2
+
+STYLE_PROMPTS = {
+  "3d-chibi": "polished soft 3D chibi sticker, gentle studio lighting, identity-faithful proportions",
+  "anime-kawaii": "clean hand-drawn Korean and Japanese portrait sticker, soft cel shading, elegant expressive line art",
+  "cyberpunk": "clean cyberpunk portrait sticker with restrained cyan and coral neon accents",
+  "comic-pop": "bold modern comic portrait sticker, crisp ink contours, controlled halftone accents",
+  "pixel-retro": "high-detail modern pixel-art portrait sticker with readable facial identity",
+  "claymation": "premium handcrafted clay character sticker with soft tactile texture",
+  "doodle-line": "minimal editorial doodle portrait sticker with expressive black line work",
+  "watercolor": "soft watercolor portrait sticker with clean facial features and controlled edges",
+  "pixel-art": "high-detail modern pixel-art portrait sticker with readable facial identity",
+  "doodle-cartoon": "minimal editorial doodle portrait sticker with expressive black line work",
+  "vector-flat": "premium flat vector portrait sticker with clean geometric color blocks",
+  "neon-glow": "clean portrait sticker with restrained cyan and coral neon glow",
+  "vintage-retro": "warm vintage editorial portrait sticker with subtle print texture",
+}
+
+STYLE_NAMES = {
+  "3d-chibi": "3D Chibi Cutie",
+  "anime-kawaii": "Anime Kawaii",
+  "cyberpunk": "Cyberpunk Neon",
+  "comic-pop": "Comic Pop Art",
+  "pixel-retro": "Pixel Retro 16-bit",
+  "claymation": "Claymation 3D",
+  "doodle-line": "Doodle Line Art",
+  "watercolor": "Watercolor Soft",
+}
+
+PIPELINE_STEPS_CONFIG = (
+  (1, "Normalize portrait", "Rotate, strip metadata, and validate the uploaded image."),
+  (2, "Lock facial identity", "Create an identity-faithful canonical character."),
+  (3, "Lock character style", "Fix outfit, proportions, line work, and palette."),
+  (4, "Generate three 8-cell sheets", "Generate three landscape 4x2 sheets from the approved canonical."),
+  (5, "Extract twenty PNG stickers", "Split the three sheets, discard reserve cells, remove backgrounds, and add die-cut outlines."),
+)
+
 
 class StickerPipelineService:
   @staticmethod
-  def create_job(style_id: str, user_id: Optional[str] = None) -> StickerJobResponse:
+  def _drop_job(job_id: str) -> None:
+    artifact_dir = job_artifacts.pop(job_id, None)
+    if artifact_dir is not None:
+      shutil.rmtree(artifact_dir, ignore_errors=True)
+    job_store.pop(job_id, None)
+    job_owners.pop(job_id, None)
+    job_contexts.pop(job_id, None)
+    job_retries.pop(job_id, None)
+
+  @staticmethod
+  def _prune_state(now: datetime) -> None:
+    cutoff = now - timedelta(seconds=settings.JOB_TTL_SECONDS)
+    expired_ids = [
+      job_id
+      for job_id, job in job_store.items()
+      if job.status != "processing" and job.created_at < cutoff
+    ]
+    for job_id in expired_ids:
+      StickerPipelineService._drop_job(job_id)
+
+    completed = sorted(
+      (
+        (job.created_at, job_id)
+        for job_id, job in job_store.items()
+        if job.status != "processing"
+      ),
+      reverse=True,
+    )
+    for _, job_id in completed[max(0, settings.MAX_RETAINED_JOBS):]:
+      StickerPipelineService._drop_job(job_id)
+
+    rate_cutoff = now - timedelta(hours=1)
+    for owner_id, attempts in tuple(job_attempts.items()):
+      recent = [attempt for attempt in attempts if attempt >= rate_cutoff]
+      if recent:
+        job_attempts[owner_id] = recent
+      else:
+        job_attempts.pop(owner_id, None)
+
+  @staticmethod
+  def create_job(
+    *,
+    owner_id: str,
+    style_id: str,
+    file_bytes: bytes,
+    filename: str,
+    content_type: str,
+  ) -> StickerJobResponse:
+    if not settings.OPENAI_API_KEY.strip():
+      raise ValueError("openai_api_key_required")
+    if style_id not in STYLE_PROMPTS:
+      raise ValueError("unsupported_style")
+
+    now = datetime.utcnow()
+    StickerPipelineService._prune_state(now)
+    if len(job_attempts.get(owner_id, [])) >= settings.GENERATION_RATE_LIMIT_PER_HOUR:
+      raise ValueError("generation_rate_limit_exceeded")
+    active_jobs = sum(job.status == "processing" for job in job_store.values())
+    if active_jobs >= settings.MAX_ACTIVE_GENERATIONS:
+      raise ValueError("generation_capacity_reached")
+    if any(
+      owner == owner_id
+      and job_store.get(existing_id)
+      and job_store[existing_id].status == "processing"
+      for existing_id, owner in job_owners.items()
+    ):
+      raise ValueError("generation_already_in_progress")
+
     job_id = f"job_{uuid.uuid4().hex[:10]}"
-    
     steps = [
       ProcessStepProgress(
-        id=cfg["id"],
-        step_name=cfg["step_name"],
-        description=cfg["description"],
-        status="pending" if cfg["id"] > 1 else "processing",
-        progress=0
+        id=step_id,
+        step_name=name,
+        description=description,
+        status="processing" if step_id == 1 else "pending",
+        progress=0,
       )
-      for cfg in PIPELINE_STEPS_CONFIG
+      for step_id, name, description in PIPELINE_STEPS_CONFIG
     ]
-
-    job_response = StickerJobResponse(
+    job = StickerJobResponse(
       job_id=job_id,
       status="processing",
       current_step=1,
       progress_percentage=0,
       steps=steps,
-      created_at=datetime.utcnow()
+      created_at=now,
     )
-
-    job_store[job_id] = job_response
-    
-    # Trigger background pipeline runner
-    asyncio.create_task(StickerPipelineService._run_pipeline_async(job_id, style_id, user_id))
-    
-    return job_response
+    job_store[job_id] = job
+    job_owners[job_id] = owner_id
+    job_artifacts[job_id] = Path(tempfile.mkdtemp(prefix=f"gensticker-{job_id}-"))
+    job_contexts[job_id] = JobContext(
+      style_id=style_id,
+      filename=filename,
+      content_type=content_type,
+    )
+    job_retries[job_id] = 0
+    job_attempts[owner_id] = [*job_attempts.get(owner_id, []), now]
+    task = asyncio.create_task(
+      StickerPipelineService._run_pipeline_async(
+        job_id=job_id,
+        style_id=style_id,
+        file_bytes=file_bytes,
+        filename=filename,
+        content_type=content_type,
+      )
+    )
+    if task is not None:
+      background_tasks.add(task)
+      task.add_done_callback(background_tasks.discard)
+    return job
 
   @staticmethod
-  def get_job(job_id: str) -> Optional[StickerJobResponse]:
+  def retry_job(job_id: str, *, owner_id: str) -> StickerJobResponse:
+    now = datetime.utcnow()
+    StickerPipelineService._prune_state(now)
+    job = job_store.get(job_id)
+    if job is None or job_owners.get(job_id) != owner_id:
+      raise ValueError("job_not_found")
+    if job.status != "error" or job.quality_status != "rejected":
+      raise ValueError("job_not_retryable")
+    if job_id not in job_artifacts or job_id not in job_contexts:
+      raise ValueError("job_artifacts_missing")
+
+    retry_count = job_retries.get(job_id, 0)
+    if retry_count >= MAX_SHEET_RETRIES:
+      raise ValueError("job_retry_limit_reached")
+    if len(job_attempts.get(owner_id, [])) >= settings.GENERATION_RATE_LIMIT_PER_HOUR:
+      raise ValueError("generation_rate_limit_exceeded")
+    if sum(item.status == "processing" for item in job_store.values()) >= settings.MAX_ACTIVE_GENERATIONS:
+      raise ValueError("generation_capacity_reached")
+
+    job_retries[job_id] = retry_count + 1
+    job_attempts[owner_id] = [*job_attempts.get(owner_id, []), now]
+    job.status = "processing"
+    job.error_message = None
+    job.quality_status = "reviewing"
+    job.preview_image_url = None
+    job.preview_image_urls = []
+    job.current_step = 4
+    job.progress_percentage = 35
+    job.steps[3].status = "processing"
+    job.steps[3].progress = 0
+    job.steps[4].status = "pending"
+    job.steps[4].progress = 0
+    task = asyncio.create_task(StickerPipelineService._resume_pipeline_async(job_id))
+    if task is not None:
+      background_tasks.add(task)
+      task.add_done_callback(background_tasks.discard)
+    return job
+
+  @staticmethod
+  def get_job(job_id: str, *, owner_id: str) -> Optional[StickerJobResponse]:
+    StickerPipelineService._prune_state(datetime.utcnow())
+    if job_owners.get(job_id) != owner_id:
+      return None
     return job_store.get(job_id)
 
   @staticmethod
-  async def _run_pipeline_async(job_id: str, style_id: str, user_id: Optional[str] = None):
-    """Simulate async 5-step AI pipeline execution"""
+  async def _run_pipeline_async(
+    *,
+    job_id: str,
+    style_id: str,
+    file_bytes: bytes,
+    filename: str,
+    content_type: str,
+  ) -> None:
     job = job_store.get(job_id)
     if not job:
       return
 
-    total_steps = len(PIPELINE_STEPS_CONFIG)
-    
-    for idx, cfg in enumerate(PIPELINE_STEPS_CONFIG):
-      step_num = idx + 1
-      job.current_step = step_num
-      
-      # Mark previous step completed
-      if idx > 0:
-        job.steps[idx - 1].status = "completed"
-        job.steps[idx - 1].progress = 100
-
-      job.steps[idx].status = "processing"
-      
-      # Simulate progress inside current step
-      duration = cfg["duration"]
-      ticks = 10
-      for t in range(1, ticks + 1):
-        await asyncio.sleep(duration / ticks)
-        job.steps[idx].progress = int((t / ticks) * 100)
-        overall = int(((idx + (t / ticks)) / total_steps) * 100)
-        job.progress_percentage = min(overall, 99)
-
-    # All steps completed
-    job.steps[-1].status = "completed"
-    job.steps[-1].progress = 100
-    job.progress_percentage = 100
-    job.status = "completed"
-
-    # Generate 20 stickers result
-    generated_stickers: List[StickerItemResponse] = []
-    style_name = style_id.replace("-", " ").title()
-    for stk in DEFAULT_20_STICKERS:
-      svg_data = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="100" cy="100" r="90" fill="{stk["color"]}"/><circle cx="70" cy="80" r="12" fill="white"/><circle cx="130" cy="80" r="12" fill="white"/><circle cx="70" cy="80" r="6" fill="%230f172a"/><circle cx="130" cy="80" r="6" fill="%230f172a"/><path d="M 65 130 Q 100 160 135 130" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/><text x="100" y="45" font-size="28" text-anchor="middle">{stk["badge"]}</text></svg>'
-      
-      generated_stickers.append(
-        StickerItemResponse(
-          id=stk["id"],
-          title=stk["title"],
-          emotion=stk["emotion"],
-          tags=stk["tags"],
-          image_url=f"data:image/svg+xml;utf8,{svg_data}",
-          style_id=style_id,
-          style_name=style_name,
-          is_favorite=False,
-          width=1024,
-          height=1024,
-          file_size_kb=145
-        )
-      )
-
-    job.stickers = generated_stickers
-
-    # Persist completed pack & stickers to Supabase Database
+    provider: OpenAIImageProvider | None = None
     try:
-      from app.services.supabase_service import SupabaseService
-      stk_dicts = [stk.model_dump() for stk in generated_stickers]
-      SupabaseService.save_sticker_pack(
-        user_id=user_id,
+      provider = OpenAIImageProvider(
+        api_key=settings.OPENAI_API_KEY,
+        model_id=settings.OPENAI_IMAGE_MODEL,
+      )
+      artifact_dir = job_artifacts.get(job_id)
+      if artifact_dir is None:
+        raise ValueError("job_artifacts_missing")
+
+      with nullcontext(artifact_dir) as temp_dir:
+        root = Path(temp_dir)
+        suffix = {
+          "image/jpeg": ".jpg",
+          "image/png": ".png",
+          "image/webp": ".webp",
+        }.get(content_type, ".png")
+        selfie_path = root / f"{Path(filename).stem or 'selfie'}{suffix}"
+        selfie_path.write_bytes(file_bytes)
+
+        def on_progress(stage: str, current: int, total: int) -> None:
+          if stage == "identity":
+            StickerPipelineService._complete_step(job, 0)
+            StickerPipelineService._activate_step(job, 1, 15)
+          elif stage == "canonical":
+            StickerPipelineService._complete_step(job, 1)
+            StickerPipelineService._complete_step(job, 2)
+            StickerPipelineService._activate_step(job, 3, 35)
+          elif stage == "groups":
+            job.steps[3].progress = round((current / total) * 100)
+            job.progress_percentage = min(89, 35 + round((current / total) * 54))
+
+        preview_bytes_total = 0
+
+        def on_sheet(image_bytes: bytes) -> None:
+          nonlocal preview_bytes_total
+          if len(image_bytes) > 8 * 1024 * 1024:
+            raise ValueError("preview_image_too_large")
+          preview_bytes_total += len(image_bytes)
+          if preview_bytes_total > 16 * 1024 * 1024:
+            raise ValueError("preview_image_too_large")
+          encoded = base64.b64encode(image_bytes).decode("ascii")
+          preview_url = f"data:image/png;base64,{encoded}"
+          job.preview_image_url = preview_url
+          job.preview_image_urls = [*job.preview_image_urls, preview_url]
+          job.quality_status = "reviewing"
+
+        generator = GroupedStickerGenerator(provider=provider, canvas_size=512)
+        paths = await generator.generate(
+          selfie_path=selfie_path,
+          output_dir=root / "result",
+          style_prompt=STYLE_PROMPTS[style_id],
+          on_progress=on_progress,
+          on_sheet=on_sheet,
+        )
+        if len(paths) != len(DEFAULT_STICKER_CATALOG):
+          raise RuntimeError("incomplete_sticker_pack")
+
+        StickerPipelineService._complete_step(job, 3)
+        StickerPipelineService._activate_step(job, 4, 92)
+        job.stickers = StickerPipelineService._build_responses(paths, style_id)
+        StickerPipelineService._complete_step(job, 4)
+        job.progress_percentage = 100
+        job.status = "completed"
+        job.quality_status = "accepted"
+        await StickerPipelineService._persist_completed_pack(job_id, style_id, paths)
+    except Exception as error:
+      job.status = "error"
+      job.error_message = StickerPipelineService._safe_error(error)
+      if job.preview_image_url:
+        job.quality_status = "rejected"
+      active_index = max(0, min(job.current_step - 1, len(job.steps) - 1))
+      job.steps[active_index].status = "error"
+    finally:
+      if provider is not None:
+        await provider.close()
+
+  @staticmethod
+  async def _resume_pipeline_async(job_id: str) -> None:
+    job = job_store.get(job_id)
+    context = job_contexts.get(job_id)
+    root = job_artifacts.get(job_id)
+    if job is None or context is None or root is None:
+      return
+
+    provider: OpenAIImageProvider | None = None
+    try:
+      provider = OpenAIImageProvider(
+        api_key=settings.OPENAI_API_KEY,
+        model_id=settings.OPENAI_IMAGE_MODEL,
+      )
+      preview_bytes_total = 0
+
+      def on_progress(stage: str, current: int, total: int) -> None:
+        if stage == "groups":
+          job.steps[3].progress = round((current / total) * 100)
+          job.progress_percentage = min(89, 35 + round((current / total) * 54))
+
+      def on_sheet(image_bytes: bytes) -> None:
+        nonlocal preview_bytes_total
+        if len(image_bytes) > 8 * 1024 * 1024:
+          raise ValueError("preview_image_too_large")
+        preview_bytes_total += len(image_bytes)
+        if preview_bytes_total > 16 * 1024 * 1024:
+          raise ValueError("preview_image_too_large")
+        preview_url = f"data:image/png;base64,{base64.b64encode(image_bytes).decode('ascii')}"
+        job.preview_image_url = preview_url
+        job.preview_image_urls = [*job.preview_image_urls, preview_url]
+        job.quality_status = "reviewing"
+
+      generator = GroupedStickerGenerator(provider=provider, canvas_size=512)
+      paths = await generator.resume(
+        output_dir=root / "result",
+        style_prompt=STYLE_PROMPTS[context.style_id],
+        on_progress=on_progress,
+        on_sheet=on_sheet,
+      )
+      if len(paths) != len(DEFAULT_STICKER_CATALOG):
+        raise RuntimeError("incomplete_sticker_pack")
+
+      StickerPipelineService._complete_step(job, 3)
+      StickerPipelineService._activate_step(job, 4, 92)
+      job.stickers = StickerPipelineService._build_responses(paths, context.style_id)
+      StickerPipelineService._complete_step(job, 4)
+      job.progress_percentage = 100
+      job.status = "completed"
+      job.quality_status = "accepted"
+      await StickerPipelineService._persist_completed_pack(job_id, context.style_id, paths)
+    except Exception as error:
+      job.status = "error"
+      job.error_message = StickerPipelineService._safe_error(error)
+      if job.preview_image_url:
+        job.quality_status = "rejected"
+      active_index = max(0, min(job.current_step - 1, len(job.steps) - 1))
+      job.steps[active_index].status = "error"
+    finally:
+      if provider is not None:
+        await provider.close()
+
+  @staticmethod
+  async def _persist_completed_pack(
+    job_id: str,
+    style_id: str,
+    paths: tuple[Path, ...],
+  ) -> None:
+    """Keep kien_v4 history/Telegram data available after real AI generation."""
+    job = job_store.get(job_id)
+    owner_id = job_owners.get(job_id)
+    if job is None or not owner_id or not job.stickers:
+      return
+
+    style_name = STYLE_NAMES.get(style_id, style_id.replace("-", " ").title())
+    try:
+      sticker_payloads = [sticker.model_dump() for sticker in job.stickers]
+      if SupabaseService.has_storage_client():
+        for sticker, path, payload in zip(job.stickers, paths, sticker_payloads, strict=True):
+          public_url = await asyncio.to_thread(
+            SupabaseService.upload_image_to_storage,
+            path.read_bytes(),
+            f"{job_id}_{sticker.id}.png",
+            "image/png",
+          )
+          if public_url and "api.dicebear.com" not in public_url:
+            payload["image_url"] = public_url
+
+      await asyncio.to_thread(
+        SupabaseService.save_sticker_pack,
+        user_id=owner_id,
         title=f"Bộ Sticker {style_name}",
         prompt=None,
         style_id=style_id,
         style_name=style_name,
-        stickers=stk_dicts
+        stickers=sticker_payloads,
       )
-    except Exception as save_err:
-      print(f"⚠️ Note auto-saving pack to DB: {save_err}")
+    except Exception as error:
+      # Persistence must not turn an already generated pack into an AI failure.
+      print(f"[WARN] Auto-saving pack to DB failed: {error}")
+
+  @staticmethod
+  def _build_responses(paths: tuple[Path, ...], style_id: str) -> list[StickerItemResponse]:
+    responses: list[StickerItemResponse] = []
+    for template, path in zip(DEFAULT_STICKER_CATALOG, paths, strict=True):
+      data = path.read_bytes()
+      encoded = base64.b64encode(data).decode("ascii")
+      responses.append(
+        StickerItemResponse(
+          id=f"stk_{template.display_order:02d}",
+          title=template.label,
+          emotion=template.emotion_prompt,
+          tags=[template.template_id, template.emotion_prompt],
+          image_url=f"data:image/png;base64,{encoded}",
+          style_id=style_id,
+          width=512,
+          height=512,
+          file_size_kb=max(1, round(len(data) / 1024)),
+        )
+      )
+    return responses
+
+  @staticmethod
+  def _activate_step(job: StickerJobResponse, index: int, overall: int) -> None:
+    job.current_step = index + 1
+    job.steps[index].status = "processing"
+    job.progress_percentage = overall
+
+  @staticmethod
+  def _complete_step(job: StickerJobResponse, index: int) -> None:
+    job.steps[index].status = "completed"
+    job.steps[index].progress = 100
+
+  @staticmethod
+  def _safe_error(error: Exception) -> str:
+    messages = {
+      "openai_quota_or_billing_required": "OpenAI API đã hết quota hoặc chưa bật billing.",
+      "openai_api_key_or_permission_invalid": "OpenAI API key không hợp lệ hoặc không có quyền dùng model ảnh.",
+      "provider_output_too_large": "Ảnh trả về vượt giới hạn an toàn.",
+      "pack_sheet_grid_not_detected": "Bảng ảnh đã được tạo nhưng bố cục không đủ sạch để tự động cắt thành 20 sticker. Bạn vẫn có thể xem ảnh gốc bên dưới.",
+      "preview_image_too_large": "Bảng ảnh OpenAI trả về quá lớn để hiển thị an toàn trên web.",
+      "pack_sheet_invalid_image": "OpenAI không trả về một tệp ảnh hợp lệ để hiển thị.",
+    }
+    return messages.get(
+      str(error),
+      "Không thể sinh sticker từ ảnh này. Vui lòng thử ảnh chân dung rõ hơn.",
+    )

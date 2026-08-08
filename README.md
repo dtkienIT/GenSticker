@@ -103,7 +103,9 @@ Tạo file `.env` tại thư mục gốc bằng cách sao chép từ `.env.examp
 ```powershell
 Copy-Item .env.example .env
 ```
-Điền tối thiểu `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` và `TELEGRAM_BOT_TOKEN`.
+Điền tối thiểu `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY` và `OPENAI_API_KEY`. Khóa OpenAI chỉ được đặt ở
+backend, không dùng biến `VITE_*` để tránh lộ khóa trong bundle frontend.
 
 ### 2. Áp Dụng Migration Lịch Sử
 

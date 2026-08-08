@@ -13,7 +13,7 @@ export interface UseImageUploadReturn {
 }
 
 const MAX_FILE_SIZE_MB = 15;
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'image/svg+xml'];
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
 
 export function useImageUpload(): UseImageUploadReturn {
   const [file, setFile] = useState<File | null>(null);

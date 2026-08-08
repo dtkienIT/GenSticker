@@ -11,13 +11,13 @@ app = FastAPI(
   redoc_url="/redoc"
 )
 
-# Enable CORS for React Frontend (localhost:5173 / localhost:3000 / Mobile dev)
+# Restrict browser access to explicitly configured frontend origins.
 app.add_middleware(
   CORSMiddleware,
-  allow_origins=["*"],
-  allow_credentials=True,
-  allow_methods=["*"],
-  allow_headers=["*"],
+  allow_origins=[origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()],
+  allow_credentials=False,
+  allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+  allow_headers=["Authorization", "Content-Type"],
 )
 
 # Mount API router under /api/v1

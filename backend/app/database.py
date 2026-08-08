@@ -10,16 +10,16 @@ supabase_admin: Client | None = None
 if settings.SUPABASE_URL and settings.SUPABASE_ANON_KEY:
   try:
     supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
-    print("✅ Supabase client initialized successfully!")
+    print("[OK] Supabase client initialized successfully!")
   except Exception as e:
-    print(f"⚠️ Warning: Could not initialize Supabase client: {e}")
+    print(f"[WARN] Could not initialize Supabase client: {e}")
 
 if settings.SUPABASE_URL and settings.SUPABASE_SERVICE_ROLE_KEY:
   try:
     supabase_admin = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
-    print("✅ Supabase admin client initialized successfully!")
+    print("[OK] Supabase admin client initialized successfully!")
   except Exception as e:
-    print(f"⚠️ Warning: Could not initialize Supabase admin client: {e}")
+    print(f"[WARN] Could not initialize Supabase admin client: {e}")
 
 # SQLAlchemy Engine setup (for PostgreSQL direct connection)
 Base = declarative_base()
@@ -41,9 +41,9 @@ if settings.DATABASE_URL:
       pool_pre_ping=True
     )
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    print("✅ Direct Postgres SQLAlchemy engine connected!")
+    print("[OK] Direct Postgres SQLAlchemy engine initialized!")
   except Exception as e:
-    print(f"⚠️ Warning: SQLAlchemy Engine connection failed: {e}")
+    print(f"[WARN] SQLAlchemy engine initialization failed: {e}")
 
 def get_db():
   """FastAPI dependency for database sessions"""

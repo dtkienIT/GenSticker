@@ -11,7 +11,6 @@ interface HeaderProps {
   onOpenAuth: (mode?: 'login' | 'register') => void;
   onLogout: () => void;
   onReset?: () => void;
-  hasActiveSession?: boolean;
   onOpenHistory?: () => void;
   historyCount?: number;
 }
@@ -23,7 +22,6 @@ export const Header: FC<HeaderProps> = ({
   onOpenAuth,
   onLogout,
   onReset,
-  hasActiveSession,
   onOpenHistory,
   historyCount = 0,
 }) => {

@@ -45,6 +45,7 @@ export interface ProcessStep {
 export type PipelineStatus = 'idle' | 'uploading' | 'processing' | 'completed' | 'error';
 
 export interface GenerationState {
+  jobId: string | null;
   status: PipelineStatus;
   originalImage: string | null;
   originalFileName: string | null;
@@ -54,4 +55,7 @@ export interface GenerationState {
   steps: ProcessStep[];
   stickers: StickerItem[];
   errorMessage: string | null;
+  previewImageUrl: string | null;
+  previewImageUrls: string[];
+  qualityStatus: 'reviewing' | 'accepted' | 'rejected' | null;
 }

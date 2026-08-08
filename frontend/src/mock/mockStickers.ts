@@ -89,10 +89,10 @@ export const INITIAL_PIPELINE_STEPS: ProcessStep[] = [
   {
     id: 'step-4',
     title: 'Sinh 20 Biểu Cảm Độc Đáo',
-    description: 'Đang biến hóa 20 trạng thái cảm xúc (Vui, Buồn, Phẫn Nộ, Thả Tim, Ngủ...)',
+    description: 'Đang tạo ba bảng 4×2 và giữ 20 trạng thái cảm xúc đồng nhất với nhân vật canonical',
     status: 'idle',
     progress: 0,
-    estimatedTimeSec: 5,
+    estimatedTimeSec: 90,
   },
   {
     id: 'step-5',

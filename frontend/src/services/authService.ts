@@ -1,6 +1,6 @@
 import type { User } from '../types/auth';
 
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 const STORAGE_KEY_USER = 'gensticker_user_session';
 const STORAGE_KEY_TOKEN = 'gensticker_access_token';
 
@@ -111,6 +111,18 @@ export class AuthService {
   }
 
   static async quickDemoLogin(): Promise<User> {
+    if (import.meta.env.DEV && import.meta.env.VITE_DEV_BYPASS_AUTH === 'true') {
+      const demoUser: User = {
+        id: 'local-demo-user',
+        email: 'demo@localhost',
+        name: 'Local Demo',
+        avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=local-demo',
+        createdAt: new Date().toISOString(),
+      };
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(demoUser));
+      localStorage.setItem(STORAGE_KEY_TOKEN, 'local-dev-only');
+      return demoUser;
+    }
     return AuthService.login('demo@gensticker.ai', 'Demo@2026!');
   }
 }
