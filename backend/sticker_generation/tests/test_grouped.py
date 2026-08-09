@@ -70,6 +70,35 @@ def _mock_eight_sheet(sheet_index: int) -> bytes:
     return buffer.getvalue()
 
 
+def _mock_three_by_two_sheet(
+    *,
+    horizontal_inset: int = 40,
+    vertical_inset: int = 28,
+) -> bytes:
+    image = Image.new("RGBA", (1536, 1024), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    for row in range(2):
+        for column in range(3):
+            index = row * 3 + column
+            draw.ellipse(
+                (
+                    column * 512 + horizontal_inset,
+                    row * 512 + vertical_inset,
+                    (column + 1) * 512 - horizontal_inset,
+                    (row + 1) * 512 - vertical_inset,
+                ),
+                fill=(
+                    40 + index * 25,
+                    70 + index * 15,
+                    120 + index * 10,
+                    255,
+                ),
+            )
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
 class FakeProvider:
     def __init__(self) -> None:
         self.calls: list[ImageGenerationRequest] = []
@@ -152,32 +181,63 @@ def test_eight_sheet_split_returns_eight_cells_in_row_major_order() -> None:
 
 
 def test_eight_sheet_split_finds_shifted_gutters_near_nominal_boundaries() -> None:
-    image = Image.new("RGBA", (1500, 1000), (0, 0, 0, 0))
+    image = Image.new("RGBA", (1536, 1024), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
-    column_edges = (0, 395, 770, 1145, 1500)
+    column_edges = (0, 433, 817, 1201, 1536)
     for row in range(2):
         for column in range(4):
             index = row * 4 + column
             draw.rectangle(
                 (
-                    column_edges[column] + 15,
-                    row * 500 + 20,
-                    column_edges[column + 1] - 15,
-                    (row + 1) * 500 - 20,
+                    column_edges[column] + 8,
+                    row * 512 + 20,
+                    column_edges[column + 1] - 8,
+                    (row + 1) * 512 - 20,
                 ),
                 fill=(40 + index * 7, 70 + index * 5, 120 + index * 3),
             )
     buffer = BytesIO()
     image.save(buffer, format="PNG")
 
+    foreground = GroupedStickerGenerator._foreground_mask(image)
+    *_, detected_column_edges, _ = GroupedStickerGenerator._adaptive_grid_quality(
+        foreground,
+        4,
+        2,
+    )
     cells = GroupedStickerGenerator._split_eight_sheet(buffer.getvalue())
 
+    assert detected_column_edges[1] in range(430, 438)
     assert len(cells) == 8
-    decoded = [Image.open(BytesIO(cell)).convert("RGB") for cell in cells]
+    decoded = [Image.open(BytesIO(cell)).convert("RGBA") for cell in cells]
+    assert decoded[1].getpixel((0, decoded[1].height // 2))[3] == 0
     assert [cell.getpixel((cell.width // 2, cell.height // 2)) for cell in decoded] == [
-        (40 + index * 7, 70 + index * 5, 120 + index * 3)
+        (40 + index * 7, 70 + index * 5, 120 + index * 3, 255)
         for index in range(8)
     ]
+
+
+def test_eight_sheet_split_rejects_transparent_three_by_two_layout() -> None:
+    with pytest.raises(ValueError, match="pack_sheet_grid_not_detected"):
+        GroupedStickerGenerator._split_eight_sheet(_mock_three_by_two_sheet())
+
+
+def test_eight_sheet_split_rejects_sparse_three_by_two_layout() -> None:
+    image_bytes = _mock_three_by_two_sheet(
+        horizontal_inset=140,
+        vertical_inset=150,
+    )
+    foreground = GroupedStickerGenerator._foreground_mask(
+        Image.open(BytesIO(image_bytes)).convert("RGBA")
+    )
+    cut_score, minimum_occupancy, *_ = (
+        GroupedStickerGenerator._adaptive_grid_quality(foreground, 4, 2)
+    )
+
+    assert 0.10 < cut_score < 0.45
+    assert minimum_occupancy > 0.03
+    with pytest.raises(ValueError, match="pack_sheet_grid_not_detected"):
+        GroupedStickerGenerator._split_eight_sheet(image_bytes)
 
 
 def test_eight_sheet_split_handles_smooth_opaque_background() -> None:
@@ -250,6 +310,9 @@ async def test_resume_reuses_canonical_and_completed_first_sheet(tmp_path: Path)
         Image.new("RGBA", (128, 128), "white").save(
             stickers_dir / template.reference_filename
         )
+    invalid_raw_sheet = _mock_three_by_two_sheet()
+    raw_sheet_path = output_dir / "raw-sheet-3.png"
+    raw_sheet_path.write_bytes(invalid_raw_sheet)
 
     provider = FakeProvider()
     generator = GroupedStickerGenerator(provider=provider, canvas_size=128)
@@ -262,7 +325,7 @@ async def test_resume_reuses_canonical_and_completed_first_sheet(tmp_path: Path)
     assert len(provider.calls) == 1
     assert provider.calls[0].metadata["sheet_index"] == 3
     assert provider.calls[0].metadata["keep_count"] == 4
-    assert (output_dir / "raw-sheet-3.png").is_file()
+    assert raw_sheet_path.read_bytes() == _mock_eight_sheet(3)
 
 
 @pytest.mark.asyncio

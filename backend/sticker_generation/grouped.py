@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from io import BytesIO
+from itertools import pairwise
 from pathlib import Path
-from typing import Callable, Sequence
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
@@ -12,7 +13,6 @@ from sticker_generation.models import ImageGenerationRequest, StickerTemplate
 from sticker_generation.postprocess import postprocess_sticker
 from sticker_generation.prompts import build_canonical_prompt, build_eight_sheet_prompt
 from sticker_generation.providers.base import ImageProvider
-
 
 ProgressCallback = Callable[[str, int, int], None]
 SheetCallback = Callable[[bytes], None]
@@ -24,6 +24,11 @@ SHEET_NEGATIVE_PROMPT = (
     "cells, decoration crossing cell boundary, extra row, third row, extra column, fifth column, "
     "5 by 2 grid, ten stickers, twelve stickers"
 )
+
+# A wrong column count can create multiple separate crossings that the
+# decorative-accent heuristic intentionally ignores. A score this high is
+# never a safe gutter.
+SEVERE_TRANSPARENT_CUT_SCORE = 0.45
 
 
 class GroupedStickerGenerator:
@@ -261,13 +266,15 @@ class GroupedStickerGenerator:
             4,
             2,
         )
-        transparent_cut_rejected = (
-            transparent_background
-            and cut_score > 0.10
-            and GroupedStickerGenerator._has_dominant_gutter_crossing(
-                foreground,
-                column_edges,
-                row_edges,
+        transparent_cut_rejected = transparent_background and (
+            cut_score >= SEVERE_TRANSPARENT_CUT_SCORE
+            or (
+                cut_score > 0.10
+                and GroupedStickerGenerator._has_dominant_gutter_crossing(
+                    foreground,
+                    column_edges,
+                    row_edges,
+                )
             )
         )
         opaque_cut_rejected = not transparent_background and cut_score > 0.18
@@ -293,6 +300,14 @@ class GroupedStickerGenerator:
         column_edges: tuple[int, ...],
         row_edges: tuple[int, ...],
     ) -> bool:
+        def longest_run(values: tuple[bool, ...]) -> int:
+            longest = 0
+            current = 0
+            for has_foreground in values:
+                current = current + 1 if has_foreground else 0
+                longest = max(longest, current)
+            return longest
+
         width, height = foreground.size
         band = max(2, min(width, height) // 256)
         strips = (
@@ -314,11 +329,16 @@ class GroupedStickerGenerator:
             occupied = sum(projection)
             if occupied == 0:
                 continue
-            longest = 0
-            current = 0
-            for has_foreground in projection:
-                current = current + 1 if has_foreground else 0
-                longest = max(longest, current)
+            longest = longest_run(projection)
+            segment_edges = row_edges if axis == "vertical" else column_edges
+            crossed_segments = sum(
+                longest_run(projection[start:end]) / max(1, end - start) >= 0.12
+                for start, end in pairwise(segment_edges)
+            )
+            # A wrong row/column count often cuts one subject in several cells,
+            # producing multiple long runs without one run dominating the total.
+            if crossed_segments >= 2:
+                return True
             if longest / len(projection) >= 0.12 and longest / occupied >= 0.80:
                 return True
         return False
@@ -370,7 +390,14 @@ class GroupedStickerGenerator:
         width, height = foreground.size
         length = width if axis == "vertical" else height
         band = max(2, min(width, height) // 256)
-        search_radius = max(band + 1, length // 50)
+        # Image models can shift an otherwise valid gutter more than two
+        # percent from the mathematical cell boundary. Four percent still
+        # keeps adjacent search windows disjoint and cannot reach a 3x2 gutter.
+        cell_span = length // divisions
+        search_radius = max(
+            band + 1,
+            min(length // 25, cell_span // 4),
+        )
         edges = [0]
         scores: list[float] = []
         for division in range(1, divisions):

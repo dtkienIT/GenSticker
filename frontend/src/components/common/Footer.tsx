@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { Heart, ShieldCheck, Cpu } from 'lucide-react';
+import { Heart, ShieldCheck } from 'lucide-react';
 
 export const Footer: FC = () => {
   return (
@@ -27,9 +27,6 @@ export const Footer: FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <Cpu size={15} color="#8b5cf6" /> SAM2 & Stable Diffusion XL
-          </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
             <ShieldCheck size={15} color="#10b981" /> 100% Bảo mật dữ liệu ảnh
           </span>
