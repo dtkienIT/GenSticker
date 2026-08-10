@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,7 +17,7 @@ from docx.shared import Inches, Pt, RGBColor
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "project-docs.json"
-OUTPUT_DIR = ROOT / "originals"
+OUTPUT_DIR = Path(os.environ.get("GENSTICKER_DOCX_OUTPUT_DIR", ROOT / "originals")).resolve()
 
 PRIMARY = "5B3DF5"
 PRIMARY_DARK = "4338CA"
@@ -76,6 +77,13 @@ def set_repeat_table_header(row) -> None:
     tbl_header = OxmlElement("w:tblHeader")
     tbl_header.set(qn("w:val"), "true")
     tr_pr.append(tbl_header)
+
+
+def set_row_cant_split(row) -> None:
+    """Keep each logical table row intact across Word/WPS page boundaries."""
+    tr_pr = row._tr.get_or_add_trPr()
+    cant_split = OxmlElement("w:cantSplit")
+    tr_pr.append(cant_split)
 
 
 def set_repeat_header(paragraph) -> None:
@@ -177,7 +185,10 @@ def configure_document(doc: Document, item: dict, meta: dict) -> None:
     set_cell_margins(left, 40, 0, 0, 0)
     set_cell_margins(right, 40, 0, 0, 0)
     p = left.paragraphs[0]
-    run = p.add_run(f"{meta['branch']} @ {meta['commit']}  •  {meta['verifiedAt']}")
+    snapshot_label = f"{meta['branch']} @ {meta['commit']}"
+    if meta.get("sourceSnapshot", {}).get("workingTreeIncluded"):
+        snapshot_label += " + working tree"
+    run = p.add_run(snapshot_label)
     run.font.size = Pt(8)
     run.font.color.rgb = RGBColor.from_string(MUTED)
     add_page_number(right.paragraphs[0])
@@ -191,8 +202,9 @@ def configure_document(doc: Document, item: dict, meta: dict) -> None:
     doc.core_properties.comments = (
         "Source-derived clean-room documentation. No sample-project, AI-generated, or user image content."
     )
-    doc.core_properties.created = datetime(2026, 8, 9, tzinfo=timezone.utc)
-    doc.core_properties.modified = datetime(2026, 8, 9, tzinfo=timezone.utc)
+    verified_at = datetime.fromisoformat(meta["verifiedAt"]).replace(tzinfo=timezone.utc)
+    doc.core_properties.created = verified_at
+    doc.core_properties.modified = verified_at
     doc.core_properties.revision = 1
 
 
@@ -294,6 +306,7 @@ def add_table(doc: Document, headers: list[str], rows: list[list[str]]) -> None:
     table.autofit = True
     header_row = table.rows[0]
     set_repeat_table_header(header_row)
+    set_row_cant_split(header_row)
     for idx, header in enumerate(headers):
         cell = header_row.cells[idx]
         set_cell_shading(cell, PRIMARY_DARK)
@@ -302,9 +315,12 @@ def add_table(doc: Document, headers: list[str], rows: list[list[str]]) -> None:
         cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
         p = cell.paragraphs[0]
         p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p.paragraph_format.keep_with_next = True
         style_text_run(p.add_run(str(header)), bold=True, color=WHITE, size=8.6)
     for row_index, row_values in enumerate(rows):
-        cells = table.add_row().cells
+        data_row = table.add_row()
+        set_row_cant_split(data_row)
+        cells = data_row.cells
         for col_index, value in enumerate(row_values):
             cell = cells[col_index]
             set_cell_shading(cell, LIGHT_ALT if row_index % 2 else WHITE)
@@ -314,7 +330,13 @@ def add_table(doc: Document, headers: list[str], rows: list[list[str]]) -> None:
             p = cell.paragraphs[0]
             p.paragraph_format.space_after = Pt(0)
             style_text_run(p.add_run(str(value)), size=8.4 if len(headers) >= 4 else 9.0)
-    doc.add_paragraph().paragraph_format.space_after = Pt(1)
+    # Word/WPS always needs a paragraph after a table. Keep this spacer at one
+    # point so a table ending near the page boundary cannot create a blank page.
+    spacer = doc.add_paragraph()
+    spacer.paragraph_format.space_before = Pt(0)
+    spacer.paragraph_format.space_after = Pt(0)
+    spacer.paragraph_format.line_spacing = Pt(1)
+    spacer.add_run(" ").font.size = Pt(1)
 
 
 def add_section_content(doc: Document, section: dict) -> None:
@@ -364,7 +386,11 @@ def add_figure(doc: Document, figure: dict, item: dict, figure_number: int) -> N
     paragraph.paragraph_format.keep_with_next = True
     paragraph.paragraph_format.space_after = Pt(0)
     run = paragraph.add_run()
-    shape = run.add_picture(str(image_path), width=Inches(6.65))
+    # Keep the image, caption, description and source together in the printable
+    # area. The operations guide contains two figures plus dense runbook tables,
+    # so it uses a slightly narrower but still legible image width.
+    figure_width = 5.95 if item["number"] == "11" else 6.30
+    shape = run.add_picture(str(image_path), width=Inches(figure_width))
     shape._inline.docPr.set("title", figure["title"])
     shape._inline.docPr.set("descr", figure["alt"])
 
@@ -394,7 +420,7 @@ def add_figure(doc: Document, figure: dict, item: dict, figure_number: int) -> N
 
     source = doc.add_paragraph()
     source.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    source.paragraph_format.space_after = Pt(8)
+    source.paragraph_format.space_after = Pt(4)
     run = source.add_run(
         "Nguồn: " + "; ".join(figure.get("sourceRefs", []))
         + f" · baseline {item.get('baselineLabel', 'kien_v5')}"

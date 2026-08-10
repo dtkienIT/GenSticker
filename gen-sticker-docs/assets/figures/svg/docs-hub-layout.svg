@@ -14,7 +14,7 @@
     <rect x="90" y="225" width="265" height="445" rx="24" fill="#F8FAFC" stroke="#64748B" stroke-width="3"/>
 
     <text x="112" y="268" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="27" font-weight="800">Sidebar</text>
-    <text x="112" y="306" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="112" dy="0">Search</tspan><tspan x="112" dy="29">Category filters</tspan><tspan x="112" dy="29">11 document cards</tspan><tspan x="112" dy="29">DOCX/XLSX badge</tspan></text>
+    <text x="112" y="306" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="112" dy="0">Search</tspan><tspan x="112" dy="29">Category filters</tspan><tspan x="112" dy="29">12 document cards</tspan><tspan x="112" dy="29">DOCX/XLSX badge</tspan></text>
   </g><g>
     <rect x="390" y="225" width="535" height="445" rx="24" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="3"/>
 
@@ -28,8 +28,8 @@
   </g><g>
     <rect x="1065" y="360" width="430" height="120" rx="24" fill="#F8FAFC" stroke="#64748B" stroke-width="3"/>
 
-    <text x="1087" y="403" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="27" font-weight="800">Document picker</text>
-    <text x="1087" y="441" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1087" dy="0">horizontal/stacked cards</tspan></text>
+    <text x="1087" y="403" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="27" font-weight="800">Document carousel</text>
+    <text x="1087" y="441" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1087" dy="0">một hàng · snap · touch scroll</tspan></text>
   </g><g>
     <rect x="1065" y="510" width="430" height="160" rx="24" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="3"/>
 

@@ -147,7 +147,7 @@ def figure_story(figure: dict, document: dict, number: int, width: float) -> lis
     return [KeepTogether([Spacer(1, 8), image, caption, description, Spacer(1, 4), source])]
 
 
-def page_decorator(document: dict):
+def page_decorator(document: dict, meta: dict):
     def draw(canvas, doc) -> None:
         page_width, page_height = A4
         canvas.saveState()
@@ -159,14 +159,18 @@ def page_decorator(document: dict):
         canvas.drawRightString(page_width - 21 * mm, page_height - 9.7 * mm, f"GS-DOC-{document['number']}")
         canvas.setFillColor(MUTED)
         canvas.setFont("Arial", 7)
-        canvas.drawString(19 * mm, 9 * mm, "kien_v5 @ c09e26a · 2026-08-09")
+        canvas.drawString(
+            19 * mm,
+            9 * mm,
+            f"{meta['branch']} @ {meta['commit']} · {meta['verifiedAt']}",
+        )
         canvas.setFont("Arial-Bold", 7)
         canvas.drawRightString(page_width - 19 * mm, 9 * mm, f"TRANG {doc.page}")
         canvas.restoreState()
     return draw
 
 
-def render_document(document: dict, figures: dict, output_root: Path) -> int:
+def render_document(document: dict, figures: dict, meta: dict, output_root: Path) -> int:
     document_dir = output_root / f"{document['number']}-{document['id']}"
     document_dir.mkdir(parents=True, exist_ok=True)
     pdf_path = document_dir / "qa.pdf"
@@ -193,7 +197,7 @@ def render_document(document: dict, figures: dict, output_root: Path) -> int:
         Paragraph(e(document["subtitle"]), STYLES["GSSubtitle"]),
         Table([["", ""]], colWidths=[width * 0.72, width * 0.28], rowHeights=[7], style=TableStyle([("BACKGROUND", (0, 0), (0, 0), PRIMARY), ("BACKGROUND", (1, 0), (1, 0), PINK)])),
         Spacer(1, 12),
-        qa_table(["Control", "Value"], [["Phiên bản", "1.0"], ["Baseline", "kien_v5 @ c09e26a"], ["Trạng thái", document["status"]], ["Ngày kiểm tra", "2026-08-09"], ["Nguồn nội dung", "Source hiện tại; mẫu chỉ cung cấp cấu trúc"]], width),
+        qa_table(["Control", "Value"], [["Phiên bản", meta["version"]], ["Baseline", f"{meta['branch']} @ {meta['commit']}"], ["Trạng thái", document["status"]], ["Ngày kiểm tra", meta["verifiedAt"]], ["Nguồn nội dung", "Source hiện tại; mẫu chỉ cung cấp cấu trúc"]], width),
         Spacer(1, 10),
         Paragraph(e(document["summary"]), STYLES["GSBody"]),
         Paragraph("NỘI DUNG", STYLES["GSH1"]),
@@ -207,7 +211,7 @@ def render_document(document: dict, figures: dict, output_root: Path) -> int:
         for visual in visuals.get(section["title"], []):
             story.extend(figure_story(figures[visual["figureId"]], document, figure_number, width))
             figure_number += 1
-    decorator = page_decorator(document)
+    decorator = page_decorator(document, meta)
     doc.build(story, onFirstPage=decorator, onLaterPages=decorator)
 
     pages = convert_from_path(str(pdf_path), dpi=125, poppler_path=str(POPPLER))
@@ -224,7 +228,7 @@ def main() -> None:
     payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
     for document in payload["documents"]:
         if document["kind"] == "DOCX":
-            count = render_document(document, payload["figures"], output_root)
+            count = render_document(document, payload["figures"], payload["meta"], output_root)
             print(f"{document['number']} {document['title']}: {count} QA pages")
 
 

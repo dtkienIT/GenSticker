@@ -9,52 +9,52 @@
   <circle cx="62" cy="55" r="22" fill="#5B3DF5"/>
   <text x="62" y="63" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="20" font-weight="800">05</text>
   <text x="102" y="50" text-anchor="start" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="34" font-weight="800">Roadmap Now / Next / Later</text>
-  <text x="103" y="82" text-anchor="start" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="18" font-weight="500">Ưu tiên đề xuất từ source audit; không phải cam kết lịch phát hành</text>
-  <g filter="url(#shadow-roadmap-now-next-later)"><g><rect x="55" y="160" width="470" height="590" rx="26" fill="#FEF2F2" fill-opacity="0.55" stroke="#DC2626" stroke-width="2" /><text x="79" y="197" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="21" font-weight="800">NOW — giảm rủi ro dữ liệu</text></g><g><rect x="565" y="160" width="470" height="590" rx="26" fill="#EEF2FF" fill-opacity="0.55" stroke="#5B3DF5" stroke-width="2" /><text x="589" y="197" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="21" font-weight="800">NEXT — tăng độ bền</text></g><g><rect x="1075" y="160" width="470" height="590" rx="26" fill="#F0FDFA" fill-opacity="0.55" stroke="#0D9488" stroke-width="2" /><text x="1099" y="197" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="21" font-weight="800">LATER — tối ưu vận hành</text></g><g>
-    <rect x="85" y="230" width="410" height="125" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
+  <text x="103" y="82" text-anchor="start" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="18" font-weight="500">Face gate MVP đã có; enforcement, test và telemetry được tách theo giai đoạn</text>
+  <g filter="url(#shadow-roadmap-now-next-later)"><g><rect x="55" y="160" width="470" height="590" rx="26" fill="#F0FDFA" fill-opacity="0.55" stroke="#0D9488" stroke-width="2" /><text x="79" y="197" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="21" font-weight="800">NOW — đã triển khai</text></g><g><rect x="565" y="160" width="470" height="590" rx="26" fill="#EEF2FF" fill-opacity="0.55" stroke="#5B3DF5" stroke-width="2" /><text x="589" y="197" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="21" font-weight="800">NEXT — làm gate đáng tin cậy</text></g><g><rect x="1075" y="160" width="470" height="590" rx="26" fill="#F8FAFC" fill-opacity="0.55" stroke="#64748B" stroke-width="2" /><text x="1099" y="197" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="21" font-weight="800">LATER — đo và tối ưu</text></g><g>
+    <rect x="85" y="230" width="410" height="125" rx="24" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
 
-    <text x="107" y="273" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">P0 · Runtime data</text>
-    <text x="107" y="311" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="107" dy="0">Bỏ base64 user images khỏi Git</tspan><tspan x="107" dy="29">tách/purge pending Telegram data</tspan></text>
+    <text x="107" y="273" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="27" font-weight="800">DONE · Browser gate</text>
+    <text x="107" y="311" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="107" dy="0">MediaPipe CPU/WASM</tspan><tspan x="107" dy="29">0/1/&gt;1 verdict · fail closed</tspan></text>
   </g><g>
-    <rect x="85" y="385" width="410" height="125" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
+    <rect x="85" y="385" width="410" height="125" rx="24" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
 
-    <text x="107" y="428" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">P0 · Credentials</text>
-    <text x="107" y="466" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="107" dy="0">Bỏ demo credential hard-code</tspan><tspan x="107" dy="29">rotate và đưa vào controlled config</tspan></text>
+    <text x="107" y="428" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="27" font-weight="800">DONE · UX/privacy</text>
+    <text x="107" y="466" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="107" dy="0">checking/verified/error states</tspan><tspan x="107" dy="29">reject giữ ảnh trên thiết bị</tspan></text>
   </g><g>
-    <rect x="85" y="540" width="410" height="135" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
+    <rect x="85" y="540" width="410" height="135" rx="24" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="3"/>
 
-    <text x="107" y="583" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">P1 · Privacy</text>
-    <text x="107" y="621" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="107" dy="0">Private bucket + signed URL</tspan><tspan x="107" dy="29">retention/delete selfie rõ ràng</tspan></text>
+    <text x="107" y="583" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="27" font-weight="800">DONE · Documentation</text>
+    <text x="107" y="621" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="107" dy="0">source/model provenance</tspan><tspan x="107" dy="29">Office + SVG/PNG synchronized</tspan></text>
   </g><g>
     <rect x="595" y="230" width="410" height="125" rx="24" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="3"/>
 
-    <text x="617" y="273" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="27" font-weight="800">P1 · Durable jobs</text>
-    <text x="617" y="311" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="617" dy="0">Persist job state/artifacts</tspan><tspan x="617" dy="29">hỗ trợ multi-worker/restart</tspan></text>
+    <text x="617" y="273" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="27" font-weight="800">P1 · Automated tests</text>
+    <text x="617" y="311" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="617" dy="0">hook/service race + timeout</tspan><tspan x="617" dy="29">E2E assert reject không POST</tspan></text>
   </g><g>
-    <rect x="595" y="385" width="410" height="125" rx="24" fill="#ECFDF5" stroke="#059669" stroke-width="3"/>
+    <rect x="595" y="385" width="410" height="125" rx="24" fill="#FDF2F8" stroke="#DB2777" stroke-width="3"/>
 
-    <text x="617" y="428" text-anchor="start" fill="#065F46" font-family="Arial, sans-serif" font-size="27" font-weight="800">P1 · Schema + RLS</text>
-    <text x="617" y="466" text-anchor="start" fill="#065F46" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="617" dy="0">Version-control DDL/policies</tspan><tspan x="617" dy="29">FK + ownership integration tests</tspan></text>
+    <text x="617" y="428" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="27" font-weight="800">P1 · Backend policy</text>
+    <text x="617" y="466" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="617" dy="0">quyết định authoritative detector</tspan><tspan x="617" dy="29">direct API contract + tests</tspan></text>
   </g><g>
-    <rect x="595" y="540" width="410" height="135" rx="24" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="3"/>
+    <rect x="595" y="540" width="410" height="135" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
 
-    <text x="617" y="583" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="27" font-weight="800">P1 · Automated UX</text>
-    <text x="617" y="621" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="617" dy="0">Frontend unit/E2E</tspan><tspan x="617" dy="29">a11y + responsive regression</tspan></text>
+    <text x="617" y="583" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">P1 · Hardening</text>
+    <text x="617" y="621" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="617" dy="0">pixel/decompression guard client</tspan><tspan x="617" dy="29">CSP/CDN incident strategy</tspan></text>
   </g><g>
-    <rect x="1105" y="230" width="410" height="125" rx="24" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
+    <rect x="1105" y="230" width="410" height="125" rx="24" fill="#F8FAFC" stroke="#64748B" stroke-width="3"/>
 
-    <text x="1127" y="273" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="27" font-weight="800">P2 · Observability</text>
-    <text x="1127" y="311" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1127" dy="0">request_id · latency · actual cost</tspan><tspan x="1127" dy="29">provider error dashboard</tspan></text>
+    <text x="1127" y="273" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="27" font-weight="800">P2 · Telemetry</text>
+    <text x="1127" y="311" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1127" dy="0">latency · accept/reject/error</tspan><tspan x="1127" dy="29">false reject from real images</tspan></text>
   </g><g>
-    <rect x="1105" y="385" width="410" height="125" rx="24" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
+    <rect x="1105" y="385" width="410" height="125" rx="24" fill="#F8FAFC" stroke="#64748B" stroke-width="3"/>
 
-    <text x="1127" y="428" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="27" font-weight="800">P2 · QA mở rộng</text>
-    <text x="1127" y="466" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1127" dy="0">identity/anatomy/OCR review</tspan><tspan x="1127" dy="29">real-provider contract canary</tspan></text>
+    <text x="1127" y="428" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="27" font-weight="800">P2 · Policy</text>
+    <text x="1127" y="466" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1127" dy="0">multi-face/occlusion thresholds</tspan><tspan x="1127" dy="29">browser compatibility matrix</tspan></text>
   </g><g>
     <rect x="1105" y="540" width="410" height="135" rx="24" fill="#F8FAFC" stroke="#64748B" stroke-width="3"/>
 
-    <text x="1127" y="583" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="27" font-weight="800">P2 · Deprecations</text>
-    <text x="1127" y="621" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1127" dy="0">Pydantic/FastAPI/datetime</tspan><tspan x="1127" dy="29">docs drift + dead retry branch</tspan></text>
+    <text x="1127" y="583" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="27" font-weight="800">P2 · Runtime fallback</text>
+    <text x="1127" y="621" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1127" dy="0">self-host/fallback WASM</tspan><tspan x="1127" dy="29">cache/version rollout</tspan></text>
   </g></g>
   <g><rect x="60" y="822" width="28" height="28" rx="8" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="2" /><text x="100" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Đã triển khai</text><rect x="265" y="822" width="28" height="28" rx="8" fill="#F8FAFC" stroke="#64748B" stroke-width="2" /><text x="305" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Suy ra từ source</text><rect x="503" y="822" width="28" height="28" rx="8" fill="#FEF2F2" stroke="#DC2626" stroke-width="2" /><text x="543" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Gap / rủi ro</text><rect x="697" y="822" width="28" height="28" rx="8" fill="#F0FDFA" stroke="#0D9488" stroke-width="2" /><text x="737" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Khuyến nghị</text></g>
 </svg>

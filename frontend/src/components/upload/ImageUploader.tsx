@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import type { FC, ChangeEvent, DragEvent } from 'react';
-import { UploadCloud, X, Sparkles, AlertCircle, FileCheck, LogIn } from 'lucide-react';
+import { UploadCloud, X, Sparkles, AlertCircle, Loader2, LogIn, ShieldCheck } from 'lucide-react';
 import { useImageUpload } from '../../hooks/useImageUpload';
 import { StyleSelector } from './StyleSelector';
 import type { StickerStyleId } from '../../types/sticker';
@@ -13,21 +13,6 @@ interface ImageUploaderProps {
   isAuthenticated: boolean;
   onRequestAuth: () => void;
 }
-
-const SAMPLE_AVATARS = [
-  {
-    name: 'Chân Dung Chibi',
-    url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><circle cx="60" cy="60" r="55" fill="%238b5cf6"/><circle cx="45" cy="50" r="10" fill="white"/><circle cx="75" cy="50" r="10" fill="white"/><circle cx="45" cy="50" r="5" fill="%231e1b4b"/><circle cx="75" cy="50" r="5" fill="%231e1b4b"/><path d="M 45 80 Q 60 98 75 80" stroke="white" stroke-width="5" fill="none"/></svg>'
-  },
-  {
-    name: 'Mèo Máy Cute',
-    url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><circle cx="60" cy="60" r="55" fill="%23ec4899"/><polygon points="25,25 45,40 20,50" fill="%23be185d"/><polygon points="95,25 75,40 100,50" fill="%23be185d"/><circle cx="45" cy="55" r="8" fill="white"/><circle cx="75" cy="55" r="8" fill="white"/><circle cx="45" cy="55" r="4" fill="%230f172a"/><circle cx="75" cy="55" r="4" fill="%230f172a"/><ellipse cx="60" cy="70" rx="6" ry="4" fill="%23831843"/></svg>'
-  },
-  {
-    name: 'Anime Boy',
-    url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><circle cx="60" cy="60" r="55" fill="%2306b6d4"/><path d="M 30 40 Q 60 20 90 40 L 80 65 L 40 65 Z" fill="%23155e75"/><circle cx="45" cy="65" r="8" fill="white"/><circle cx="75" cy="65" r="8" fill="white"/><circle cx="45" cy="65" r="4" fill="%23083344"/><circle cx="75" cy="65" r="4" fill="%23083344"/><path d="M 50 85 L 70 85" stroke="white" stroke-width="4" stroke-linecap="round"/></svg>'
-  }
-];
 
 export const ImageUploader: FC<ImageUploaderProps> = ({
   onStartGeneration,
@@ -43,6 +28,8 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
     previewUrl,
     error,
     isDragging,
+    faceCheckStatus,
+    pendingFileName,
     handleFileSelect,
     handleDrop,
     handleDragOver,
@@ -50,25 +37,14 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
     clearImage,
   } = useImageUpload();
 
-  const onFileInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFileSelect(e.target.files[0]);
-    }
-  };
+  const isCheckingFace = faceCheckStatus === 'checking';
+  const isFaceVerified = faceCheckStatus === 'verified';
+  const isUploadDisabled = isGenerating || isCheckingFace;
 
-  const handleSampleClick = async (sampleUrl: string, sampleName: string) => {
-    const image = new Image();
-    image.src = sampleUrl;
-    await image.decode();
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
-    const context = canvas.getContext('2d');
-    if (!context) return;
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
-    if (!blob) return;
-    handleFileSelect(new File([blob], `${sampleName}.png`, { type: 'image/png' }));
+  const onFileInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    e.target.value = '';
+    if (selectedFile) void handleFileSelect(selectedFile);
   };
 
   const handleGenerateClick = () => {
@@ -77,7 +53,7 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
       return;
     }
 
-    if (file && previewUrl) {
+    if (file && previewUrl && isFaceVerified) {
       onStartGeneration(file, previewUrl);
     }
   };
@@ -96,7 +72,7 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
           Tải Ảnh Lên & <span className="text-gradient">Tạo Bộ Sticker AI</span>
         </h1>
         <p style={{ fontSize: '0.98rem', color: 'var(--text-secondary)', marginTop: '10px', maxWidth: '640px', margin: '10px auto 0' }}>
-          Chỉ cần 1 bức ảnh chân dung hoặc nhân vật, hệ thống AI sẽ tự động tách nền, tạo nét vẽ và sinh trọn bộ 20 sticker biểu cảm sắc nét.
+          Chọn ảnh chân dung có đúng một khuôn mặt rõ ràng. Hệ thống sẽ kiểm tra ngay trên thiết bị trước khi tạo trọn bộ 20 sticker biểu cảm.
         </p>
       </div>
 
@@ -106,17 +82,46 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
         {!previewUrl ? (
           /* Drag and Drop Zone */
           <div
-            onDrop={(e: DragEvent<HTMLDivElement>) => handleDrop(e)}
-            onDragOver={(e: DragEvent<HTMLDivElement>) => handleDragOver(e)}
+            data-face-check-status={faceCheckStatus}
+            role="button"
+            tabIndex={isUploadDisabled ? -1 : 0}
+            aria-busy={isCheckingFace}
+            aria-label={isCheckingFace ? 'Đang kiểm tra khuôn mặt' : 'Chọn ảnh chân dung'}
+            onDrop={(e: DragEvent<HTMLDivElement>) => {
+              if (isUploadDisabled) {
+                e.preventDefault();
+                return;
+              }
+              handleDrop(e);
+            }}
+            onDragOver={(e: DragEvent<HTMLDivElement>) => {
+              if (isUploadDisabled) {
+                e.preventDefault();
+                return;
+              }
+              handleDragOver(e);
+            }}
             onDragLeave={(e: DragEvent<HTMLDivElement>) => handleDragLeave(e)}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              if (!isUploadDisabled) fileInputRef.current?.click();
+            }}
+            onKeyDown={(event) => {
+              if (!isUploadDisabled && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
             style={{
               border: isDragging ? '2px dashed var(--accent-purple)' : '2px dashed rgba(255, 255, 255, 0.15)',
               borderRadius: 'var(--radius-md)',
               padding: '36px 16px',
               textAlign: 'center',
-              cursor: 'pointer',
-              background: isDragging ? 'rgba(139, 92, 246, 0.1)' : 'rgba(255, 255, 255, 0.02)',
+              cursor: isUploadDisabled ? 'wait' : 'pointer',
+              background: isCheckingFace
+                ? 'linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(6, 182, 212, 0.06))'
+                : isDragging
+                  ? 'rgba(139, 92, 246, 0.1)'
+                  : 'rgba(255, 255, 255, 0.02)',
               transition: 'all 0.3s ease',
               display: 'flex',
               flexDirection: 'column',
@@ -129,6 +134,8 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
               type="file" 
               accept="image/png, image/jpeg, image/webp" 
               onChange={onFileInputChange}
+              disabled={isUploadDisabled}
+              aria-label="Chọn ảnh chân dung có đúng một khuôn mặt"
               style={{
                 position: 'absolute',
                 width: '1px',
@@ -138,62 +145,71 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
               }}
             />
 
-            <div style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%)',
-              border: '1px solid rgba(139, 92, 246, 0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '14px'
-            }} className="animate-float">
-              <UploadCloud size={28} color="#c084fc" />
-            </div>
-
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '6px' }}>
-              Kéo thả ảnh vào đây, hoặc <span className="text-gradient">bấm để chọn file</span>
-            </h4>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-              Hỗ trợ PNG, JPG, WEBP (Tối đa 15MB) - Khuyên dùng ảnh rõ nét khuôn mặt
-            </p>
-
-            {/* Quick Sample Avatars */}
-            <div 
-              onClick={(e) => e.stopPropagation()}
-              style={{ marginTop: '24px', paddingTop: '18px', borderTop: '1px solid var(--border-subtle)', width: '100%', maxWidth: '480px' }}
-            >
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '10px', fontWeight: 600 }}>
-                Hoặc thử nhanh với ảnh mẫu:
-              </p>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                {SAMPLE_AVATARS.map((sample, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleSampleClick(sample.url, sample.name)}
-                    style={{
-                      background: 'var(--btn-secondary-bg)',
-                      border: '1px solid var(--border-subtle)',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '6px 12px',
-                      color: 'var(--text-primary)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontSize: '0.78rem',
-                      transition: 'all 0.2s ease'
-                    }}
-                    className="glass-card-interactive"
-                  >
-                    <img src={sample.url} alt={sample.name} style={{ width: '22px', height: '22px' }} />
-                    <span>{sample.name}</span>
-                  </button>
-                ))}
+            {isCheckingFace ? (
+              <div role="status" aria-live="polite" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.22), rgba(6, 182, 212, 0.18))',
+                  border: '1px solid rgba(139, 92, 246, 0.45)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '14px',
+                }}>
+                  <Loader2 size={28} color="#c084fc" className="animate-spin-slow" />
+                </div>
+                <h4 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '6px' }}>
+                  Đang kiểm tra khuôn mặt…
+                </h4>
+                <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', overflowWrap: 'anywhere' }}>
+                  {pendingFileName}
+                </p>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+                  Xử lý miễn phí ngay trên thiết bị, ảnh chưa được gửi lên máy chủ.
+                </p>
               </div>
-            </div>
+            ) : (
+              <>
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%)',
+                  border: '1px solid rgba(139, 92, 246, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '14px',
+                }} className="animate-float">
+                  <UploadCloud size={28} color="#c084fc" />
+                </div>
+
+                <h4 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '6px' }}>
+                  Kéo thả ảnh vào đây, hoặc <span className="text-gradient">bấm để chọn file</span>
+                </h4>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                  PNG, JPG hoặc WEBP · Tối đa 15MB · Chỉ một khuôn mặt người
+                </p>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  marginTop: '18px',
+                  padding: '8px 12px',
+                  borderRadius: '999px',
+                  color: 'var(--accent-emerald)',
+                  background: 'rgba(16, 185, 129, 0.08)',
+                  border: '1px solid rgba(16, 185, 129, 0.22)',
+                  fontSize: '0.76rem',
+                  fontWeight: 600,
+                }}>
+                  <ShieldCheck size={15} />
+                  <span>Kiểm tra cục bộ · Không dùng GPU hay API trả phí</span>
+                </div>
+              </>
+            )}
           </div>
         ) : (
           /* Preview Selected Image */
@@ -217,6 +233,7 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
 
               {/* Clear button */}
               <button
+                type="button"
                 onClick={clearImage}
                 style={{
                   position: 'absolute',
@@ -235,6 +252,7 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
                   boxShadow: '0 4px 10px rgba(0, 0, 0, 0.5)'
                 }}
                 title="Chọn ảnh khác"
+                aria-label="Xóa ảnh và chọn ảnh khác"
               >
                 <X size={18} />
               </button>
@@ -242,11 +260,11 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
 
             <div style={{ textAlign: 'center' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--accent-emerald)', fontSize: '0.9rem', fontWeight: 600 }}>
-                <FileCheck size={18} />
-                <span>Đã chọn ảnh: {file?.name}</span>
+                <ShieldCheck size={18} />
+                <span>Đã xác nhận đúng 1 khuôn mặt</span>
               </div>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                {(file?.size ? (file.size / 1024 / 1024).toFixed(2) : 0)} MB
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px', overflowWrap: 'anywhere' }}>
+                {file?.name} · {(file?.size ? (file.size / 1024 / 1024).toFixed(2) : 0)} MB
               </p>
             </div>
           </div>
@@ -254,7 +272,7 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
 
         {/* Error alert if any */}
         {error && (
-          <div style={{
+          <div role="alert" aria-live="assertive" style={{
             marginTop: '16px',
             padding: '12px 16px',
             borderRadius: 'var(--radius-sm)',
@@ -276,7 +294,7 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
         <StyleSelector 
           selectedStyle={selectedStyle} 
           onSelectStyle={onSelectStyle}
-          disabled={isGenerating}
+          disabled={isGenerating || isCheckingFace}
         />
 
         {/* CTA Generate Button */}
@@ -288,8 +306,13 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
           )}
 
           <button
+            type="button"
             onClick={handleGenerateClick}
-            disabled={(!file && isAuthenticated) || isGenerating}
+            disabled={
+              isGenerating
+              || isCheckingFace
+              || (isAuthenticated && (!file || !previewUrl || !isFaceVerified))
+            }
             className="btn-primary"
             style={{
               padding: '16px 40px',
@@ -299,7 +322,12 @@ export const ImageUploader: FC<ImageUploaderProps> = ({
               justifyContent: 'center'
             }}
           >
-            {isAuthenticated ? (
+            {isCheckingFace ? (
+              <>
+                <Loader2 size={22} className="animate-spin-slow" />
+                <span>Đang Kiểm Tra Khuôn Mặt</span>
+              </>
+            ) : isAuthenticated ? (
               <>
                 <Sparkles size={22} className="animate-spin-slow" />
                 <span>Tạo Bộ 20 Sticker Ngay</span>

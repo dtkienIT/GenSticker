@@ -2,7 +2,7 @@
 
 **GenSticker AI** là ứng dụng web & Telegram Bot thông minh cho phép người dùng tải lên 1 bức ảnh chân dung/avatar duy nhất và tự động sinh ra trọn **bộ 20 sticker biểu cảm** sắc nét (Vui, Buồn, Phẫn Nộ, Thả Tim, Cày Code, Quẩy Tiệc...) nhờ quy trình xử lý đồ họa AI 5 bước.
 
-> 📌 **Branch hiện tại**: Các tính năng mới nhất và mã nguồn đã hoàn thiện được đẩy lên nhánh **`kien_v4`**.
+> 📌 **Branch hiện tại**: Các tính năng mới nhất và mã nguồn đã hoàn thiện được đẩy lên nhánh **`kien_v5`**.
 
 ---
 
@@ -18,30 +18,36 @@
    - Chặn hoàn toàn đăng nhập tài khoản chưa đăng ký. Trả về mã lỗi chuẩn HTTP `409 Conflict`, `422 Unprocessable Entity` và `401 Unauthorized`.
    - Khôi phục nút **"Đăng Nhập Nhanh (Demo VIP User)"** chạy bằng API xác thực thật (`demo@gensticker.ai`).
 
-3. **🧠 Pipeline AI Sinh 20 Sticker Giữ Nhận Dạng**:
+3. **👤 Gate Ảnh Đầu Vào Đúng Một Khuôn Mặt, Chạy Miễn Phí Trên Trình Duyệt**:
+   - Trước khi nhận ảnh, frontend dùng **MediaPipe BlazeFace short-range** trong Web Worker để đếm khuôn mặt bằng CPU/WebAssembly; chỉ ảnh có **đúng 1 khuôn mặt được detector phát hiện** mới đi tiếp.
+   - Ảnh detector không phát hiện khuôn mặt hoặc phát hiện nhiều khuôn mặt, trình duyệt không hỗ trợ, detector lỗi hay quá thời gian 45 giây đều bị chặn trước bước tạo sticker và hiển thị hướng dẫn chọn ảnh khác.
+   - Model TFLite được phục vụ cùng frontend, runtime WASM được ghim phiên bản `@mediapipe/tasks-vision@1.0.1`; gate không cần GPU server, không gọi Gemini/DeepSeek và không phát sinh phí API thị giác khi deploy frontend trên Vercel Free.
+   - Đây là **client-side UX gate**, không phải kiểm tra danh tính, liveness hay số người trong toàn ảnh. Người gọi trực tiếp API backend có thể bỏ qua lớp này; backend hiện chỉ kiểm tra kỹ thuật file ảnh chứ chưa đếm khuôn mặt.
+
+4. **🧠 Pipeline AI Sinh 20 Sticker Giữ Nhận Dạng**:
    - Web app dùng API ảnh tương thích OpenAI với khóa chỉ đặt ở backend (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, mặc định `OPENAI_IMAGE_MODEL=gpt-image-1.5`); khóa bí mật không được đưa vào bundle frontend.
    - Luồng grouped thực hiện **4 lượt tạo ảnh**: 1 ảnh canonical khóa nhận dạng và 3 sheet ngang 4×2. Backend cắt theo từng ô, giữ đúng 20 sticker, loại các ô dự phòng và xử lý nền/viền die-cut.
    - Job được ràng buộc theo Supabase JWT, có polling tiến độ, tiếp tục job đang chạy, giới hạn tần suất/tải đồng thời và endpoint retry sheet lỗi mà không cần tạo lại canonical.
    - Sau khi job hoàn tất, backend lưu 20 sticker lên Supabase Storage và `public.sticker_packs` / `public.stickers` theo cơ chế best-effort để xem lại theo tài khoản.
 
-4. **🤖 Telegram Bot 1-Click Export & Thanh Tiến Độ Kép (Dual Progress Tracking)**:
+5. **🤖 Telegram Bot 1-Click Export & Thanh Tiến Độ Kép (Dual Progress Tracking)**:
    - Xuất trọn bộ 20 sticker trực tiếp lên Telegram chỉ với 1 cú click.
    - Hiển thị **2 thanh tiến độ thời gian thực** ngay trên tin nhắn Telegram (Tiến độ tổng thể bộ sticker + Tiến độ load/upload từng sticker cá nhân).
    - Cơ chế chống trùng lặp pack 3 lớp (Persistent offset, memory lock, atomic removal) + **Atomic `_claim_pending_pack`** đảm bảo an toàn luồng khi nhiều Telegram update đến cùng lúc.
    - **Chống bấm đôi (Double-Launch Lock)**: Frontend khóa nút xuất Telegram bằng `useRef` lock, ngăn người dùng kích hoạt đồng thời nhiều lần request export.
 
-5. **🕘 Lịch Sử Sticker Theo Tài Khoản & Quản Lý Xóa**:
+6. **🕘 Lịch Sử Sticker Theo Tài Khoản & Quản Lý Xóa**:
    - Chỉ tải và hiển thị lịch sử sau khi người dùng đăng nhập; khách chưa đăng nhập sẽ được yêu cầu đăng nhập và không nhìn thấy dữ liệu cũ.
    - Nút **"Xem Lại"** khôi phục đúng bộ sticker đã lưu. Dữ liệu ảnh từ API được chuẩn hóa để xem, tải HD và xuất Telegram đều dùng đúng URL.
    - Cho phép xóa từng bộ không muốn giữ với hộp thoại xác nhận. Hệ thống dùng **soft delete** (`is_deleted`, `deleted_at`) nên không xóa nhầm dữ liệu vật lý.
    - Mọi thao tác tạo, xem và xóa lịch sử đều lấy chủ sở hữu từ Supabase JWT; client không thể tự truyền `user_id` của tài khoản khác.
 
-6. **🌠 Hiệu Ứng Nền Sao Băng Động (Meteor Shower Background)**:
+7. **🌠 Hiệu Ứng Nền Sao Băng Động (Meteor Shower Background)**:
    - Component `MeteorBackground` render 10 sao băng bay chéo liên tục trên nền tối, tạo hiệu ứng không gian sống động.
    - Mỗi sao băng được cấu hình riêng biệt về vị trí, độ dài, tốc độ và độ trễ qua CSS custom properties.
    - Tự động ẩn trong Light Mode, chỉ hiển thị ở Dark Mode để giữ phong cách *Cyber Dark Glassmorphism*.
 
-7. **⚡ FastAPI & Supabase Backend Core**:
+8. **⚡ FastAPI & Supabase Backend Core**:
    - Kết nối trực tiếp PostgreSQL và Supabase Storage Bucket `stickers`.
    - Quản lý người dùng qua **Supabase Auth** với cơ chế tự động xác thực email (Auto-confirm).
    - Lưu lịch sử bộ sticker qua Supabase (`public.sticker_packs` & `public.stickers`) theo đúng tài khoản đang đăng nhập; lỗi persistence không làm mất kết quả AI đang trả cho người dùng.
@@ -56,10 +62,12 @@
 GenSticker Web & Backend Architecture:
 [ React 19 Frontend (Vite + TypeScript) ]
        │  ├── Upload ảnh, Auth, History và Telegram Export
-       │  └── Tạo job, polling tiến độ và retry khi sheet bị từ chối
+       │  ├── Web Worker + MediaPipe/BlazeFace: chỉ nhận đúng 1 khuôn mặt
+       │  └── Ảnh hợp lệ mới tạo job, polling tiến độ và retry sheet
        ▼  Bearer JWT + REST API
 [ FastAPI Backend Engine (Python 3.11+) ]
-       │  ├── Supabase JWT Guard + owner-bound jobs
+       │  ├── Supabase JWT Guard + kiểm tra kỹ thuật file + owner-bound jobs
+       │  ├── Chưa có semantic face gate; direct API caller có thể bypass UI gate
        │  ├── OpenAI Grouped Pipeline
        │  │      ├── 1 canonical giữ nhận dạng
        │  │      ├── 3 sheet 4×2
@@ -90,9 +98,12 @@ GenSticker/
 │   │   ├── components/           # Components (auth, common, history, upload, processing, gallery)
 │   │   │   └── common/MeteorBackground.tsx   # Hiệu ứng sao băng nền trang
 │   │   ├── hooks/                # Custom hooks (useTheme, useImageUpload, useStickerGenerator)
-│   │   ├── services/             # Service API client & Telegram export service
+│   │   ├── services/             # API client, Telegram export & faceDetectionService
+│   │   ├── workers/              # MediaPipe FaceDetector chạy ngoài UI thread
 │   │   └── index.css             # CSS Variables (Theme token Sáng/Tối, Glassmorphism)
+│   ├── public/models/             # BlazeFace TFLite + nguồn/hash/license
 │   └── README.md                 # Tài liệu hướng dẫn Frontend
+├── gen-sticker-docs/             # 12 tài liệu Office, 20 figures và build/sync pipeline
 ├── .env.example                  # Mẫu biến môi trường đồng bộ với .env
 ├── .env                          # Biến môi trường thực tế (Git ignored)
 ├── requirements.txt              # Danh sách thư viện Python chính
@@ -165,6 +176,10 @@ npm run dev
 
 > Lưu ý: tạo sticker và lịch sử là tính năng theo tài khoản. Người dùng cần đăng nhập để tạo, xem lại hoặc xóa một bộ sticker.
 
+> Lần kiểm tra ảnh đầu tiên cần tải runtime WASM đã ghim phiên bản từ jsDelivr và model BlazeFace từ chính frontend. Detector chạy trên CPU thiết bị, nên Vercel không cần GPU hay API thị giác trả phí. Nếu runtime/model không tải được, gate sẽ fail closed và yêu cầu người dùng thử lại thay vì gửi ảnh lên backend.
+
+> Gate đúng một khuôn mặt chỉ áp dụng cho luồng upload trên web. Nó không xác minh danh tính/liveness và không thay thế kiểm tra phía server; client gọi thẳng `POST /api/v1/stickers/generate` có thể bỏ qua gate này.
+
 ---
 
 ## 🔌 API Pipeline AI Chính
@@ -180,6 +195,12 @@ Các endpoint có cột Auth là `JWT` yêu cầu header
 | `POST` | `/api/v1/stickers/jobs/{job_id}/retry` | JWT | Chạy lại sheet thiếu/lỗi, tái sử dụng canonical và artifact hợp lệ |
 | `GET` | `/api/v1/stickers/history` | JWT | Lấy các bộ sticker chưa bị xóa của tài khoản |
 | `DELETE` | `/api/v1/stickers/history/{pack_id}` | JWT | Xóa mềm một bộ sticker thuộc tài khoản |
+
+---
+
+## 📚 Bộ Tài Liệu Dự Án
+
+Thư mục [`gen-sticker-docs`](gen-sticker-docs) chứa **12 tài liệu Office** (6 DOCX + 6 XLSX) và **20 sơ đồ kỹ thuật** (SVG editable + PNG). Bộ tài liệu, hình nhúng và bản phục vụ tại documentation hub được build từ cùng manifest để mô tả đồng bộ gate đúng một khuôn mặt, kiến trúc, kiểm thử, dữ liệu, bảo mật và vận hành.
 
 ---
 
@@ -203,8 +224,8 @@ và không phát sinh phí.
 
 Mọi thay đổi mới nhất được cam kết và đẩy lên nhánh:
 ```bash
-git checkout kien_v4
-git pull origin kien_v4
+git checkout kien_v5
+git pull origin kien_v5
 ```
 
 *Phát triển bởi đội ngũ GenSticker AI Team.*

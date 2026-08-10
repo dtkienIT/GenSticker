@@ -2,7 +2,7 @@
   {
     "id": "value-flow",
     "title": "Dòng giá trị của GenSticker",
-    "subtitle": "Từ chân dung người dùng đến bộ 20 sticker có thể tải và chia sẻ",
+    "subtitle": "Từ ảnh chân dung qua gate đúng một khuôn mặt đến bộ 20 sticker",
     "svg": "assets/figures/svg/value-flow.svg",
     "png": "assets/figures/png/value-flow.png",
     "width": 1600,
@@ -11,7 +11,7 @@
   {
     "id": "user-journey",
     "title": "User journey và nhánh phục hồi",
-    "subtitle": "Luồng UI thực tế trên kien_v5, gồm auth, polling và rejected state",
+    "subtitle": "Face preflight cục bộ đứng trước job và mọi image call trả phí",
     "svg": "assets/figures/svg/user-journey.svg",
     "png": "assets/figures/png/user-journey.png",
     "width": 1600,
@@ -20,7 +20,7 @@
   {
     "id": "system-boundary",
     "title": "Ranh giới hệ thống và actor",
-    "subtitle": "Những gì thuộc GenSticker, những gì do nền tảng bên ngoài quản lý",
+    "subtitle": "Detector chạy trong browser; backend semantic face gate vẫn là khoảng trống",
     "svg": "assets/figures/svg/system-boundary.svg",
     "png": "assets/figures/png/system-boundary.png",
     "width": 1600,
@@ -28,8 +28,8 @@
   },
   {
     "id": "job-state",
-    "title": "State machine của trình tạo sticker",
-    "subtitle": "Trạng thái hiển thị ở frontend và nhánh retry backend chưa được nối vào CTA",
+    "title": "State machine upload và trình tạo sticker",
+    "subtitle": "Preflight checking/verified chạy trước generation processing",
     "svg": "assets/figures/svg/job-state.svg",
     "png": "assets/figures/png/job-state.png",
     "width": 1600,
@@ -38,7 +38,7 @@
   {
     "id": "system-context",
     "title": "Kiến trúc runtime GenSticker",
-    "subtitle": "Component topology hiện tại và các external trust boundaries",
+    "subtitle": "MediaPipe CPU/WASM trên client, backend grouped pipeline không đổi",
     "svg": "assets/figures/svg/system-context.svg",
     "png": "assets/figures/png/system-context.png",
     "width": 1600,
@@ -47,7 +47,7 @@
   {
     "id": "generation-sequence",
     "title": "Sequence tạo một bộ 20 sticker",
-    "subtitle": "4 image requests/job: canonical + ba sheet landscape, sau đó structural QA và persistence best-effort",
+    "subtitle": "Preflight exact-one-face trước POST; pass mới phát sinh canonical + ba sheet",
     "svg": "assets/figures/svg/generation-sequence.svg",
     "png": "assets/figures/png/generation-sequence.png",
     "width": 1600,
@@ -65,7 +65,7 @@
   {
     "id": "roadmap-now-next-later",
     "title": "Roadmap Now / Next / Later",
-    "subtitle": "Ưu tiên đề xuất từ source audit; không phải cam kết lịch phát hành",
+    "subtitle": "Face gate MVP đã có; enforcement, test và telemetry được tách theo giai đoạn",
     "svg": "assets/figures/svg/roadmap-now-next-later.svg",
     "png": "assets/figures/png/roadmap-now-next-later.png",
     "width": 1600,
@@ -74,7 +74,7 @@
   {
     "id": "screen-flow",
     "title": "Screen flow của web app",
-    "subtitle": "Các view, overlay và state chuyển đổi thực tế trong frontend",
+    "subtitle": "Upload có preflight checking/verified; input reject tách khỏi output reject",
     "svg": "assets/figures/svg/screen-flow.svg",
     "png": "assets/figures/png/screen-flow.png",
     "width": 1600,
@@ -92,7 +92,7 @@
   {
     "id": "quality-gates",
     "title": "Chuỗi quality gates trước bàn giao",
-    "subtitle": "Từ source tests đến kiểm tra trực quan tất cả tài liệu và UI",
+    "subtitle": "Source tests, face-gate smoke, Office render và browser QA trước bàn giao",
     "svg": "assets/figures/svg/quality-gates.svg",
     "png": "assets/figures/png/quality-gates.png",
     "width": 1600,
@@ -101,7 +101,7 @@
   {
     "id": "coverage-map",
     "title": "Bản đồ coverage hiện tại",
-    "subtitle": "75 backend tests được phân bổ theo module; vùng trắng được ghi rõ thay vì suy đoán",
+    "subtitle": "75 backend tests + manual face-gate proof; automated frontend coverage vẫn là gap",
     "svg": "assets/figures/svg/coverage-map.svg",
     "png": "assets/figures/png/coverage-map.png",
     "width": 1600,
@@ -128,7 +128,7 @@
   {
     "id": "data-lifecycle",
     "title": "Vòng đời dữ liệu và điểm giữ lại",
-    "subtitle": "Luồng as-is của selfie, artifact tạm, output và soft delete",
+    "subtitle": "Local preflight đứng trước upload từ giao diện; direct API lifecycle giữ nguyên",
     "svg": "assets/figures/svg/data-lifecycle.svg",
     "png": "assets/figures/png/data-lifecycle.png",
     "width": 1600,
@@ -136,8 +136,8 @@
   },
   {
     "id": "validation-boundaries",
-    "title": "Validation theo từng trust boundary",
-    "subtitle": "Mỗi lớp chặn một loại input khác nhau trước khi ảnh tới provider",
+    "title": "Exact-one face gate và validation boundaries",
+    "subtitle": "Technical file checks → local MediaPipe decision → backend/provider guards",
     "svg": "assets/figures/svg/validation-boundaries.svg",
     "png": "assets/figures/png/validation-boundaries.png",
     "width": 1600,
@@ -164,7 +164,7 @@
   {
     "id": "repo-runtime-map",
     "title": "Bản đồ repository và dependency direction",
-    "subtitle": "Web grouped pipeline được tách khỏi adapters/CLI nhưng vẫn dùng chung generation core",
+    "subtitle": "Face service/worker/model nằm ở frontend; grouped generation và backend API giữ nguyên",
     "svg": "assets/figures/svg/repo-runtime-map.svg",
     "png": "assets/figures/png/repo-runtime-map.png",
     "width": 1600,
@@ -173,7 +173,7 @@
   {
     "id": "risk-control-map",
     "title": "Security & operations control map",
-    "subtitle": "Các trust boundary có dữ liệu chân dung, token hoặc quyền service-role",
+    "subtitle": "Local face gate giảm upload nhầm nhưng không phải API security boundary",
     "svg": "assets/figures/svg/risk-control-map.svg",
     "png": "assets/figures/png/risk-control-map.png",
     "width": 1600,

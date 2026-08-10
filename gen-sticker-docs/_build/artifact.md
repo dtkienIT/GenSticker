@@ -22,7 +22,8 @@
 
 ## Fidelity gates
 
-- DOCX packages are reopened and audited for relationships/figure counts; all 30 pages are rendered through WPS and inspected with Poppler. Word can open the files, but its native PDF export hangs in this environment and is not reported as passed.
-- Every XLSX sheet is rendered and inspected; formulas, charts, media relationships and visual-sheet layout are audited separately. Visual sheets include a cell-native fallback beneath each PNG so renderers without worksheet-drawing support never show a blank page.
+- All 6 DOCX packages are reopened and audited for relationships/figure counts. LibreOffice is unavailable and Microsoft Word PDF export times out in this environment, so final DOCX layout is not reported as visually passed. A manifest-equivalent ReportLab fallback rendered 39 QA pages for content/figure review only; it is not substituted for actual DOCX rendering.
+- All 84 sheets across the 6 XLSX workbooks are rendered and inspected; formulas, charts, media relationships and visual-sheet layout are audited separately. The final audit covers 12 visual sheets, 12 embedded figures, 3 charts and 6 formula cells with no formula errors. Visual sheets include a cell-native fallback beneath each PNG so renderers without worksheet-drawing support never show a blank page.
+- All 12 Office files include the exact-one-detected-face browser gate, and the shared 20-figure set is rebuilt from the same deterministic SVG source before PNG/Office/web synchronization.
 - The web viewer must pass TypeScript build, lint, direct-browser desktop/mobile review, document switching and asset/hash checks.
 - Root Office/manifest/figure artifacts are synchronized to `frontend/public/gen-sticker-docs` and verified by SHA-256.

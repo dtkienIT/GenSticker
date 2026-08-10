@@ -113,6 +113,80 @@ FIGURE_DETAILS = {
 }
 
 
+FACE_GATE_FIGURE_DETAILS = {
+    "value-flow": {
+        "caption": "Dòng giá trị MVP có gate đúng một khuôn mặt chạy cục bộ trước khi tạo job trả phí.",
+        "alt": "Sáu bước gồm chọn ảnh, gate một khuôn mặt, khóa nhận diện, sinh biểu cảm, kiểm tra cấu trúc và sử dụng; các callout nêu chi phí bằng không của gate, giới hạn client-only và thời điểm ảnh được gửi backend.",
+        "sourceRefs": ["frontend/src/hooks/useImageUpload.ts", "frontend/src/services/faceDetectionService.ts", "backend/app/services/sticker_pipeline.py"],
+    },
+    "user-journey": {
+        "caption": "User journey mới: ảnh chỉ đi tới xác thực và tạo job sau khi detector trả đúng một khuôn mặt.",
+        "alt": "Luồng chọn ảnh qua Web Worker MediaPipe; không có mặt, nhiều mặt hoặc detector lỗi đều quay lại chọn ảnh và không gọi API tạo sticker; đúng một mặt tiếp tục auth, job, polling và gallery.",
+        "sourceRefs": ["frontend/src/components/upload/ImageUploader.tsx", "frontend/src/hooks/useImageUpload.ts", "frontend/src/services/faceDetectionService.ts"],
+    },
+    "system-boundary": {
+        "caption": "Ranh giới hệ thống cập nhật với detector CPU/WASM chạy trong browser và backend vẫn không có semantic face gate.",
+        "alt": "Người dùng tương tác React; FaceDetector Web Worker và model tĩnh chạy trong browser; FastAPI và generation core chỉ nhận ảnh qua UI sau khi gate pass, nhưng direct API vẫn có thể bypass; jsDelivr, Supabase, Image API và Telegram nằm ngoài hệ thống.",
+        "sourceRefs": ["frontend/src/workers/faceDetector.worker.ts", "frontend/public/models/README.md", "backend/app/api/stickers.py"],
+    },
+    "job-state": {
+        "caption": "State machine bổ sung preflight checking/verified trước trạng thái generation processing.",
+        "alt": "Idle chọn ảnh chuyển sang checking; chỉ verified mới cho phép tạo job và processing; rejected hoặc detector error quay lại idle; completed/error của job giữ nguyên và retry backend vẫn chưa nối CTA.",
+        "sourceRefs": ["frontend/src/hooks/useImageUpload.ts", "frontend/src/hooks/useStickerGenerator.ts", "frontend/src/App.tsx"],
+    },
+    "system-context": {
+        "caption": "Runtime topology có MediaPipe worker chạy trên CPU client, model tĩnh cùng origin và WASM tải từ CDN ghim phiên bản.",
+        "alt": "Browser chứa React và FaceDetector worker; Vite/Vercel phục vụ model BlazeFace; worker tải WASM từ jsDelivr; ảnh pass mới được gửi FastAPI, grouped generator và Image API; Supabase và Telegram giữ nguyên.",
+        "sourceRefs": ["frontend/src/services/faceDetectionService.ts", "frontend/src/workers/faceDetector.worker.ts", "frontend/public/models/README.md"],
+    },
+    "generation-sequence": {
+        "caption": "Sequence bắt đầu bằng exact-one-face preflight cục bộ; chỉ nhánh pass mới phát sinh POST và bốn image request.",
+        "alt": "Browser gửi ImageBitmap cho Face Worker; nhánh 0, nhiều mặt hoặc lỗi dừng cục bộ; nhánh một mặt POST FastAPI rồi tạo canonical, ba sheet, structural QA và persistence best-effort.",
+        "sourceRefs": ["frontend/src/services/faceDetectionService.ts", "frontend/src/workers/faceDetector.worker.ts", "backend/sticker_generation/grouped.py"],
+    },
+    "roadmap-now-next-later": {
+        "caption": "Roadmap ghi nhận browser face gate đã triển khai và tách rõ phần backend enforcement, test tự động và telemetry còn lại.",
+        "alt": "Now có local MediaPipe gate; Next gồm backend authoritative detector và frontend unit/E2E; Later gồm metric false reject, CDN fallback và policy đa khuôn mặt.",
+        "sourceRefs": ["frontend/src/hooks/useImageUpload.ts", "frontend/src/workers/faceDetector.worker.ts", "frontend/package.json"],
+    },
+    "screen-flow": {
+        "caption": "Screen flow bổ sung trạng thái kiểm tra khuôn mặt giữa Upload và Auth/Processing.",
+        "alt": "Upload chuyển Face checking; invalid quay về Upload với alert, verified mới đi Auth hoặc Processing; các nhánh Gallery, Rejected, History, Telegram và Docs giữ nguyên.",
+        "sourceRefs": ["frontend/src/components/upload/ImageUploader.tsx", "frontend/src/hooks/useImageUpload.ts", "frontend/src/App.tsx"],
+    },
+    "quality-gates": {
+        "caption": "Release gates cập nhật với QA 0/1/2 khuôn mặt, 12 Office file và giới hạn backend semantic gate chưa triển khai.",
+        "alt": "Năm bước backend, frontend, docs build, visual QA và browser QA; frontend gate được kiểm tra 0, 1, 2 mặt; callout gap nêu chưa có test tự động và direct API vẫn bypass.",
+        "sourceRefs": ["frontend/package.json", "frontend/src/hooks/useImageUpload.ts", "backend/app/tests"],
+    },
+    "coverage-map": {
+        "caption": "Coverage giữ nguyên 75 backend tests và bổ sung bằng chứng browser QA thủ công cho ba verdict face gate.",
+        "alt": "Bên trái là 75 backend cases, giữa là manual browser matrix 0 mặt reject, 1 mặt pass, 2 mặt reject, bên phải là gap frontend unit/E2E và backend authoritative detector.",
+        "sourceRefs": ["backend/app/tests", "backend/sticker_generation/tests", "frontend/src/services/faceDetectionService.ts"],
+    },
+    "data-lifecycle": {
+        "caption": "Vòng đời dữ liệu có bước local preflight trước upload; ảnh reject không đi qua UI tới Storage hay provider.",
+        "alt": "Local face gate chạy trước Upload; pass mới gửi backend và Storage, rồi Generate, Persist, History và Soft delete; direct API bypass và cleanup Storage vẫn là gap.",
+        "sourceRefs": ["frontend/src/hooks/useImageUpload.ts", "backend/app/api/stickers.py", "backend/app/services/supabase_service.py"],
+    },
+    "validation-boundaries": {
+        "caption": "Validation tách technical file gate và exact-one-face semantic gate chạy cục bộ trước FastAPI/provider.",
+        "alt": "Sáu lớp gồm browser MIME/size, MediaPipe exact-one-face, FastAPI bytes/decode, sanitize, provider guard và response decode; fail closed không tạo job nhưng backend chưa kiểm lại semantic.",
+        "sourceRefs": ["frontend/src/hooks/useImageUpload.ts", "frontend/src/services/faceDetectionService.ts", "frontend/src/workers/faceDetector.worker.ts", "backend/app/api/stickers.py"],
+    },
+    "repo-runtime-map": {
+        "caption": "Repository map bổ sung faceDetectionService, module worker và model BlazeFace tĩnh trong frontend.",
+        "alt": "Frontend gồm React hooks, face detection service, Web Worker và public model; backend API và generation core giữ nguyên; jsDelivr cung cấp WASM; gen-sticker-docs tạo 12 Office outputs.",
+        "sourceRefs": ["frontend/src/services/faceDetectionService.ts", "frontend/src/workers/faceDetector.worker.ts", "frontend/public/models/README.md"],
+    },
+    "risk-control-map": {
+        "caption": "Control map ghi rõ local face gate giảm upload nhầm nhưng không phải security boundary có thể tin cậy cho direct API.",
+        "alt": "Browser giữ selfie và chạy MediaPipe; CDN chỉ cung cấp WASM; FastAPI vẫn nhận direct requests; controls gồm fail-closed, pinned runtime/model provenance, backend revalidation backlog và privacy disclosure.",
+        "sourceRefs": ["frontend/src/services/faceDetectionService.ts", "frontend/src/workers/faceDetector.worker.ts", "backend/app/api/stickers.py"],
+    },
+}
+
+
 VISUALS = {
     "project-charter": [{"figureId": "value-flow", "afterSection": "2. Tổng quan dự án"}],
     "prd": [{"figureId": "user-journey", "sheetName": "Visual User Journey"}],
@@ -148,6 +222,7 @@ VISUALS = {
         {"figureId": "repo-runtime-map", "afterSection": "1. Bản đồ repository"},
         {"figureId": "risk-control-map", "afterSection": "6. Risk register"},
     ],
+    "sla": [{"figureId": "system-context", "afterSection": "5. Hạ tầng triển khai"}],
 }
 
 
@@ -163,7 +238,7 @@ DOCX_EXTRA = {
             ["Web generator", "Upload → processing → gallery/error", "Frontend lint + production build", "Không phá hợp đồng 20 output"],
             ["Image pipeline", "Canonical + 3 sheet 4×2 + crop", "75 backend tests với provider mock", "Grid gate reject layout không an toàn"],
             ["Persistence", "Supabase best-effort", "Source audit; chưa có integration test", "AI success không phụ thuộc DB save"],
-            ["Project docs", "11 file Office + web viewer", "Render toàn bộ page/sheet + browser QA", "Visual có caption, alt và source refs"],
+            ["Project docs", "12 file Office + web viewer", "Render toàn bộ page/sheet + browser QA", "Visual có caption, alt và source refs"],
         ]},
         {"title": "12. Assumption, dependency và trigger xem xét lại", "type": "table", "headers": ["Nhóm", "Giả định hiện tại", "Rủi ro nếu sai", "Trigger"], "rows": [
             ["Model", "Endpoint hỗ trợ multi-image edits và 1536×1024", "Request fail hoặc output sai grid", "Đổi model/base URL/provider contract"],
@@ -331,7 +406,7 @@ DOCX_EXTRA = {
 
 XLSX_EXTRA = {
     "prd": [
-        {"name": "Feature Dashboard", "summary": "Phân bố 14 yêu cầu theo mức triển khai từ source audit", "headers": ["Status", "Count", "Meaning"], "rows": [["Implemented", 8, "Có code path và không ghi nhận gap trực tiếp"], ["Partial", 5, "Có flow nhưng còn lệch contract, cấu hình hoặc durability"], ["Gap", 1, "Chưa có durable job store"]], "formulas": [{"row": 0, "column": 1, "formula": "=COUNTIF(Requirements!$H$7:$H$20,A7)"}, {"row": 1, "column": 1, "formula": "=COUNTIF(Requirements!$H$7:$H$20,A8)"}, {"row": 2, "column": 1, "formula": "=COUNTIF(Requirements!$H$7:$H$20,A9)"}], "chart": {"type": "doughnut", "title": "14 requirements by implementation status", "categoryColumn": 0, "valueColumns": [1]}},
+        {"name": "Feature Dashboard", "summary": "Phân bố 15 yêu cầu theo mức triển khai từ source audit", "headers": ["Status", "Count", "Meaning"], "rows": [["Implemented", 9, "Có code path và không ghi nhận gap trực tiếp"], ["Partial", 5, "Có flow nhưng còn lệch contract, cấu hình hoặc durability"], ["Gap", 1, "Chưa có durable job store"]], "formulas": [{"row": 0, "column": 1, "formula": "=COUNTIF(Requirements!$H$7:$H$21,A7)"}, {"row": 1, "column": 1, "formula": "=COUNTIF(Requirements!$H$7:$H$21,A8)"}, {"row": 2, "column": 1, "formula": "=COUNTIF(Requirements!$H$7:$H$21,A9)"}], "chart": {"type": "doughnut", "title": "15 requirements by implementation status", "categoryColumn": 0, "valueColumns": [1]}},
         {"name": "Stakeholders", "summary": "Vai trò, mục tiêu và trách nhiệm trong product flow", "headers": ["Actor", "Primary need", "System touchpoint", "Risk/constraint"], "rows": [["Guest", "Hiểu sản phẩm", "Upload screen + Auth modal", "Không được xem history"], ["Authenticated user", "Tạo và quản lý sticker", "Generate/History/Telegram", "Portrait transfer consent"], ["Operator", "Duy trì uptime/cost", "Backend config/logs", "Secret handling"], ["Reviewer", "Đánh giá likeness/anatomy", "Gallery/raw preview", "Manual boundary"]]},
         {"name": "Acceptance Criteria", "summary": "Given/When/Then cho các user outcome chính", "headers": ["ID", "Given", "When", "Then", "Automation"], "rows": [["AC-01", "Authenticated + valid image", "Generate", "Job processing và poll owner-bound", "Backend API"], ["AC-02", "Provider returns valid sheets", "Pipeline completes", "Exactly 20 PNG 512px", "Grouped tests"], ["AC-03", "Grid invalid", "Gate rejects", "Error page shows raw preview", "Service tests"], ["AC-04", "Rejected page", "Click Thử Lại Ngay", "Return clean Upload state", "Manual; FE test gap"], ["AC-05", "Completed pack", "Open history", "Only current user active packs", "Backend filter tests"]]},
         {"name": "Feature Matrix", "summary": "Phạm vi MVP, dependency và trạng thái triển khai", "headers": ["Feature", "Priority", "Current state", "Dependencies", "Out of scope/gap"], "rows": [["Upload + style", "Must", "Implemented", "Browser/File API", "Frontend tests"], ["AI pack generation", "Must", "Implemented", "Image edits endpoint", "Live contract not CI"], ["Structural QA", "Must", "Implemented", "Pillow/Numpy", "No likeness/anatomy score"], ["History", "Should", "Best-effort", "Supabase", "Schema/RLS external"], ["Telegram export", "Should", "Implemented with risks", "Bot/QR", "No auth/TTL bounds"], ["Documentation hub", "Should", "Working-tree", "Static manifest/assets", "No server-side CMS"]]},
@@ -350,7 +425,7 @@ XLSX_EXTRA = {
         {"name": "Risk Register", "summary": "Risk, likelihood, impact và mitigation owner đề xuất", "headers": ["Risk", "Likelihood", "Impact", "Priority", "Mitigation", "Evidence"], "rows": [["Tracked Telegram base64", "High", "High", "P0", "Untrack/purge/TTL store", "backend/data/pending_telegram_packs.json"], ["Demo credential in client", "High", "High", "P0", "Remove/rotate", "authService.ts"], ["Multi-worker split jobs", "Medium", "High", "P1", "Durable job store", "global dictionaries"], ["Unknown RLS state", "Medium", "High", "P1", "Versioned policies/tests", "no SQL policies"], ["Grid pass but anatomy fail", "Medium", "Medium", "P2", "Human rubric/evals", "structural QA only"]]},
         {"name": "Security Workstream", "summary": "Các task security/privacy có acceptance cụ thể", "headers": ["ID", "Task", "Priority", "Dependency", "Acceptance"], "rows": [["SEC-01", "Remove tracked runtime payload", "P0", "Backup decision", "No user/base64 data in Git"], ["SEC-02", "Remove/rotate demo credential", "P0", "Auth UX", "No plaintext password in bundle"], ["SEC-03", "Auth/bound Telegram export", "P0", "JWT owner model", "Count/size/rate tests pass"], ["SEC-04", "Private Storage + signed URL", "P1", "Schema object_path", "No public portrait URL"], ["SEC-05", "Privacy notice/consent", "P1", "Product/legal", "Provider + retention disclosed"]]},
         {"name": "Data Workstream", "summary": "Durability, schema và retention backlog", "headers": ["ID", "Task", "Priority", "Blocked by", "Done evidence"], "rows": [["DATA-01", "Version base schema/FKs", "P1", "Confirm Supabase schema", "Migration from clean project"], ["DATA-02", "Version RLS/bucket policies", "P1", "DATA-01", "Policy integration tests"], ["DATA-03", "Durable job/artifact store", "P1", "Deployment target", "Restart/multi-worker test"], ["DATA-04", "Object retention/delete cascade", "P1", "Private storage", "Soft delete lifecycle test"], ["DATA-05", "Telegram durable TTL queue", "P1", "SEC-03", "Atomic claim + retry test"]]},
-        {"name": "Test Workstream", "summary": "Coverage gaps được chuyển thành deliverable", "headers": ["ID", "Layer", "Priority", "Scenario", "Gate"], "rows": [["TEST-01", "Frontend unit", "P1", "Rejected CTA resets upload", "CI"], ["TEST-02", "Browser E2E", "P1", "Auth/upload/poll/gallery/docs", "CI/manual"], ["TEST-03", "Supabase integration", "P1", "Owner/RLS/storage lifecycle", "Staging"], ["TEST-04", "Telegram integration", "P1", "Auth/bounds/claim/retry", "Sandbox bot"], ["TEST-05", "Provider canary", "P2", "One canonical + one sheet", "Budgeted manual"]]},
+        {"name": "Test Workstream", "summary": "Coverage gaps được chuyển thành deliverable", "headers": ["ID", "Layer", "Priority", "Scenario", "Gate"], "rows": [["TEST-01", "Frontend unit", "P1", "Face gate 0/1/>1, timeout, stale/clear", "CI"], ["TEST-02", "Browser E2E", "P1", "Face reject no POST; auth/upload/poll/gallery/docs", "CI/manual"], ["TEST-03", "Supabase integration", "P1", "Owner/RLS/storage lifecycle", "Staging"], ["TEST-04", "Telegram integration", "P1", "Auth/bounds/claim/retry", "Sandbox bot"], ["TEST-05", "Provider canary", "P2", "One canonical + one sheet", "Budgeted manual"]]},
         {"name": "Release Gates", "summary": "Điều kiện trước demo nội bộ và public release", "headers": ["Gate", "Internal demo", "Public release", "Status"], "rows": [["Backend tests", "75 pass", "Pass + coverage monitored", "Current pass"], ["Frontend", "Lint/build", "Unit + E2E + a11y", "Partial"], ["Secrets/runtime data", "No print", "P0 cleanup + rotation", "Blocker"], ["Schema/RLS", "External config acceptable", "Versioned + tested", "Blocker"], ["Provider", "Manual smoke", "Budget/telemetry/fallback", "Partial"], ["Privacy", "Team notice", "User consent/retention policy", "Blocker"]]},
     ],
     "uiux": [
@@ -365,7 +440,7 @@ XLSX_EXTRA = {
         {"name": "Unit Matrix", "summary": "Unit contracts và missing negative cases", "headers": ["Unit", "Covered", "Missing", "Priority"], "rows": [["Prompts", "cell map/reserve/invalid", "instruction length/model variation", "P2"], ["Identity", "used indirectly", "metadata/max-side explicit", "P2"], ["Postprocess", "border removal/determinism", "complex alpha/background", "P2"], ["Grid gate", "shift/3×2/crossing", "lower-density wrong grid", "P1"], ["Frontend hooks", "None", "all state transitions", "P1"]]},
         {"name": "API Matrix", "summary": "Endpoint scenarios và owner/security coverage", "headers": ["Endpoint", "Happy", "Auth/owner", "Validation", "Gap"], "rows": [["/auth/login", "Manual", "Supabase", "schema", "No tests"], ["/auth/register", "Manual", "admin auto-confirm", "duplicate/format", "No tests"], ["/stickers/generate", "Covered", "Bearer", "MIME/format/key", "No real storage"], ["/jobs/{id}", "Covered", "Owner-bound", "cache", "No restart"], ["/retry", "Covered", "Owner/max retry", "rejected only", "UI unwired"], ["/telegram/export", "None", "Current public", "No payload bounds", "P0"]]},
         {"name": "Integration Gaps", "summary": "External contracts chưa được chứng minh trong CI", "headers": ["Integration", "Current test", "Missing evidence", "Safe test strategy"], "rows": [["Supabase Auth", "Mock/client assumptions", "token/UUID/error contract", "Ephemeral staging project"], ["Postgres/RLS", "No policy tests", "owner isolation under anon/admin", "Migration + integration suite"], ["Storage", "Mock URLs", "private/signed/delete lifecycle", "Staging bucket"], ["Image provider", "HTTP mocks", "multi-ref/grid/cost", "Budgeted 2-call canary"], ["Telegram", "None", "claim/create/add/retry", "Sandbox bot + fixture pack"]]},
-        {"name": "E2E Plan", "summary": "Browser scenarios cần tự động hóa mà không gọi paid API", "headers": ["Scenario", "Provider mode", "Assertions", "Viewport"], "rows": [["Guest generate", "Mock backend", "Auth modal; no POST", "390/1440"], ["Happy generation", "Fixture job", "progress → exactly 20 cards", "1440"], ["Rejected", "Fixture raw preview", "CTA clears state → Upload", "390/1440"], ["History owner", "Fixture API", "open/list/delete", "1440"], ["Docs hub", "Static manifest", "11 files, visuals, downloads", "390/1440"]]},
+        {"name": "E2E Plan", "summary": "Browser scenarios cần tự động hóa mà không gọi paid API", "headers": ["Scenario", "Provider mode", "Assertions", "Viewport"], "rows": [["Face gate", "Local MediaPipe", "0 reject; 1 verified; >1 reject; reject no POST", "375/390/1440"], ["Guest generate", "Mock backend", "Auth modal; no POST", "390/1440"], ["Happy generation", "Fixture job", "progress → exactly 20 cards", "1440"], ["Rejected output", "Fixture raw preview", "CTA clears state → Upload", "390/1440"], ["History owner", "Fixture API", "open/list/delete", "1440"], ["Docs hub", "Static manifest", "12 files, visuals, downloads", "390/1440"]]},
         {"name": "Security Tests", "summary": "Abuse/misconfiguration cases và expected control", "headers": ["Case", "Layer", "Expected", "Status"], "rows": [["Missing/spoofed Bearer", "API", "401", "Partial"], ["Cross-owner job", "API/service", "404/deny", "Covered"], ["Oversized/decompression image", "Upload", "413/422", "Partial"], ["Telegram base64 flood", "API", "413/429", "Missing"], ["Service-role leak scan", "Build/repo", "No secret in output", "Manual"], ["RLS bypass owner", "Database", "Deny anon; backend filters", "Missing"]]},
     ],
     "database": [
@@ -374,6 +449,190 @@ XLSX_EXTRA = {
         {"name": "RLS Target", "summary": "Policy design đề xuất; chưa được triển khai/version-control", "headers": ["Table/object", "Operation", "Policy predicate", "Writer", "Status"], "rows": [["sticker_packs", "SELECT/UPDATE/DELETE", "auth.uid() = user_id", "Authenticated user/backend", "Recommended"], ["sticker_packs", "INSERT", "Backend service only or auth.uid=user_id", "Backend", "Recommended"], ["stickers", "SELECT", "EXISTS owned parent pack", "Authenticated user/backend", "Recommended"], ["stickers", "INSERT/UPDATE/DELETE", "Service-only", "Backend", "Recommended"], ["storage inputs/outputs", "READ", "owner prefix + signed URL", "Backend", "Recommended"]]},
         {"name": "Storage Objects", "summary": "Object naming, linkage, access và lifecycle gap", "headers": ["Artifact", "Current path/link", "Access", "Lifecycle", "Gap"], "rows": [["Selfie", "uploads/{uuid}_{file_name}", "public URL returned", "No explicit retention", "No DB row/cleanup"], ["Sticker output", "same uploads prefix", "public URL → image_url", "soft delete leaves object", "No object_path"], ["Temp canonical/raw/crops", "OS temp/job", "backend process", "TTL/retention cleanup", "lost on restart"], ["Telegram pack", "pending JSON base64", "local process", "claimed early/no abandoned TTL", "Tracked/runtime data risk"]]},
         {"name": "Retention & Deletion", "summary": "As-is behavior và policy cần chốt", "headers": ["Data", "Current delete", "Required SLA", "Implementation task", "Verification"], "rows": [["Pack row", "soft-delete flag/timestamp", "TBD", "Document retention policy", "Migration invariant test"], ["Sticker rows", "Not explicitly deleted", "Follow parent", "Cascade/FK or controlled cleanup", "Integration test"], ["Storage outputs", "Not deleted", "Follow pack policy", "Object lifecycle/delete job", "Bucket test"], ["Selfie", "Temp cleanup only; Storage remains", "Shortest practical", "Failed/success cleanup", "Object inventory audit"], ["Telegram pending", "Removed on claim", "TTL for abandoned", "Durable TTL queue", "Clock/claim tests"]]},
+    ],
+}
+
+
+FACE_GATE_DOCX_EXTRA = {
+    "project-charter": [
+        {
+            "title": "14. Baseline gate đúng một khuôn mặt",
+            "type": "table",
+            "headers": ["Điều kiện", "Hành vi đã triển khai", "Giá trị", "Giới hạn"],
+            "rows": [
+                ["0 khuôn mặt được phát hiện", "Từ chối cục bộ, hiển thị hướng dẫn chọn ảnh chân dung", "Không tạo job/không phát sinh image call", "Client-only; direct API có thể bypass"],
+                ["Đúng 1 khuôn mặt được phát hiện", "Đọc preview, gắn trạng thái verified và cho phép Generate", "Giảm upload nhầm trước bước trả phí", "Không chứng minh identity, liveness hay likeness"],
+                [">1 khuôn mặt được phát hiện", "Từ chối cục bộ và báo số mặt", "Giữ contract một chủ thể đầu vào", "Mặt nhỏ/che khuất có thể không được đếm"],
+                ["Worker/model/timeout lỗi", "Fail closed; yêu cầu tải lại và thử lại", "Không silently bypass gate", "Phụ thuộc Web Worker, createImageBitmap, WASM CDN"],
+            ],
+        }
+    ],
+    "srs": [
+        {
+            "title": "15. Exact-one-face input gate",
+            "type": "table",
+            "headers": ["ID", "Requirement", "As-is implementation", "Verification/constraint"],
+            "rows": [
+                ["FG-FR-01", "Chỉ accept ảnh khi detector trả đúng một khuôn mặt", "useImageUpload gọi detectFaceCount sau MIME/15 MiB", "0 reject; 1 pass; >1 reject"],
+                ["FG-FR-02", "Không block main thread", "Module Web Worker nhận transferred ImageBitmap", "Worker đóng bitmap ở finally"],
+                ["FG-FR-03", "Fail closed khi runtime lỗi", "45 giây timeout; worker/message error reset singleton", "Không gọi onStartGeneration"],
+                ["FG-NFR-01", "Không GPU và không paid vision API", "MediaPipe Tasks Vision 1.0.1, CPU/WASM", "Model TFLite cùng origin; WASM từ jsDelivr"],
+                ["FG-SEC-01", "Preflight không gửi selfie ra khỏi thiết bị", "Detector chạy local trong browser", "Ảnh accepted vẫn sang backend/provider khi user Generate"],
+                ["FG-GAP-01", "Authoritative server enforcement", "Chưa triển khai", "Direct API vẫn chỉ có MIME/size/decode guard"],
+            ],
+        }
+    ],
+    "input-validation": [
+        {
+            "title": "12. Gate đúng một khuôn mặt trong browser",
+            "type": "table",
+            "headers": ["Lớp", "Rule/config", "Pass", "Reject/failure", "Không chứng minh"],
+            "rows": [
+                ["Technical file", "JPEG/PNG/WebP; ≤15 MiB", "Bắt đầu face check", "Inline file error", "Nội dung ảnh"],
+                ["MediaPipe model", "BlazeFace short-range; IMAGE; CPU; confidence 0.6; suppression 0.3", "detections.length = 1", "0 hoặc >1 mặt", "Đúng một người, identity, liveness"],
+                ["Runtime", "Worker singleton; request id; timeout 45 giây", "Trả faceCount mới nhất", "Fail closed; reset worker", "Khả dụng tuyệt đối của CDN/browser"],
+                ["Privacy", "ImageBitmap transfer; model local; WASM runtime CDN", "Không upload trong preflight", "Không tạo job khi reject", "Ảnh accepted không rời thiết bị sau khi Generate"],
+                ["Authoritative API", "Chưa có server face detector", "Backend vẫn kiểm MIME/bytes/decode/40 MP", "Direct caller bypass client gate", "Semantic face/person policy"],
+                ["Browser memory", "createImageBitmap xảy ra trước backend 40 MP guard", "Ảnh thường xử lý cục bộ", "Ảnh nén có pixel cực lớn có thể gây memory pressure", "Decompression safety hoàn chỉnh"],
+            ],
+        }
+    ],
+    "output-quality": [
+        {
+            "title": "14. Phân biệt input face gate và output quality",
+            "type": "table",
+            "headers": ["Gate", "Đo cái gì", "Thời điểm", "Pass không có nghĩa là", "Owner"],
+            "rows": [
+                ["Input exact-one-face", "Số khuôn mặt BlazeFace phát hiện", "Trước auth/generate POST", "Đúng người, ảnh đủ toàn thân, identity/liveness", "Frontend browser"],
+                ["Output structural QA", "Kích thước, gutter, crossing, occupancy", "Sau mỗi raw sheet", "Giống selfie, tay đúng, không watermark/OCR", "Backend grouped generator"],
+                ["Manual acceptance", "Identity, anatomy, pose, thẩm mỹ", "Trước sử dụng/xuất", "Cam kết SLA tự động", "Người dùng/QA"],
+            ],
+        }
+    ],
+    "source-security-operations": [
+        {
+            "title": "16. MediaPipe browser gate: security và vận hành",
+            "type": "table",
+            "headers": ["Control/asset", "Current implementation", "Release check", "Residual risk"],
+            "rows": [
+                ["Package", "@mediapipe/tasks-vision 1.0.1 được pin", "Lockfile exact version; dependency audit", "Supply-chain/CDN availability"],
+                ["Model", "public/models/blaze_face_short_range.tflite; SHA-256 documented", "Model tồn tại trong dist và hash khớp", "Model face detector, không phải person/liveness classifier"],
+                ["WASM", "Pinned jsDelivr path; CPU delegate", "CSP/network cho CDN; browser smoke", "CDN lỗi làm gate fail closed"],
+                ["Worker lifecycle", "Singleton, request map, bitmap close, 45s timeout", "0/1/2-face matrix; console sạch", "Chưa có automated unit/E2E"],
+                ["Trust boundary", "Rejected input không POST qua UI chính", "Network assertion no generate POST", "Direct API bypass; backend chưa semantic revalidate"],
+            ],
+        }
+    ],
+    "sla": [
+        {
+            "title": "14. Face gate: chi phí, khả dụng và giới hạn",
+            "type": "table",
+            "headers": ["Chỉ số/điều kiện", "Baseline hiện tại", "Chi phí", "SLA/giới hạn"],
+            "rows": [
+                ["Execution", "CPU/WASM trong browser; không server GPU", "$0 cho vision gate", "Phụ thuộc năng lực thiết bị/browser"],
+                ["Model/runtime", "TFLite local khoảng 230 KB; WASM CDN khoảng 11.8 MB lần đầu", "$0 API", "Cache trình duyệt; CDN/network có thể lỗi"],
+                ["Timeout", "45 giây mỗi request detector", "$0 khi reject", "Timeout fail closed; không tạo paid generation job"],
+                ["Input contract", "Đúng một khuôn mặt được detector nhận diện", "Tránh 4 image calls khi 0/>1 bị chặn", "Không cam kết identity, likeness, liveness hoặc full-person"],
+                ["Telemetry", "Chưa có dashboard acceptance/error/latency", "Savings thực tế = TBD", "Không tự suy diễn tiền tiết kiệm"],
+                ["Enforcement", "UX gate phía client", "$0", "Direct API không thuộc bảo đảm semantic này"],
+            ],
+        }
+    ],
+}
+
+
+FACE_GATE_XLSX_EXTRA = {
+    "prd": [
+        {
+            "name": "Face Gate Requirements",
+            "summary": "Yêu cầu sản phẩm cho preflight đúng một khuôn mặt chạy cục bộ và không phát sinh chi phí",
+            "headers": ["ID", "Requirement", "Acceptance", "Status", "Evidence"],
+            "rows": [
+                ["FG-01", "Chỉ accept detections.length = 1", "0 reject; 1 verified; >1 reject", "Implemented", "useImageUpload.ts"],
+                ["FG-02", "Không gửi ảnh ra ngoài trong preflight", "Worker xử lý ImageBitmap local", "Implemented", "faceDetector.worker.ts"],
+                ["FG-03", "Không GPU/paid vision API", "CPU/WASM; không API key", "Implemented", "public/models/README.md"],
+                ["FG-04", "Fail closed khi unsupported/timeout", "Không có preview/file hợp lệ và không Generate", "Implemented", "faceDetectionService.ts"],
+                ["FG-05", "Không đổi generation contract", "onStartGeneration chỉ chạy sau verified", "Implemented", "ImageUploader.tsx"],
+                ["FG-06", "Authoritative backend check", "Direct API cũng bị semantic gate", "Gap", "Chưa có server detector"],
+                ["FG-07", "Metrics", "Latency/accept/reject/error rate", "TBD", "Chưa có telemetry"],
+            ],
+        }
+    ],
+    "architecture": [
+        {
+            "name": "Face Gate Architecture",
+            "summary": "Component, dữ liệu, dependency và failure boundary của detector browser",
+            "headers": ["Layer", "Component/data", "Responsibility", "Failure behavior", "Deployment"],
+            "rows": [
+                ["UI", "ImageUploader + useImageUpload", "State idle/checking/verified; copy/CTA", "Reject inline; stale result ignored", "Vite static"],
+                ["Service", "faceDetectionService", "Worker singleton, request map, 45s timeout", "Terminate/reset; reject pending", "Browser runtime"],
+                ["Worker", "faceDetector.worker", "MediaPipe detect on transferred ImageBitmap", "Fail closed; bitmap close", "Module worker chunk"],
+                ["Model", "BlazeFace short-range TFLite", "Human face detections", "Missing model rejects", "Same-origin public/models"],
+                ["WASM", "MediaPipe Tasks Vision 1.0.1", "CPU inference runtime", "CDN/network error rejects", "Pinned jsDelivr URL"],
+                ["API", "FastAPI generate", "Unchanged multipart/JWT contract", "No server semantic check", "Separate backend"],
+            ],
+        }
+    ],
+    "backlog": [
+        {
+            "name": "Face Gate Backlog",
+            "summary": "Đã triển khai browser MVP và các hạng mục còn lại để chống bypass/đo chất lượng",
+            "headers": ["ID", "Task", "Priority", "Status", "Acceptance"],
+            "rows": [
+                ["FG-IMP-01", "Browser CPU/WASM exact-one-face gate", "P1", "Done", "0/1/2 browser matrix pass; no GPU/paid API"],
+                ["FG-TEST-01", "Unit test service/hook race + timeout", "P1", "Next", "Stale/clear/same-file/fail-closed covered"],
+                ["FG-E2E-01", "Browser network assertion", "P1", "Next", "Reject path never POSTs /stickers/generate"],
+                ["FG-BE-01", "Decide authoritative backend face detector", "P1", "Gap", "Direct API policy documented/enforced"],
+                ["FG-SUPPLY-01", "Self-host/fallback WASM decision", "P2", "Later", "CDN incident runbook"],
+                ["FG-METRIC-01", "Latency/false-reject metrics", "P2", "Later", "TBD thresholds from real telemetry"],
+            ],
+        }
+    ],
+    "uiux": [
+        {
+            "name": "Face Gate UX",
+            "summary": "Upload states, copy, accessibility và responsive behavior cho detector local",
+            "headers": ["State", "Visual/copy", "Allowed action", "Accessibility", "Exit"],
+            "rows": [
+                ["idle", "Chọn ảnh chân dung đúng một khuôn mặt", "Picker/drop/style", "Keyboard upload control", "checking"],
+                ["checking", "Spinner + filename + local/privacy note", "Upload/style/generate locked", "aria-busy + live status", "verified/error"],
+                ["verified", "Green shield + filename/size", "Generate or clear", "Text + icon, not color only", "processing/idle"],
+                ["0 face", "Không tìm thấy khuôn mặt", "Chọn lại", "role=alert", "idle"],
+                [">1 face", "Báo số khuôn mặt", "Chọn lại", "role=alert", "idle"],
+                ["runtime error", "Không thể kiểm tra; reload/retry", "Không Generate", "assertive error", "idle"],
+                ["responsive", "Filename/message wrap", "Touch upload", "No horizontal overflow", "375/390 QA"],
+            ],
+        }
+    ],
+    "tdd": [
+        {
+            "name": "Face Gate Test Matrix",
+            "summary": "Manual evidence hiện tại và regression cases cần tự động hóa",
+            "headers": ["Case", "Expected verdict", "UI assertion", "Network assertion", "Automation"],
+            "rows": [
+                ["0 human face", "Reject", "Inline no-face error; no preview", "No generate POST", "Manual pass; E2E gap"],
+                ["Exactly 1 detected face", "Accept", "Verified shield + preview", "Generate allowed", "Manual pass; E2E gap"],
+                ["2 detected faces", "Reject", "Count error; no preview", "No generate POST", "Manual pass; E2E gap"],
+                ["Worker/WASM/model error", "Reject", "Fail-closed error", "No generate POST", "Unit/E2E gap"],
+                ["45s timeout", "Reject", "Worker reset", "No generate POST", "Unit gap"],
+                ["Stale request/clear", "Ignore old result", "Newest state only", "No unintended POST", "Unit gap"],
+                ["Direct API no-person image", "Outside client gate", "N/A", "Backend currently may accept", "Backend gap"],
+            ],
+        }
+    ],
+    "database": [
+        {
+            "name": "Face Gate Data Impact",
+            "summary": "Ảnh reject không đi tới dữ liệu server qua UI chính; accepted/direct API lifecycle giữ nguyên",
+            "headers": ["Condition", "Client state", "Server/storage impact", "Privacy meaning", "Residual gap"],
+            "rows": [
+                ["0 face", "Rejected local", "No standard-UI upload/job", "Ảnh ở thiết bị", "Direct API bypass"],
+                [">1 face", "Rejected local", "No standard-UI upload/job", "Ảnh ở thiết bị", "False count possible"],
+                ["1 face verified, not generated", "Preview local", "No upload yet", "Ảnh ở thiết bị", "Browser memory only"],
+                ["1 face + Generate", "Generation processing", "Source upload + provider refs", "Existing consent/retention applies", "Public URL/cleanup gaps unchanged"],
+                ["Detector failure", "Fail closed", "No standard-UI upload/job", "No external transfer", "CDN/browser availability"],
+            ],
+        }
     ],
 }
 
@@ -390,22 +649,57 @@ def upsert_items(items: list[dict], extras: list[dict], key: str) -> None:
             items[position] = extra
 
 
+def refresh_snapshot_text(value):
+    """Keep embedded prose/tables aligned with the current verified snapshot."""
+    if isinstance(value, dict):
+        return {key: refresh_snapshot_text(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [refresh_snapshot_text(item) for item in value]
+    if isinstance(value, str):
+        return value.replace("c09e26a", "4d23b9a").replace("2026-08-09", "2026-08-10")
+    return value
+
+
 def main() -> None:
-    payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    payload = refresh_snapshot_text(json.loads(MANIFEST.read_text(encoding="utf-8")))
     index = json.loads(FIGURE_INDEX.read_text(encoding="utf-8"))
     payload["schemaVersion"] = "2.0"
+    payload["meta"]["version"] = "1.1"
+    payload["meta"]["commit"] = "4d23b9a"
+    payload["meta"]["verifiedAt"] = "2026-08-10"
+    payload["meta"]["verification"] = [
+        "Backend: 75 tests passed; provider trong test được mock, không gọi API ảnh trả phí.",
+        "Frontend: lint và production build đều đạt sau khi thêm MediaPipe face gate.",
+        "Browser QA: 0 mặt bị reject, đúng 1 mặt được verified, 2 mặt bị reject; viewport 375x667 không tràn ngang.",
+        "Không đọc .env, secret, ảnh người dùng hoặc payload base64 runtime.",
+    ]
     payload["meta"]["sourceSnapshot"] = {
         "branch": payload["meta"]["branch"],
         "commit": payload["meta"]["commit"],
         "workingTreeIncluded": True,
-        "includedChanges": ["Documentation Hub", "Rejected CTA resets to Upload"],
+        "includedChanges": [
+            "Documentation Hub",
+            "Responsive docs UI",
+            "MediaPipe exact-one-face browser gate",
+            "Face gate documentation and diagrams",
+        ],
     }
     payload["meta"]["verificationStats"] = {
         "backendTests": 75,
         "backendWarnings": 25,
         "frontendLint": "passed",
         "frontendBuild": "passed",
+        "faceGateBrowserCases": 3,
+        "faceGateViewport": "375x667",
         "paidApiCalls": 0,
+    }
+    payload["meta"]["faceGate"] = {
+        "status": "implemented-client-side",
+        "rule": "Accept only when MediaPipe detections.length equals 1.",
+        "runtime": "Browser CPU/WebAssembly in a module Web Worker.",
+        "cost": "No server GPU and no paid vision API.",
+        "privacy": "Rejected input remains on-device in the standard UI flow.",
+        "boundary": "Client UX/spend guard only; direct backend API calls can bypass it.",
     }
     payload["meta"]["visualPolicy"] = (
         "Sơ đồ vector được dựng mới từ source hiện tại và lưu SVG editable; ảnh mẫu/ảnh AI/ảnh người dùng không được tái sử dụng."
@@ -413,11 +707,11 @@ def main() -> None:
     payload["meta"]["figmaSource"] = {
         "page": "Documentation Diagrams – Web v5",
         "url": "https://www.figma.com/design/RZJ594RY1AAAPEHm30vWfb/GenSticker-%E2%80%93-Mobile-MVP-UI-UX?node-id=42-2&p=f",
-        "note": "Editable vector board; source-derived diagrams only.",
+        "note": "Local assets/figures/figma-board.svg is the canonical updated vector board; source-derived diagrams only.",
     }
     payload["figures"] = {}
     for item in index:
-        detail = FIGURE_DETAILS[item["id"]]
+        detail = {**FIGURE_DETAILS[item["id"]], **FACE_GATE_FIGURE_DETAILS.get(item["id"], {})}
         payload["figures"][item["id"]] = {
             **item,
             **detail,
@@ -436,13 +730,19 @@ def main() -> None:
         "input-validation": "originals/09-input-validation.docx",
         "output-quality": "originals/10-output-quality.docx",
         "source-security-operations": "originals/11-source-security-operations.docx",
+        "sla": "originals/12-sla.docx",
     }
     for document in payload["documents"]:
         document["assetPath"] = ascii_assets[document["id"]]
-        document["visuals"] = VISUALS[document["id"]]
+        document["visuals"] = VISUALS.get(document["id"], [])
         document["searchTerms"] = [document["title"], document["subtitle"], document["category"]]
         if document["kind"] == "DOCX":
             upsert_items(document.setdefault("sections", []), DOCX_EXTRA.get(document["id"], []), "title")
+            upsert_items(document.setdefault("sections", []), FACE_GATE_DOCX_EXTRA.get(document["id"], []), "title")
+            for section in document["sections"]:
+                for row in section.get("rows", []):
+                    if row and row[0] == "Phiên bản":
+                        row[1] = payload["meta"]["version"]
         else:
             if document["id"] == "prd":
                 requirements = next(
@@ -452,6 +752,17 @@ def main() -> None:
                 if requirements is not None:
                     if requirements["headers"][-1] != "Implementation class":
                         requirements["headers"].append("Implementation class")
+                    if not any(row[0] == "PRD-015" for row in requirements["rows"]):
+                        requirements["rows"].append([
+                            "PRD-015",
+                            "Input gate",
+                            "Kiểm tra đúng một khuôn mặt trong browser trước generation",
+                            "0 mặt reject; 1 mặt verified; >1 mặt reject; failure fail closed",
+                            "Must",
+                            "Có",
+                            "frontend/src/hooks/useImageUpload.ts; frontend/src/workers/faceDetector.worker.ts",
+                            "Implemented",
+                        ])
                     for row in requirements["rows"]:
                         status = str(row[5]).strip()
                         classification = "Implemented" if status == "Có" else "Gap" if status == "Chưa có" else "Partial"
@@ -460,6 +771,7 @@ def main() -> None:
                         else:
                             row.append(classification)
             upsert_items(document.setdefault("sheets", []), XLSX_EXTRA.get(document["id"], []), "name")
+            upsert_items(document.setdefault("sheets", []), FACE_GATE_XLSX_EXTRA.get(document["id"], []), "name")
 
     MANIFEST.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Enriched manifest schema 2.0: {len(payload['documents'])} documents, {len(payload['figures'])} figures")

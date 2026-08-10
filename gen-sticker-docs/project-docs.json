@@ -2,24 +2,27 @@
   "meta": {
     "project": "GenSticker AI",
     "title": "Tài liệu dự án & source code",
-    "version": "1.0",
+    "version": "1.1",
     "branch": "kien_v5",
-    "commit": "c09e26a",
-    "verifiedAt": "2026-08-09",
+    "commit": "4d23b9a",
+    "verifiedAt": "2026-08-10",
     "language": "vi",
     "sourcePolicy": "Nội dung được viết từ source hiện tại; ZIP mẫu chỉ cung cấp cấu trúc và không cung cấp nội dung hay hình ảnh.",
     "verification": [
       "Backend: 75 tests passed; provider trong test được mock, không gọi API ảnh trả phí.",
-      "Frontend: lint và production build đều đạt.",
+      "Frontend: lint và production build đều đạt sau khi thêm MediaPipe face gate.",
+      "Browser QA: 0 mặt bị reject, đúng 1 mặt được verified, 2 mặt bị reject; viewport 375x667 không tràn ngang.",
       "Không đọc .env, secret, ảnh người dùng hoặc payload base64 runtime."
     ],
     "sourceSnapshot": {
       "branch": "kien_v5",
-      "commit": "c09e26a",
+      "commit": "4d23b9a",
       "workingTreeIncluded": true,
       "includedChanges": [
         "Documentation Hub",
-        "Rejected CTA resets to Upload"
+        "Responsive docs UI",
+        "MediaPipe exact-one-face browser gate",
+        "Face gate documentation and diagrams"
       ]
     },
     "verificationStats": {
@@ -27,13 +30,23 @@
       "backendWarnings": 25,
       "frontendLint": "passed",
       "frontendBuild": "passed",
+      "faceGateBrowserCases": 3,
+      "faceGateViewport": "375x667",
       "paidApiCalls": 0
     },
     "visualPolicy": "Sơ đồ vector được dựng mới từ source hiện tại và lưu SVG editable; ảnh mẫu/ảnh AI/ảnh người dùng không được tái sử dụng.",
     "figmaSource": {
       "page": "Documentation Diagrams – Web v5",
       "url": "https://www.figma.com/design/RZJ594RY1AAAPEHm30vWfb/GenSticker-%E2%80%93-Mobile-MVP-UI-UX?node-id=42-2&p=f",
-      "note": "Editable vector board; source-derived diagrams only."
+      "note": "Local assets/figures/figma-board.svg is the canonical updated vector board; source-derived diagrams only."
+    },
+    "faceGate": {
+      "status": "implemented-client-side",
+      "rule": "Accept only when MediaPipe detections.length equals 1.",
+      "runtime": "Browser CPU/WebAssembly in a module Web Worker.",
+      "cost": "No server GPU and no paid vision API.",
+      "privacy": "Rejected input remains on-device in the standard UI flow.",
+      "boundary": "Client UX/spend guard only; direct backend API calls can bypass it."
     }
   },
   "documents": [
@@ -58,7 +71,7 @@
           "rows": [
             [
               "Phiên bản",
-              "1.0"
+              "1.1"
             ],
             [
               "Trạng thái",
@@ -66,11 +79,11 @@
             ],
             [
               "Branch / commit",
-              "kien_v5 / c09e26a"
+              "kien_v5 / 4d23b9a"
             ],
             [
               "Ngày kiểm tra",
-              "2026-08-09"
+              "2026-08-10"
             ],
             [
               "Phạm vi",
@@ -251,7 +264,7 @@
             ],
             [
               "Project docs",
-              "11 file Office + web viewer",
+              "12 file Office + web viewer",
               "Render toàn bộ page/sheet + browser QA",
               "Visual có caption, alt và source refs"
             ]
@@ -302,6 +315,42 @@
             "Không đưa secret, credential, user selfie, Telegram base64 runtime hoặc ảnh từ ZIP mẫu vào output.",
             "Database/architecture visual phải có source reference, caption và mô tả dài để người đọc không phụ thuộc màu sắc.",
             "Mọi số liệu product KPI chưa có telemetry phải mang nhãn TBD thay vì được tự tạo."
+          ]
+        },
+        {
+          "title": "14. Baseline gate đúng một khuôn mặt",
+          "type": "table",
+          "headers": [
+            "Điều kiện",
+            "Hành vi đã triển khai",
+            "Giá trị",
+            "Giới hạn"
+          ],
+          "rows": [
+            [
+              "0 khuôn mặt được phát hiện",
+              "Từ chối cục bộ, hiển thị hướng dẫn chọn ảnh chân dung",
+              "Không tạo job/không phát sinh image call",
+              "Client-only; direct API có thể bypass"
+            ],
+            [
+              "Đúng 1 khuôn mặt được phát hiện",
+              "Đọc preview, gắn trạng thái verified và cho phép Generate",
+              "Giảm upload nhầm trước bước trả phí",
+              "Không chứng minh identity, liveness hay likeness"
+            ],
+            [
+              ">1 khuôn mặt được phát hiện",
+              "Từ chối cục bộ và báo số mặt",
+              "Giữ contract một chủ thể đầu vào",
+              "Mặt nhỏ/che khuất có thể không được đếm"
+            ],
+            [
+              "Worker/model/timeout lỗi",
+              "Fail closed; yêu cầu tải lại và thử lại",
+              "Không silently bypass gate",
+              "Phụ thuộc Web Worker, createImageBitmap, WASM CDN"
+            ]
           ]
         }
       ],
@@ -371,7 +420,7 @@
             [
               "Trạng thái kiểm tra",
               "75 backend tests; frontend lint/build đạt",
-              "Kiểm tra cục bộ 2026-08-09"
+              "Kiểm tra cục bộ 2026-08-10"
             ]
           ]
         },
@@ -528,6 +577,16 @@
               "Chưa có",
               "backlog",
               "Gap"
+            ],
+            [
+              "PRD-015",
+              "Input gate",
+              "Kiểm tra đúng một khuôn mặt trong browser trước generation",
+              "0 mặt reject; 1 mặt verified; >1 mặt reject; failure fail closed",
+              "Must",
+              "Có",
+              "frontend/src/hooks/useImageUpload.ts; frontend/src/workers/faceDetector.worker.ts",
+              "Implemented"
             ]
           ]
         },
@@ -709,7 +768,7 @@
         },
         {
           "name": "Feature Dashboard",
-          "summary": "Phân bố 14 yêu cầu theo mức triển khai từ source audit",
+          "summary": "Phân bố 15 yêu cầu theo mức triển khai từ source audit",
           "headers": [
             "Status",
             "Count",
@@ -718,7 +777,7 @@
           "rows": [
             [
               "Implemented",
-              8,
+              9,
               "Có code path và không ghi nhận gap trực tiếp"
             ],
             [
@@ -736,22 +795,22 @@
             {
               "row": 0,
               "column": 1,
-              "formula": "=COUNTIF(Requirements!$H$7:$H$20,A7)"
+              "formula": "=COUNTIF(Requirements!$H$7:$H$21,A7)"
             },
             {
               "row": 1,
               "column": 1,
-              "formula": "=COUNTIF(Requirements!$H$7:$H$20,A8)"
+              "formula": "=COUNTIF(Requirements!$H$7:$H$21,A8)"
             },
             {
               "row": 2,
               "column": 1,
-              "formula": "=COUNTIF(Requirements!$H$7:$H$20,A9)"
+              "formula": "=COUNTIF(Requirements!$H$7:$H$21,A9)"
             }
           ],
           "chart": {
             "type": "doughnut",
-            "title": "14 requirements by implementation status",
+            "title": "15 requirements by implementation status",
             "categoryColumn": 0,
             "valueColumns": [
               1
@@ -944,6 +1003,68 @@
               "Separate AI success"
             ]
           ]
+        },
+        {
+          "name": "Face Gate Requirements",
+          "summary": "Yêu cầu sản phẩm cho preflight đúng một khuôn mặt chạy cục bộ và không phát sinh chi phí",
+          "headers": [
+            "ID",
+            "Requirement",
+            "Acceptance",
+            "Status",
+            "Evidence"
+          ],
+          "rows": [
+            [
+              "FG-01",
+              "Chỉ accept detections.length = 1",
+              "0 reject; 1 verified; >1 reject",
+              "Implemented",
+              "useImageUpload.ts"
+            ],
+            [
+              "FG-02",
+              "Không gửi ảnh ra ngoài trong preflight",
+              "Worker xử lý ImageBitmap local",
+              "Implemented",
+              "faceDetector.worker.ts"
+            ],
+            [
+              "FG-03",
+              "Không GPU/paid vision API",
+              "CPU/WASM; không API key",
+              "Implemented",
+              "public/models/README.md"
+            ],
+            [
+              "FG-04",
+              "Fail closed khi unsupported/timeout",
+              "Không có preview/file hợp lệ và không Generate",
+              "Implemented",
+              "faceDetectionService.ts"
+            ],
+            [
+              "FG-05",
+              "Không đổi generation contract",
+              "onStartGeneration chỉ chạy sau verified",
+              "Implemented",
+              "ImageUploader.tsx"
+            ],
+            [
+              "FG-06",
+              "Authoritative backend check",
+              "Direct API cũng bị semantic gate",
+              "Gap",
+              "Chưa có server detector"
+            ],
+            [
+              "FG-07",
+              "Metrics",
+              "Latency/accept/reject/error rate",
+              "TBD",
+              "Chưa có telemetry"
+            ]
+          ]
         }
       ],
       "assetPath": "originals/02-prd.xlsx",
@@ -974,7 +1095,7 @@
           "title": "1. Mục đích và phạm vi",
           "type": "paragraphs",
           "paragraphs": [
-            "Tài liệu đặc tả hành vi có thể kiểm tra của web GenSticker tại commit c09e26a. Hệ thống nhận một ảnh chân dung, tạo job nền, sinh canonical và ba raw sheet, kiểm tra/cắt thành 20 sticker, trả kết quả và lưu lịch sử theo best-effort.",
+            "Tài liệu đặc tả hành vi có thể kiểm tra của web GenSticker tại commit 4d23b9a. Hệ thống nhận một ảnh chân dung, tạo job nền, sinh canonical và ba raw sheet, kiểm tra/cắt thành 20 sticker, trả kết quả và lưu lịch sử theo best-effort.",
             "Các yêu cầu mong muốn nhưng chưa có trong source được đánh dấu Gap hoặc Proposed, không được mô tả như chức năng đã hoàn tất."
           ]
         },
@@ -1417,6 +1538,54 @@
             "Rate limit mặc định 3 job/giờ/user và global active capacity 2 job; các giá trị cấu hình được đọc từ settings.",
             "Persistence failure chỉ log warning và không đổi completed AI result thành error; history có thể không tồn tại dù gallery hoàn tất.",
             "Code cost estimate hard-code theo gpt-image-1.5 medium và không phải hóa đơn proxy thực tế."
+          ]
+        },
+        {
+          "title": "15. Exact-one-face input gate",
+          "type": "table",
+          "headers": [
+            "ID",
+            "Requirement",
+            "As-is implementation",
+            "Verification/constraint"
+          ],
+          "rows": [
+            [
+              "FG-FR-01",
+              "Chỉ accept ảnh khi detector trả đúng một khuôn mặt",
+              "useImageUpload gọi detectFaceCount sau MIME/15 MiB",
+              "0 reject; 1 pass; >1 reject"
+            ],
+            [
+              "FG-FR-02",
+              "Không block main thread",
+              "Module Web Worker nhận transferred ImageBitmap",
+              "Worker đóng bitmap ở finally"
+            ],
+            [
+              "FG-FR-03",
+              "Fail closed khi runtime lỗi",
+              "45 giây timeout; worker/message error reset singleton",
+              "Không gọi onStartGeneration"
+            ],
+            [
+              "FG-NFR-01",
+              "Không GPU và không paid vision API",
+              "MediaPipe Tasks Vision 1.0.1, CPU/WASM",
+              "Model TFLite cùng origin; WASM từ jsDelivr"
+            ],
+            [
+              "FG-SEC-01",
+              "Preflight không gửi selfie ra khỏi thiết bị",
+              "Detector chạy local trong browser",
+              "Ảnh accepted vẫn sang backend/provider khi user Generate"
+            ],
+            [
+              "FG-GAP-01",
+              "Authoritative server enforcement",
+              "Chưa triển khai",
+              "Direct API vẫn chỉ có MIME/size/decode guard"
+            ]
           ]
         }
       ],
@@ -2059,6 +2228,61 @@
               "Docs need collaborative authoring"
             ]
           ]
+        },
+        {
+          "name": "Face Gate Architecture",
+          "summary": "Component, dữ liệu, dependency và failure boundary của detector browser",
+          "headers": [
+            "Layer",
+            "Component/data",
+            "Responsibility",
+            "Failure behavior",
+            "Deployment"
+          ],
+          "rows": [
+            [
+              "UI",
+              "ImageUploader + useImageUpload",
+              "State idle/checking/verified; copy/CTA",
+              "Reject inline; stale result ignored",
+              "Vite static"
+            ],
+            [
+              "Service",
+              "faceDetectionService",
+              "Worker singleton, request map, 45s timeout",
+              "Terminate/reset; reject pending",
+              "Browser runtime"
+            ],
+            [
+              "Worker",
+              "faceDetector.worker",
+              "MediaPipe detect on transferred ImageBitmap",
+              "Fail closed; bitmap close",
+              "Module worker chunk"
+            ],
+            [
+              "Model",
+              "BlazeFace short-range TFLite",
+              "Human face detections",
+              "Missing model rejects",
+              "Same-origin public/models"
+            ],
+            [
+              "WASM",
+              "MediaPipe Tasks Vision 1.0.1",
+              "CPU inference runtime",
+              "CDN/network error rejects",
+              "Pinned jsDelivr URL"
+            ],
+            [
+              "API",
+              "FastAPI generate",
+              "Unchanged multipart/JWT contract",
+              "No server semantic check",
+              "Separate backend"
+            ]
+          ]
         }
       ],
       "assetPath": "originals/04-architecture.xlsx",
@@ -2599,14 +2823,14 @@
               "TEST-01",
               "Frontend unit",
               "P1",
-              "Rejected CTA resets upload",
+              "Face gate 0/1/>1, timeout, stale/clear",
               "CI"
             ],
             [
               "TEST-02",
               "Browser E2E",
               "P1",
-              "Auth/upload/poll/gallery/docs",
+              "Face reject no POST; auth/upload/poll/gallery/docs",
               "CI/manual"
             ],
             [
@@ -2677,6 +2901,61 @@
               "Team notice",
               "User consent/retention policy",
               "Blocker"
+            ]
+          ]
+        },
+        {
+          "name": "Face Gate Backlog",
+          "summary": "Đã triển khai browser MVP và các hạng mục còn lại để chống bypass/đo chất lượng",
+          "headers": [
+            "ID",
+            "Task",
+            "Priority",
+            "Status",
+            "Acceptance"
+          ],
+          "rows": [
+            [
+              "FG-IMP-01",
+              "Browser CPU/WASM exact-one-face gate",
+              "P1",
+              "Done",
+              "0/1/2 browser matrix pass; no GPU/paid API"
+            ],
+            [
+              "FG-TEST-01",
+              "Unit test service/hook race + timeout",
+              "P1",
+              "Next",
+              "Stale/clear/same-file/fail-closed covered"
+            ],
+            [
+              "FG-E2E-01",
+              "Browser network assertion",
+              "P1",
+              "Next",
+              "Reject path never POSTs /stickers/generate"
+            ],
+            [
+              "FG-BE-01",
+              "Decide authoritative backend face detector",
+              "P1",
+              "Gap",
+              "Direct API policy documented/enforced"
+            ],
+            [
+              "FG-SUPPLY-01",
+              "Self-host/fallback WASM decision",
+              "P2",
+              "Later",
+              "CDN incident runbook"
+            ],
+            [
+              "FG-METRIC-01",
+              "Latency/false-reject metrics",
+              "P2",
+              "Later",
+              "TBD thresholds from real telemetry"
             ]
           ]
         }
@@ -3218,6 +3497,68 @@
               "reflow",
               "No clipped controls/text",
               "Planned"
+            ]
+          ]
+        },
+        {
+          "name": "Face Gate UX",
+          "summary": "Upload states, copy, accessibility và responsive behavior cho detector local",
+          "headers": [
+            "State",
+            "Visual/copy",
+            "Allowed action",
+            "Accessibility",
+            "Exit"
+          ],
+          "rows": [
+            [
+              "idle",
+              "Chọn ảnh chân dung đúng một khuôn mặt",
+              "Picker/drop/style",
+              "Keyboard upload control",
+              "checking"
+            ],
+            [
+              "checking",
+              "Spinner + filename + local/privacy note",
+              "Upload/style/generate locked",
+              "aria-busy + live status",
+              "verified/error"
+            ],
+            [
+              "verified",
+              "Green shield + filename/size",
+              "Generate or clear",
+              "Text + icon, not color only",
+              "processing/idle"
+            ],
+            [
+              "0 face",
+              "Không tìm thấy khuôn mặt",
+              "Chọn lại",
+              "role=alert",
+              "idle"
+            ],
+            [
+              ">1 face",
+              "Báo số khuôn mặt",
+              "Chọn lại",
+              "role=alert",
+              "idle"
+            ],
+            [
+              "runtime error",
+              "Không thể kiểm tra; reload/retry",
+              "Không Generate",
+              "assertive error",
+              "idle"
+            ],
+            [
+              "responsive",
+              "Filename/message wrap",
+              "Touch upload",
+              "No horizontal overflow",
+              "375/390 QA"
             ]
           ]
         }
@@ -3768,6 +4109,12 @@
           ],
           "rows": [
             [
+              "Face gate",
+              "Local MediaPipe",
+              "0 reject; 1 verified; >1 reject; reject no POST",
+              "375/390/1440"
+            ],
+            [
               "Guest generate",
               "Mock backend",
               "Auth modal; no POST",
@@ -3780,7 +4127,7 @@
               "1440"
             ],
             [
-              "Rejected",
+              "Rejected output",
               "Fixture raw preview",
               "CTA clears state → Upload",
               "390/1440"
@@ -3794,7 +4141,7 @@
             [
               "Docs hub",
               "Static manifest",
-              "11 files, visuals, downloads",
+              "12 files, visuals, downloads",
               "390/1440"
             ]
           ]
@@ -3844,6 +4191,68 @@
               "Database",
               "Deny anon; backend filters",
               "Missing"
+            ]
+          ]
+        },
+        {
+          "name": "Face Gate Test Matrix",
+          "summary": "Manual evidence hiện tại và regression cases cần tự động hóa",
+          "headers": [
+            "Case",
+            "Expected verdict",
+            "UI assertion",
+            "Network assertion",
+            "Automation"
+          ],
+          "rows": [
+            [
+              "0 human face",
+              "Reject",
+              "Inline no-face error; no preview",
+              "No generate POST",
+              "Manual pass; E2E gap"
+            ],
+            [
+              "Exactly 1 detected face",
+              "Accept",
+              "Verified shield + preview",
+              "Generate allowed",
+              "Manual pass; E2E gap"
+            ],
+            [
+              "2 detected faces",
+              "Reject",
+              "Count error; no preview",
+              "No generate POST",
+              "Manual pass; E2E gap"
+            ],
+            [
+              "Worker/WASM/model error",
+              "Reject",
+              "Fail-closed error",
+              "No generate POST",
+              "Unit/E2E gap"
+            ],
+            [
+              "45s timeout",
+              "Reject",
+              "Worker reset",
+              "No generate POST",
+              "Unit gap"
+            ],
+            [
+              "Stale request/clear",
+              "Ignore old result",
+              "Newest state only",
+              "No unintended POST",
+              "Unit gap"
+            ],
+            [
+              "Direct API no-person image",
+              "Outside client gate",
+              "N/A",
+              "Backend currently may accept",
+              "Backend gap"
             ]
           ]
         }
@@ -4403,6 +4812,54 @@
               "Clock/claim tests"
             ]
           ]
+        },
+        {
+          "name": "Face Gate Data Impact",
+          "summary": "Ảnh reject không đi tới dữ liệu server qua UI chính; accepted/direct API lifecycle giữ nguyên",
+          "headers": [
+            "Condition",
+            "Client state",
+            "Server/storage impact",
+            "Privacy meaning",
+            "Residual gap"
+          ],
+          "rows": [
+            [
+              "0 face",
+              "Rejected local",
+              "No standard-UI upload/job",
+              "Ảnh ở thiết bị",
+              "Direct API bypass"
+            ],
+            [
+              ">1 face",
+              "Rejected local",
+              "No standard-UI upload/job",
+              "Ảnh ở thiết bị",
+              "False count possible"
+            ],
+            [
+              "1 face verified, not generated",
+              "Preview local",
+              "No upload yet",
+              "Ảnh ở thiết bị",
+              "Browser memory only"
+            ],
+            [
+              "1 face + Generate",
+              "Generation processing",
+              "Source upload + provider refs",
+              "Existing consent/retention applies",
+              "Public URL/cleanup gaps unchanged"
+            ],
+            [
+              "Detector failure",
+              "Fail closed",
+              "No standard-UI upload/job",
+              "No external transfer",
+              "CDN/browser availability"
+            ]
+          ]
         }
       ],
       "assetPath": "originals/08-database.xlsx",
@@ -4702,6 +5159,61 @@
             "Sanitize ảnh loại EXIF/metadata và giới hạn kích thước, nhưng không làm ảnh chân dung mất tính nhận diện. Selfie vẫn được gửi tới image provider; các sheet tiếp theo gửi selfie, canonical và layout guide.",
             "Upload source hiện được đưa lên Supabase Storage trước rate/capacity checks và trả public URL; URL chỉ được log, không liên kết record. Đây là lý do cần failed-upload cleanup, private bucket và retention policy rõ ràng.",
             "Tài liệu và test không được đọc hay nhúng user image/base64 runtime. Fixture chất lượng phải là hình tổng hợp hình học hoặc asset repo an toàn, không phải dữ liệu người dùng."
+          ]
+        },
+        {
+          "title": "12. Gate đúng một khuôn mặt trong browser",
+          "type": "table",
+          "headers": [
+            "Lớp",
+            "Rule/config",
+            "Pass",
+            "Reject/failure",
+            "Không chứng minh"
+          ],
+          "rows": [
+            [
+              "Technical file",
+              "JPEG/PNG/WebP; ≤15 MiB",
+              "Bắt đầu face check",
+              "Inline file error",
+              "Nội dung ảnh"
+            ],
+            [
+              "MediaPipe model",
+              "BlazeFace short-range; IMAGE; CPU; confidence 0.6; suppression 0.3",
+              "detections.length = 1",
+              "0 hoặc >1 mặt",
+              "Đúng một người, identity, liveness"
+            ],
+            [
+              "Runtime",
+              "Worker singleton; request id; timeout 45 giây",
+              "Trả faceCount mới nhất",
+              "Fail closed; reset worker",
+              "Khả dụng tuyệt đối của CDN/browser"
+            ],
+            [
+              "Privacy",
+              "ImageBitmap transfer; model local; WASM runtime CDN",
+              "Không upload trong preflight",
+              "Không tạo job khi reject",
+              "Ảnh accepted không rời thiết bị sau khi Generate"
+            ],
+            [
+              "Authoritative API",
+              "Chưa có server face detector",
+              "Backend vẫn kiểm MIME/bytes/decode/40 MP",
+              "Direct caller bypass client gate",
+              "Semantic face/person policy"
+            ],
+            [
+              "Browser memory",
+              "createImageBitmap xảy ra trước backend 40 MP guard",
+              "Ảnh thường xử lý cục bộ",
+              "Ảnh nén có pixel cực lớn có thể gây memory pressure",
+              "Decompression safety hoàn chỉnh"
+            ]
           ]
         }
       ],
@@ -5089,6 +5601,40 @@
               "Potential full new job",
               "No UI cost warning",
               "Expose retry strategy and cost budget"
+            ]
+          ]
+        },
+        {
+          "title": "14. Phân biệt input face gate và output quality",
+          "type": "table",
+          "headers": [
+            "Gate",
+            "Đo cái gì",
+            "Thời điểm",
+            "Pass không có nghĩa là",
+            "Owner"
+          ],
+          "rows": [
+            [
+              "Input exact-one-face",
+              "Số khuôn mặt BlazeFace phát hiện",
+              "Trước auth/generate POST",
+              "Đúng người, ảnh đủ toàn thân, identity/liveness",
+              "Frontend browser"
+            ],
+            [
+              "Output structural QA",
+              "Kích thước, gutter, crossing, occupancy",
+              "Sau mỗi raw sheet",
+              "Giống selfie, tay đúng, không watermark/OCR",
+              "Backend grouped generator"
+            ],
+            [
+              "Manual acceptance",
+              "Identity, anatomy, pose, thẩm mỹ",
+              "Trước sử dụng/xuất",
+              "Cam kết SLA tự động",
+              "Người dùng/QA"
             ]
           ]
         }
@@ -5628,6 +6174,48 @@
               "25 warnings from backend suite"
             ]
           ]
+        },
+        {
+          "title": "16. MediaPipe browser gate: security và vận hành",
+          "type": "table",
+          "headers": [
+            "Control/asset",
+            "Current implementation",
+            "Release check",
+            "Residual risk"
+          ],
+          "rows": [
+            [
+              "Package",
+              "@mediapipe/tasks-vision 1.0.1 được pin",
+              "Lockfile exact version; dependency audit",
+              "Supply-chain/CDN availability"
+            ],
+            [
+              "Model",
+              "public/models/blaze_face_short_range.tflite; SHA-256 documented",
+              "Model tồn tại trong dist và hash khớp",
+              "Model face detector, không phải person/liveness classifier"
+            ],
+            [
+              "WASM",
+              "Pinned jsDelivr path; CPU delegate",
+              "CSP/network cho CDN; browser smoke",
+              "CDN lỗi làm gate fail closed"
+            ],
+            [
+              "Worker lifecycle",
+              "Singleton, request map, bitmap close, 45s timeout",
+              "0/1/2-face matrix; console sạch",
+              "Chưa có automated unit/E2E"
+            ],
+            [
+              "Trust boundary",
+              "Rejected input không POST qua UI chính",
+              "Network assertion no generate POST",
+              "Direct API bypass; backend chưa semantic revalidate"
+            ]
+          ]
         }
       ],
       "assetPath": "originals/11-source-security-operations.docx",
@@ -5668,7 +6256,7 @@
           "rows": [
             [
               "Phiên bản",
-              "1.0"
+              "1.1"
             ],
             [
               "Trạng thái",
@@ -5676,7 +6264,7 @@
             ],
             [
               "Branch / commit",
-              "kien_v5 / c09e26a"
+              "kien_v5 / 4d23b9a"
             ],
             [
               "Ngày kiểm tra",
@@ -6205,17 +6793,67 @@
             "frontend/src/App.tsx",
             "ShopAIKey Usage History (shopaikey.com/en/account/usage) – snapshot 08–09/08/2026"
           ]
+        },
+        {
+          "title": "14. Face gate: chi phí, khả dụng và giới hạn",
+          "type": "table",
+          "headers": [
+            "Chỉ số/điều kiện",
+            "Baseline hiện tại",
+            "Chi phí",
+            "SLA/giới hạn"
+          ],
+          "rows": [
+            [
+              "Execution",
+              "CPU/WASM trong browser; không server GPU",
+              "$0 cho vision gate",
+              "Phụ thuộc năng lực thiết bị/browser"
+            ],
+            [
+              "Model/runtime",
+              "TFLite local khoảng 230 KB; WASM CDN khoảng 11.8 MB lần đầu",
+              "$0 API",
+              "Cache trình duyệt; CDN/network có thể lỗi"
+            ],
+            [
+              "Timeout",
+              "45 giây mỗi request detector",
+              "$0 khi reject",
+              "Timeout fail closed; không tạo paid generation job"
+            ],
+            [
+              "Input contract",
+              "Đúng một khuôn mặt được detector nhận diện",
+              "Tránh 4 image calls khi 0/>1 bị chặn",
+              "Không cam kết identity, likeness, liveness hoặc full-person"
+            ],
+            [
+              "Telemetry",
+              "Chưa có dashboard acceptance/error/latency",
+              "Savings thực tế = TBD",
+              "Không tự suy diễn tiền tiết kiệm"
+            ],
+            [
+              "Enforcement",
+              "UX gate phía client",
+              "$0",
+              "Direct API không thuộc bảo đảm semantic này"
+            ]
+          ]
         }
       ],
       "assetPath": "originals/12-sla.docx",
-      "visuals": [],
+      "visuals": [
+        {
+          "figureId": "system-context",
+          "afterSection": "5. Hạ tầng triển khai"
+        }
+      ],
       "searchTerms": [
-        "Service Level Agreement",
+        "Service Level Agreement (SLA)",
         "Thỏa thuận mức độ dịch vụ",
-        "Vận hành",
-        "SLA",
-        "Chi phí",
-        "Token"
+        "Vận hành"
       ]
     }
   ],
@@ -6224,17 +6862,17 @@
     "value-flow": {
       "id": "value-flow",
       "title": "Dòng giá trị của GenSticker",
-      "subtitle": "Từ chân dung người dùng đến bộ 20 sticker có thể tải và chia sẻ",
+      "subtitle": "Từ ảnh chân dung qua gate đúng một khuôn mặt đến bộ 20 sticker",
       "svg": "assets/figures/svg/value-flow.svg",
       "png": "assets/figures/png/value-flow.png",
       "width": 1600,
       "height": 900,
-      "caption": "Dòng giá trị MVP từ upload chân dung đến bộ 20 sticker và các kênh sử dụng.",
-      "alt": "Sơ đồ năm bước gồm Upload, Giữ danh tính, Sinh biểu cảm, Kiểm thử và Sử dụng; ba khối dưới nêu giá trị, điểm kiểm soát và giới hạn hiện tại.",
+      "caption": "Dòng giá trị MVP có gate đúng một khuôn mặt chạy cục bộ trước khi tạo job trả phí.",
+      "alt": "Sáu bước gồm chọn ảnh, gate một khuôn mặt, khóa nhận diện, sinh biểu cảm, kiểm tra cấu trúc và sử dụng; các callout nêu chi phí bằng không của gate, giới hạn client-only và thời điểm ảnh được gửi backend.",
       "sourceRefs": [
-        "backend/app/services/sticker_pipeline.py",
-        "backend/sticker_generation/grouped.py",
-        "frontend/src/App.tsx"
+        "frontend/src/hooks/useImageUpload.ts",
+        "frontend/src/services/faceDetectionService.ts",
+        "backend/app/services/sticker_pipeline.py"
       ],
       "statusLegend": [
         "Implemented",
@@ -6246,17 +6884,17 @@
     "user-journey": {
       "id": "user-journey",
       "title": "User journey và nhánh phục hồi",
-      "subtitle": "Luồng UI thực tế trên kien_v5, gồm auth, polling và rejected state",
+      "subtitle": "Face preflight cục bộ đứng trước job và mọi image call trả phí",
       "svg": "assets/figures/svg/user-journey.svg",
       "png": "assets/figures/png/user-journey.png",
       "width": 1600,
       "height": 900,
-      "caption": "Happy path và nhánh rejected của CTA Thử Lại Ngay trong UI hiện tại.",
-      "alt": "Luồng từ chọn ảnh, xác thực, tạo job, polling đến gallery; nhánh validation rejected reset về upload, còn retry API backend được đánh dấu chưa nối UI.",
+      "caption": "User journey mới: ảnh chỉ đi tới xác thực và tạo job sau khi detector trả đúng một khuôn mặt.",
+      "alt": "Luồng chọn ảnh qua Web Worker MediaPipe; không có mặt, nhiều mặt hoặc detector lỗi đều quay lại chọn ảnh và không gọi API tạo sticker; đúng một mặt tiếp tục auth, job, polling và gallery.",
       "sourceRefs": [
-        "frontend/src/App.tsx",
-        "frontend/src/hooks/useStickerGenerator.ts",
-        "frontend/src/services/stickerService.ts"
+        "frontend/src/components/upload/ImageUploader.tsx",
+        "frontend/src/hooks/useImageUpload.ts",
+        "frontend/src/services/faceDetectionService.ts"
       ],
       "statusLegend": [
         "Implemented",
@@ -6268,17 +6906,17 @@
     "system-boundary": {
       "id": "system-boundary",
       "title": "Ranh giới hệ thống và actor",
-      "subtitle": "Những gì thuộc GenSticker, những gì do nền tảng bên ngoài quản lý",
+      "subtitle": "Detector chạy trong browser; backend semantic face gate vẫn là khoảng trống",
       "svg": "assets/figures/svg/system-boundary.svg",
       "png": "assets/figures/png/system-boundary.png",
       "width": 1600,
       "height": 900,
-      "caption": "Actor và ranh giới giữa code GenSticker với Supabase, Image API và Telegram.",
-      "alt": "Người dùng và nhà vận hành tương tác với React, FastAPI và generation core bên trong GenSticker; ba dịch vụ ngoài nằm bên phải.",
+      "caption": "Ranh giới hệ thống cập nhật với detector CPU/WASM chạy trong browser và backend vẫn không có semantic face gate.",
+      "alt": "Người dùng tương tác React; FaceDetector Web Worker và model tĩnh chạy trong browser; FastAPI và generation core chỉ nhận ảnh qua UI sau khi gate pass, nhưng direct API vẫn có thể bypass; jsDelivr, Supabase, Image API và Telegram nằm ngoài hệ thống.",
       "sourceRefs": [
-        "backend/app/main.py",
-        "backend/app/api/router.py",
-        "frontend/src/App.tsx"
+        "frontend/src/workers/faceDetector.worker.ts",
+        "frontend/public/models/README.md",
+        "backend/app/api/stickers.py"
       ],
       "statusLegend": [
         "Implemented",
@@ -6289,18 +6927,18 @@
     },
     "job-state": {
       "id": "job-state",
-      "title": "State machine của trình tạo sticker",
-      "subtitle": "Trạng thái hiển thị ở frontend và nhánh retry backend chưa được nối vào CTA",
+      "title": "State machine upload và trình tạo sticker",
+      "subtitle": "Preflight checking/verified chạy trước generation processing",
       "svg": "assets/figures/svg/job-state.svg",
       "png": "assets/figures/png/job-state.png",
       "width": 1600,
       "height": 900,
-      "caption": "State machine frontend và nhánh retry backend chưa được nối với CTA hiện tại.",
-      "alt": "Idle chuyển processing rồi completed hoặc error; từ error, Thử Lại Ngay quay về idle; retry backend là đường nét đứt.",
+      "caption": "State machine bổ sung preflight checking/verified trước trạng thái generation processing.",
+      "alt": "Idle chọn ảnh chuyển sang checking; chỉ verified mới cho phép tạo job và processing; rejected hoặc detector error quay lại idle; completed/error của job giữ nguyên và retry backend vẫn chưa nối CTA.",
       "sourceRefs": [
+        "frontend/src/hooks/useImageUpload.ts",
         "frontend/src/hooks/useStickerGenerator.ts",
-        "frontend/src/App.tsx",
-        "backend/app/services/sticker_pipeline.py"
+        "frontend/src/App.tsx"
       ],
       "statusLegend": [
         "Implemented",
@@ -6312,17 +6950,17 @@
     "system-context": {
       "id": "system-context",
       "title": "Kiến trúc runtime GenSticker",
-      "subtitle": "Component topology hiện tại và các external trust boundaries",
+      "subtitle": "MediaPipe CPU/WASM trên client, backend grouped pipeline không đổi",
       "svg": "assets/figures/svg/system-context.svg",
       "png": "assets/figures/png/system-context.png",
       "width": 1600,
       "height": 900,
-      "caption": "Component topology runtime và các external trust boundaries.",
-      "alt": "Browser gọi React, React gọi FastAPI; FastAPI điều phối grouped generator, RAM/temp, Supabase, Image API và Telegram.",
+      "caption": "Runtime topology có MediaPipe worker chạy trên CPU client, model tĩnh cùng origin và WASM tải từ CDN ghim phiên bản.",
+      "alt": "Browser chứa React và FaceDetector worker; Vite/Vercel phục vụ model BlazeFace; worker tải WASM từ jsDelivr; ảnh pass mới được gửi FastAPI, grouped generator và Image API; Supabase và Telegram giữ nguyên.",
       "sourceRefs": [
-        "backend/app/main.py",
-        "backend/app/services/sticker_pipeline.py",
-        "backend/sticker_generation/grouped.py"
+        "frontend/src/services/faceDetectionService.ts",
+        "frontend/src/workers/faceDetector.worker.ts",
+        "frontend/public/models/README.md"
       ],
       "statusLegend": [
         "Implemented",
@@ -6334,17 +6972,17 @@
     "generation-sequence": {
       "id": "generation-sequence",
       "title": "Sequence tạo một bộ 20 sticker",
-      "subtitle": "4 image requests/job: canonical + ba sheet landscape, sau đó structural QA và persistence best-effort",
+      "subtitle": "Preflight exact-one-face trước POST; pass mới phát sinh canonical + ba sheet",
       "svg": "assets/figures/svg/generation-sequence.svg",
       "png": "assets/figures/png/generation-sequence.png",
       "width": 1600,
       "height": 900,
-      "caption": "Sequence bốn image request, structural QA, polling và persistence best-effort.",
-      "alt": "Swimlane từ Browser qua FastAPI, Pipeline, Image API, Quality và Supabase; gồm canonical, ba sheet, crop và poll kết quả.",
+      "caption": "Sequence bắt đầu bằng exact-one-face preflight cục bộ; chỉ nhánh pass mới phát sinh POST và bốn image request.",
+      "alt": "Browser gửi ImageBitmap cho Face Worker; nhánh 0, nhiều mặt hoặc lỗi dừng cục bộ; nhánh một mặt POST FastAPI rồi tạo canonical, ba sheet, structural QA và persistence best-effort.",
       "sourceRefs": [
-        "backend/sticker_generation/grouped.py",
-        "backend/sticker_generation/providers/openai_image.py",
-        "backend/app/services/sticker_pipeline.py"
+        "frontend/src/services/faceDetectionService.ts",
+        "frontend/src/workers/faceDetector.worker.ts",
+        "backend/sticker_generation/grouped.py"
       ],
       "statusLegend": [
         "Implemented",
@@ -6378,17 +7016,17 @@
     "roadmap-now-next-later": {
       "id": "roadmap-now-next-later",
       "title": "Roadmap Now / Next / Later",
-      "subtitle": "Ưu tiên đề xuất từ source audit; không phải cam kết lịch phát hành",
+      "subtitle": "Face gate MVP đã có; enforcement, test và telemetry được tách theo giai đoạn",
       "svg": "assets/figures/svg/roadmap-now-next-later.svg",
       "png": "assets/figures/png/roadmap-now-next-later.png",
       "width": 1600,
       "height": 900,
-      "caption": "Roadmap đề xuất theo mức độ rủi ro và phụ thuộc kỹ thuật.",
-      "alt": "Ba cột Now, Next, Later lần lượt chứa các hạng mục dữ liệu, credentials, durable jobs, schema RLS, test, observability và QA.",
+      "caption": "Roadmap ghi nhận browser face gate đã triển khai và tách rõ phần backend enforcement, test tự động và telemetry còn lại.",
+      "alt": "Now có local MediaPipe gate; Next gồm backend authoritative detector và frontend unit/E2E; Later gồm metric false reject, CDN fallback và policy đa khuôn mặt.",
       "sourceRefs": [
-        "backend/data/pending_telegram_packs.json",
-        "frontend/src/services/authService.ts",
-        "backend/migrations/001_add_sticker_pack_soft_delete.sql"
+        "frontend/src/hooks/useImageUpload.ts",
+        "frontend/src/workers/faceDetector.worker.ts",
+        "frontend/package.json"
       ],
       "statusLegend": [
         "Implemented",
@@ -6400,17 +7038,17 @@
     "screen-flow": {
       "id": "screen-flow",
       "title": "Screen flow của web app",
-      "subtitle": "Các view, overlay và state chuyển đổi thực tế trong frontend",
+      "subtitle": "Upload có preflight checking/verified; input reject tách khỏi output reject",
       "svg": "assets/figures/svg/screen-flow.svg",
       "png": "assets/figures/png/screen-flow.png",
       "width": 1600,
       "height": 900,
-      "caption": "Bản đồ view, overlay và chuyển trạng thái chính của ứng dụng web.",
-      "alt": "Upload nối Auth modal và Processing; kết quả sang Gallery hoặc Rejected; Gallery mở History/Telegram; header mở Docs hub.",
+      "caption": "Screen flow bổ sung trạng thái kiểm tra khuôn mặt giữa Upload và Auth/Processing.",
+      "alt": "Upload chuyển Face checking; invalid quay về Upload với alert, verified mới đi Auth hoặc Processing; các nhánh Gallery, Rejected, History, Telegram và Docs giữ nguyên.",
       "sourceRefs": [
-        "frontend/src/App.tsx",
-        "frontend/src/components",
-        "frontend/src/hooks/useStickerGenerator.ts"
+        "frontend/src/components/upload/ImageUploader.tsx",
+        "frontend/src/hooks/useImageUpload.ts",
+        "frontend/src/App.tsx"
       ],
       "statusLegend": [
         "Implemented",
@@ -6443,17 +7081,17 @@
     "quality-gates": {
       "id": "quality-gates",
       "title": "Chuỗi quality gates trước bàn giao",
-      "subtitle": "Từ source tests đến kiểm tra trực quan tất cả tài liệu và UI",
+      "subtitle": "Source tests, face-gate smoke, Office render và browser QA trước bàn giao",
       "svg": "assets/figures/svg/quality-gates.svg",
       "png": "assets/figures/png/quality-gates.png",
       "width": 1600,
       "height": 900,
-      "caption": "Chuỗi kiểm tra source, Office artifact và browser trước bàn giao.",
-      "alt": "Năm bước Backend, Frontend, Docs build, Visual QA và Browser QA; bên dưới là pass criteria, manual boundary và gaps.",
+      "caption": "Release gates cập nhật với QA 0/1/2 khuôn mặt, 12 Office file và giới hạn backend semantic gate chưa triển khai.",
+      "alt": "Năm bước backend, frontend, docs build, visual QA và browser QA; frontend gate được kiểm tra 0, 1, 2 mặt; callout gap nêu chưa có test tự động và direct API vẫn bypass.",
       "sourceRefs": [
-        "backend/app/tests",
-        "backend/sticker_generation/tests",
-        "frontend/package.json"
+        "frontend/package.json",
+        "frontend/src/hooks/useImageUpload.ts",
+        "backend/app/tests"
       ],
       "statusLegend": [
         "Implemented",
@@ -6465,17 +7103,17 @@
     "coverage-map": {
       "id": "coverage-map",
       "title": "Bản đồ coverage hiện tại",
-      "subtitle": "75 backend tests được phân bổ theo module; vùng trắng được ghi rõ thay vì suy đoán",
+      "subtitle": "75 backend tests + manual face-gate proof; automated frontend coverage vẫn là gap",
       "svg": "assets/figures/svg/coverage-map.svg",
       "png": "assets/figures/png/coverage-map.png",
       "width": 1600,
       "height": 900,
-      "caption": "Phân bổ 75 backend test cases và các vùng chưa được tự động hóa.",
-      "alt": "Sáu nhóm test backend ở trái và ba nhóm coverage gap ở phải, gồm frontend, external integration và non-functional.",
+      "caption": "Coverage giữ nguyên 75 backend tests và bổ sung bằng chứng browser QA thủ công cho ba verdict face gate.",
+      "alt": "Bên trái là 75 backend cases, giữa là manual browser matrix 0 mặt reject, 1 mặt pass, 2 mặt reject, bên phải là gap frontend unit/E2E và backend authoritative detector.",
       "sourceRefs": [
         "backend/app/tests",
         "backend/sticker_generation/tests",
-        "frontend/package.json"
+        "frontend/src/services/faceDetectionService.ts"
       ],
       "statusLegend": [
         "Implemented",
@@ -6531,16 +7169,16 @@
     "data-lifecycle": {
       "id": "data-lifecycle",
       "title": "Vòng đời dữ liệu và điểm giữ lại",
-      "subtitle": "Luồng as-is của selfie, artifact tạm, output và soft delete",
+      "subtitle": "Local preflight đứng trước upload từ giao diện; direct API lifecycle giữ nguyên",
       "svg": "assets/figures/svg/data-lifecycle.svg",
       "png": "assets/figures/png/data-lifecycle.png",
       "width": 1600,
       "height": 900,
-      "caption": "Vòng đời selfie, temp artifacts, output history và soft delete.",
-      "alt": "Năm bước Upload, Generate, Persist, History và Soft delete; ba callout mô tả nguồn selfie, temp artifact và target lifecycle.",
+      "caption": "Vòng đời dữ liệu có bước local preflight trước upload; ảnh reject không đi qua UI tới Storage hay provider.",
+      "alt": "Local face gate chạy trước Upload; pass mới gửi backend và Storage, rồi Generate, Persist, History và Soft delete; direct API bypass và cleanup Storage vẫn là gap.",
       "sourceRefs": [
+        "frontend/src/hooks/useImageUpload.ts",
         "backend/app/api/stickers.py",
-        "backend/app/services/sticker_pipeline.py",
         "backend/app/services/supabase_service.py"
       ],
       "statusLegend": [
@@ -6552,18 +7190,19 @@
     },
     "validation-boundaries": {
       "id": "validation-boundaries",
-      "title": "Validation theo từng trust boundary",
-      "subtitle": "Mỗi lớp chặn một loại input khác nhau trước khi ảnh tới provider",
+      "title": "Exact-one face gate và validation boundaries",
+      "subtitle": "Technical file checks → local MediaPipe decision → backend/provider guards",
       "svg": "assets/figures/svg/validation-boundaries.svg",
       "png": "assets/figures/png/validation-boundaries.png",
       "width": 1600,
       "height": 900,
-      "caption": "Các lớp validation từ browser đến decode response của provider.",
-      "alt": "Năm bước Browser, FastAPI, Sanitize, Provider guard và Decode; bên dưới nêu safe rejection, gap và privacy boundary.",
+      "caption": "Validation tách technical file gate và exact-one-face semantic gate chạy cục bộ trước FastAPI/provider.",
+      "alt": "Sáu lớp gồm browser MIME/size, MediaPipe exact-one-face, FastAPI bytes/decode, sanitize, provider guard và response decode; fail closed không tạo job nhưng backend chưa kiểm lại semantic.",
       "sourceRefs": [
         "frontend/src/hooks/useImageUpload.ts",
-        "backend/app/api/stickers.py",
-        "backend/sticker_generation/providers/openai_image.py"
+        "frontend/src/services/faceDetectionService.ts",
+        "frontend/src/workers/faceDetector.worker.ts",
+        "backend/app/api/stickers.py"
       ],
       "statusLegend": [
         "Implemented",
@@ -6617,18 +7256,17 @@
     "repo-runtime-map": {
       "id": "repo-runtime-map",
       "title": "Bản đồ repository và dependency direction",
-      "subtitle": "Web grouped pipeline được tách khỏi adapters/CLI nhưng vẫn dùng chung generation core",
+      "subtitle": "Face service/worker/model nằm ở frontend; grouped generation và backend API giữ nguyên",
       "svg": "assets/figures/svg/repo-runtime-map.svg",
       "png": "assets/figures/png/repo-runtime-map.png",
       "width": 1600,
       "height": 900,
-      "caption": "Bản đồ thư mục source và chiều phụ thuộc của web grouped pipeline.",
-      "alt": "Frontend gọi backend app, backend app dùng sticker_generation; migrations, runtime state, docs và external services được đặt thành các khối riêng.",
+      "caption": "Repository map bổ sung faceDetectionService, module worker và model BlazeFace tĩnh trong frontend.",
+      "alt": "Frontend gồm React hooks, face detection service, Web Worker và public model; backend API và generation core giữ nguyên; jsDelivr cung cấp WASM; gen-sticker-docs tạo 12 Office outputs.",
       "sourceRefs": [
-        "frontend/src",
-        "backend/app",
-        "backend/sticker_generation",
-        "backend/migrations"
+        "frontend/src/services/faceDetectionService.ts",
+        "frontend/src/workers/faceDetector.worker.ts",
+        "frontend/public/models/README.md"
       ],
       "statusLegend": [
         "Implemented",
@@ -6640,17 +7278,17 @@
     "risk-control-map": {
       "id": "risk-control-map",
       "title": "Security & operations control map",
-      "subtitle": "Các trust boundary có dữ liệu chân dung, token hoặc quyền service-role",
+      "subtitle": "Local face gate giảm upload nhầm nhưng không phải API security boundary",
       "svg": "assets/figures/svg/risk-control-map.svg",
       "png": "assets/figures/png/risk-control-map.png",
       "width": 1600,
       "height": 900,
-      "caption": "Trust boundaries và lộ trình kiểm soát bảo mật/vận hành theo P0–P2.",
-      "alt": "Browser, FastAPI, Supabase và providers nối qua các cạnh dữ liệu rủi ro; bốn nhóm control phía dưới theo ưu tiên.",
+      "caption": "Control map ghi rõ local face gate giảm upload nhầm nhưng không phải security boundary có thể tin cậy cho direct API.",
+      "alt": "Browser giữ selfie và chạy MediaPipe; CDN chỉ cung cấp WASM; FastAPI vẫn nhận direct requests; controls gồm fail-closed, pinned runtime/model provenance, backend revalidation backlog và privacy disclosure.",
       "sourceRefs": [
-        "frontend/src/services/authService.ts",
-        "backend/app/services/supabase_service.py",
-        "backend/app/services/telegram_service.py"
+        "frontend/src/services/faceDetectionService.ts",
+        "frontend/src/workers/faceDetector.worker.ts",
+        "backend/app/api/stickers.py"
       ],
       "statusLegend": [
         "Implemented",

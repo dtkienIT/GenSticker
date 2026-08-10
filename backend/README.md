@@ -91,6 +91,14 @@ Telegram khi cần chức năng xuất pack.
 - `DELETE /api/v1/stickers/history/{pack_id}` : Xóa mềm một bộ sticker nếu bộ đó thuộc tài khoản đang đăng nhập.
 - `POST /api/v1/telegram/export` : Tạo request xuất sticker set sang Telegram Bot với thanh tiến độ thời gian thực.
 
+### 👤 Ranh Giới Gate Ảnh Đầu Vào
+
+Luồng web trên branch `kien_v5` có gate MediaPipe/BlazeFace chạy trong trình duyệt và chỉ gửi ảnh khi phát hiện đúng một khuôn mặt. Gate này không gọi backend, không dùng GPU server và không phát sinh phí API thị giác; do đó frontend có thể chạy trên Vercel Free mà không cần thuê GPU cho bước kiểm tra đầu vào.
+
+Backend **chưa có semantic face gate**. `POST /api/v1/stickers/generate` hiện chỉ kiểm tra Bearer token và tính hợp lệ kỹ thuật của file: JPEG/PNG/WEBP, tối đa 15 MB, tối đa 40 triệu pixel và phải giải mã được. API không đếm khuôn mặt, không xác minh danh tính/liveness và không khẳng định ảnh chỉ có một người.
+
+Vì vậy client gọi trực tiếp API có thể bỏ qua gate của giao diện. Không được coi client-side gate là kiểm soát bảo mật phía server; nếu yêu cầu này trở thành điều kiện tin cậy bắt buộc, cần bổ sung kiểm tra độc lập ở backend.
+
 ### 🛡 Cải Tiến Concurrency Telegram Bot
 
 `telegram_bot.py` sử dụng hàm **`_claim_pending_pack(pack_id)`** thay vì pop trực tiếp từ dict, đảm bảo atomic claim khi nhiều Telegram update đến đồng thời. Kết hợp với `_processing_packs` set lock, hệ thống chặn hoàn toàn xử lý trùng lặp pack.

@@ -359,7 +359,7 @@ export function DocumentationPage({ onBack }: DocumentationPageProps) {
           {manifest.meta.figmaSource && (
             <a className="docs-figma-link" href={manifest.meta.figmaSource.url} target="_blank" rel="noreferrer">
               <ExternalLink size={16} />
-              Mở source vector trên Figma
+              Mở board Figma tham chiếu (không tự đồng bộ)
             </a>
           )}
         </div>

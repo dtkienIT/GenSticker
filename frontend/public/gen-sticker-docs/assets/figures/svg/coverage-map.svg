@@ -9,57 +9,57 @@
   <circle cx="62" cy="55" r="22" fill="#5B3DF5"/>
   <text x="62" y="63" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="20" font-weight="800">07</text>
   <text x="102" y="50" text-anchor="start" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="34" font-weight="800">Bản đồ coverage hiện tại</text>
-  <text x="103" y="82" text-anchor="start" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="18" font-weight="500">75 backend tests được phân bổ theo module; vùng trắng được ghi rõ thay vì suy đoán</text>
-  <g filter="url(#shadow-coverage-map)"><g><rect x="55" y="160" width="1020" height="575" rx="26" fill="#F0FDFA" fill-opacity="0.55" stroke="#0D9488" stroke-width="2" /><text x="79" y="197" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="21" font-weight="800">Automated backend coverage — 75 cases</text></g><g>
-    <rect x="85" y="220" width="300" height="145" rx="24" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
+  <text x="103" y="82" text-anchor="start" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="18" font-weight="500">75 backend tests + manual face-gate proof; automated frontend coverage vẫn là gap</text>
+  <g filter="url(#shadow-coverage-map)"><g><rect x="50" y="155" width="970" height="585" rx="26" fill="#F0FDFA" fill-opacity="0.55" stroke="#0D9488" stroke-width="2" /><text x="74" y="192" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="21" font-weight="800">Automated backend coverage — 75 cases</text></g><g>
+    <rect x="80" y="215" width="280" height="135" rx="24" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
 
-    <text x="107" y="263" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="21" font-weight="800">Grouped generation · 18</text>
-    <text x="107" y="301" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="107" dy="0">4 calls · 4×2 split</tspan><tspan x="107" dy="29">3×2 reject · resume</tspan></text>
+    <text x="102" y="258" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="21" font-weight="800">Grouped · 18</text>
+    <text x="102" y="296" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="102" dy="0">4 calls · 4×2 split</tspan><tspan x="102" dy="29">reject · resume</tspan></text>
   </g><g>
-    <rect x="415" y="220" width="300" height="145" rx="24" fill="#FDF2F8" stroke="#DB2777" stroke-width="3"/>
+    <rect x="390" y="215" width="280" height="135" rx="24" fill="#FDF2F8" stroke="#DB2777" stroke-width="3"/>
 
-    <text x="437" y="263" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="23" font-weight="800">Pipeline service · 10</text>
-    <text x="437" y="301" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="437" dy="0">owner · rate · retry</tspan><tspan x="437" dy="29">TTL · persistence</tspan></text>
+    <text x="412" y="258" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="21" font-weight="800">Pipeline · 10</text>
+    <text x="412" y="296" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="412" dy="0">owner · rate · retry</tspan><tspan x="412" dy="29">TTL · persistence</tspan></text>
   </g><g>
-    <rect x="745" y="220" width="300" height="145" rx="24" fill="#FDF2F8" stroke="#DB2777" stroke-width="3"/>
+    <rect x="700" y="215" width="280" height="135" rx="24" fill="#FDF2F8" stroke="#DB2777" stroke-width="3"/>
 
-    <text x="767" y="263" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="23" font-weight="800">Stickers API · 9</text>
-    <text x="767" y="301" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="767" dy="0">Bearer · MIME · owner</tspan><tspan x="767" dy="29">cache · missing key</tspan></text>
+    <text x="722" y="258" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="21" font-weight="800">API · 9</text>
+    <text x="722" y="296" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="722" dy="0">Bearer · MIME · owner</tspan><tspan x="722" dy="29">cache · missing key</tspan></text>
   </g><g>
-    <rect x="85" y="405" width="300" height="145" rx="24" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="3"/>
+    <rect x="80" y="385" width="280" height="135" rx="24" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="3"/>
 
-    <text x="107" y="448" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="27" font-weight="800">Prompts · 9</text>
-    <text x="107" y="486" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="107" dy="0">exact cells/reserve</tspan><tspan x="107" dy="29">invalid plans</tspan></text>
+    <text x="102" y="428" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="21" font-weight="800">Prompts · 9</text>
+    <text x="102" y="466" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="102" dy="0">cells/reserve</tspan><tspan x="102" dy="29">invalid plans</tspan></text>
   </g><g>
-    <rect x="415" y="405" width="300" height="145" rx="24" fill="#FFF7ED" stroke="#EA580C" stroke-width="3"/>
+    <rect x="390" y="385" width="280" height="135" rx="24" fill="#FFF7ED" stroke="#EA580C" stroke-width="3"/>
 
-    <text x="437" y="448" text-anchor="start" fill="#7C2D12" font-family="Arial, sans-serif" font-size="27" font-weight="800">Providers · 14</text>
-    <text x="437" y="486" text-anchor="start" fill="#7C2D12" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="437" dy="0">OpenAI 7 · Gemini/Fal 7</tspan><tspan x="437" dy="29">multipart · billing</tspan></text>
+    <text x="412" y="428" text-anchor="start" fill="#7C2D12" font-family="Arial, sans-serif" font-size="21" font-weight="800">Providers · 14</text>
+    <text x="412" y="466" text-anchor="start" fill="#7C2D12" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="412" dy="0">HTTP mocks</tspan><tspan x="412" dy="29">multipart · billing</tspan></text>
   </g><g>
-    <rect x="745" y="405" width="300" height="145" rx="24" fill="#F8FAFC" stroke="#64748B" stroke-width="3"/>
+    <rect x="700" y="385" width="280" height="135" rx="24" fill="#F8FAFC" stroke="#64748B" stroke-width="3"/>
 
-    <text x="767" y="448" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="27" font-weight="800">Other · 15</text>
-    <text x="767" y="486" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="767" dy="0">CLI · catalog · postprocess</tspan><tspan x="767" dy="29">pose refs · quality</tspan></text>
+    <text x="722" y="428" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="21" font-weight="800">Other · 15</text>
+    <text x="722" y="466" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="722" dy="0">CLI · catalog</tspan><tspan x="722" dy="29">postprocess · quality</tspan></text>
   </g><g>
-    <rect x="85" y="590" width="960" height="105" rx="24" fill="#F8FAFC" stroke="#64748B" stroke-width="3"/>
+    <rect x="80" y="565" width="900" height="125" rx="24" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
 
-    <text x="107" y="633" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="22" font-weight="800">Boundary</text>
-    <text x="107" y="671" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="17" font-weight="500"><tspan x="107" dy="0">Provider tests dùng mocks; số pass không chứng minh live model quality, actual cost hay Supabase policy.</tspan></text>
-  </g><g><rect x="1120" y="160" width="425" height="575" rx="26" fill="#FEF2F2" fill-opacity="0.55" stroke="#DC2626" stroke-width="2" /><text x="1144" y="197" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="21" font-weight="800">Coverage gaps</text></g><g>
-    <rect x="1150" y="220" width="365" height="120" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
+    <text x="102" y="608" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="22" font-weight="800">Manual browser evidence</text>
+    <text x="102" y="646" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="17" font-weight="500"><tspan x="102" dy="0">0 face → reject · 1 face → verified · 2 faces → reject · 375×667 no overflow · console clean</tspan></text>
+  </g><g><rect x="1060" y="155" width="485" height="585" rx="26" fill="#FEF2F2" fill-opacity="0.55" stroke="#DC2626" stroke-width="2" /><text x="1084" y="192" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="21" font-weight="800">Coverage gaps</text></g><g>
+    <rect x="1090" y="215" width="425" height="125" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
 
-    <text x="1172" y="263" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">Frontend</text>
-    <text x="1172" y="301" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1172" dy="0">0 unit/spec · 0 browser E2E</tspan></text>
+    <text x="1112" y="258" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">Frontend automation</text>
+    <text x="1112" y="296" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1112" dy="0">0 unit/spec · 0 browser E2E</tspan></text>
   </g><g>
-    <rect x="1150" y="365" width="365" height="120" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
+    <rect x="1090" y="370" width="425" height="135" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
 
-    <text x="1172" y="408" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">External integration</text>
-    <text x="1172" y="446" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1172" dy="0">Supabase/RLS · Telegram · live provider</tspan></text>
+    <text x="1112" y="413" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">Face-gate authority</text>
+    <text x="1112" y="451" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1112" dy="0">Direct API bypass</tspan><tspan x="1112" dy="29">backend semantic detector chưa có</tspan></text>
   </g><g>
-    <rect x="1150" y="510" width="365" height="145" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
+    <rect x="1090" y="535" width="425" height="145" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
 
-    <text x="1172" y="553" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">Non-functional</text>
-    <text x="1172" y="591" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1172" dy="0">load/concurrency · security fuzz</tspan><tspan x="1172" dy="29">a11y · visual regression</tspan><tspan x="1172" dy="29">backup/retention</tspan></text>
+    <text x="1112" y="578" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">External / non-functional</text>
+    <text x="1112" y="612" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1112" dy="0">CDN outage · browser matrix</tspan><tspan x="1112" dy="29">Supabase/RLS · provider canary</tspan><tspan x="1112" dy="29">load · security fuzz</tspan></text>
   </g></g>
   <g><rect x="60" y="822" width="28" height="28" rx="8" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="2" /><text x="100" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Đã triển khai</text><rect x="265" y="822" width="28" height="28" rx="8" fill="#F8FAFC" stroke="#64748B" stroke-width="2" /><text x="305" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Suy ra từ source</text><rect x="503" y="822" width="28" height="28" rx="8" fill="#FEF2F2" stroke="#DC2626" stroke-width="2" /><text x="543" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Gap / rủi ro</text><rect x="697" y="822" width="28" height="28" rx="8" fill="#F0FDFA" stroke="#0D9488" stroke-width="2" /><text x="737" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Khuyến nghị</text></g>
 </svg>

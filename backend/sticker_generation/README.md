@@ -3,7 +3,7 @@
 This package owns only image generation. It does not depend on Expo, FastAPI,
 SQLAlchemy, or the app's job schema.
 
-In the `kien_v4` worktree it lives under `backend/sticker_generation`. Run it
+In the `kien_v5` worktree it lives under `backend/sticker_generation`. Run it
 from the repository root with `PYTHONPATH=backend`.
 
 ## Prepare Pose References
@@ -66,6 +66,18 @@ compatible endpoint, set `OPENAI_API_KEY`, optionally set `OPENAI_BASE_URL`, and
 use `--model gpt-image-1.5`.
 
 ## Web App Grouped Mode
+
+The standard web upload flow first runs MediaPipe BlazeFace short-range in a
+browser Web Worker. It continues only when the detector reports exactly one
+face. This input gate runs on the user's CPU through WebAssembly, needs no
+server GPU, and calls no paid vision API, so the gate itself is compatible
+with a free Vercel frontend deployment.
+
+That browser check is deliberately outside this standalone package and outside
+the FastAPI generation endpoint. The CLI/package still accepts any decodable
+input supplied by its caller, and a direct API client can bypass the UI gate.
+BlazeFace detection is not identity, liveness, or whole-image person-count
+verification; callers that need a trusted policy must enforce it separately.
 
 The web app's grouped OpenAI flow uses four image-generation requests. The
 first creates a high-resolution canonical character from the selfie. The next

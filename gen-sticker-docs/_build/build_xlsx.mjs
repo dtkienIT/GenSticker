@@ -10,7 +10,10 @@ import JSZip from "jszip";
 const BUILD_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(BUILD_DIR, "..");
 const MANIFEST_PATH = path.join(ROOT, "project-docs.json");
-const OUTPUT_DIR = path.join(ROOT, "originals");
+const CONFIGURED_OUTPUT_DIR = typeof process !== "undefined" ? process.env.GENSTICKER_DOCS_OUTPUT : undefined;
+const OUTPUT_DIR = CONFIGURED_OUTPUT_DIR
+  ? path.resolve(CONFIGURED_OUTPUT_DIR)
+  : path.join(ROOT, "originals");
 const CONFIGURED_QA_DIR = typeof process !== "undefined" ? process.env.GENSTICKER_DOCS_QA : undefined;
 const QA_DIR = CONFIGURED_QA_DIR
   ? path.resolve(CONFIGURED_QA_DIR)
