@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import type { User } from '../../types/auth';
 import type { Theme } from '../../hooks/useTheme';
-import { Sparkles, LogIn, LogOut, User as UserIcon, History } from 'lucide-react';
+import { Sparkles, LogIn, LogOut, User as UserIcon, History, BookOpen } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
@@ -11,6 +11,8 @@ interface HeaderProps {
   onOpenAuth: (mode?: 'login' | 'register') => void;
   onLogout: () => void;
   onReset?: () => void;
+  onOpenDocs?: () => void;
+  isDocsActive?: boolean;
   onOpenHistory?: () => void;
   historyCount?: number;
 }
@@ -22,6 +24,8 @@ export const Header: FC<HeaderProps> = ({
   onOpenAuth,
   onLogout,
   onReset,
+  onOpenDocs,
+  isDocsActive = false,
   onOpenHistory,
   historyCount = 0,
 }) => {
@@ -47,7 +51,7 @@ export const Header: FC<HeaderProps> = ({
           }}>
             <Sparkles size={20} color="white" />
           </div>
-          <div>
+          <div className="header-brand-copy">
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em' }} className="text-gradient">
                 GenSticker AI
@@ -70,6 +74,18 @@ export const Header: FC<HeaderProps> = ({
 
         {/* Right Nav & User Section */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          <button
+            onClick={onOpenDocs}
+            type="button"
+            className={`btn-secondary header-docs-button ${isDocsActive ? 'is-active' : ''}`}
+            title="Xem tài liệu dự án và source code"
+            aria-label="Xem tài liệu dự án"
+            aria-current={isDocsActive ? 'page' : undefined}
+          >
+            <BookOpen size={16} />
+            <span className="btn-text-desktop">Xem tài liệu</span>
+          </button>
+
           {/* History belongs to the signed-in account, so guests should not see it. */}
           {user && (
             <button

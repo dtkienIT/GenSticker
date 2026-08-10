@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <filter id="shadow-system-context" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0F172A" flood-opacity="0.10"/></filter>
+    <marker id="arrow-system-context-client" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0891B2"/></marker><marker id="arrow-system-context-frontend" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5B3DF5"/></marker><marker id="arrow-system-context-backend" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#DB2777"/></marker><marker id="arrow-system-context-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#059669"/></marker><marker id="arrow-system-context-external" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#EA580C"/></marker><marker id="arrow-system-context-quality" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0D9488"/></marker><marker id="arrow-system-context-risk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#DC2626"/></marker><marker id="arrow-system-context-neutral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748B"/></marker><marker id="arrow-system-context-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0F172A"/></marker>
+  </defs>
+  <rect width="1600" height="900" rx="36" fill="#FFFFFF"/>
+  <rect x="0" y="0" width="1600" height="112" rx="36" fill="#0F172A"/>
+  <rect x="0" y="76" width="1600" height="36" fill="#0F172A"/>
+  <circle cx="62" cy="55" r="22" fill="#5B3DF5"/>
+  <text x="62" y="63" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="20" font-weight="800">04</text>
+  <text x="102" y="50" text-anchor="start" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="34" font-weight="800">Kiến trúc runtime GenSticker</text>
+  <text x="103" y="82" text-anchor="start" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="18" font-weight="500">Component topology hiện tại và các external trust boundaries</text>
+  <g filter="url(#shadow-system-context)"><g><rect x="40" y="155" width="235" height="565" rx="26" fill="#ECFEFF" fill-opacity="0.55" stroke="#0891B2" stroke-width="2" /><text x="64" y="192" text-anchor="start" fill="#164E63" font-family="Arial, sans-serif" font-size="21" font-weight="800">Client</text></g><g><rect x="310" y="155" width="820" height="565" rx="26" fill="#EEF2FF" fill-opacity="0.55" stroke="#5B3DF5" stroke-width="2" /><text x="334" y="192" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="21" font-weight="800">GenSticker runtime</text></g><g><rect x="1165" y="155" width="390" height="565" rx="26" fill="#FFF7ED" fill-opacity="0.55" stroke="#EA580C" stroke-width="2" /><text x="1189" y="192" text-anchor="start" fill="#7C2D12" font-family="Arial, sans-serif" font-size="21" font-weight="800">Dịch vụ ngoài</text></g><g>
+    <rect x="70" y="330" width="175" height="150" rx="24" fill="#ECFEFF" stroke="#0891B2" stroke-width="3"/>
+
+    <text x="92" y="373" text-anchor="start" fill="#164E63" font-family="Arial, sans-serif" font-size="24" font-weight="800">Browser</text>
+    <text x="92" y="411" text-anchor="start" fill="#164E63" font-family="Arial, sans-serif" font-size="17" font-weight="500"><tspan x="92" dy="0">React UI</tspan><tspan x="92" dy="26">JWT · polling</tspan></text>
+  </g><g>
+    <rect x="350" y="220" width="240" height="145" rx="24" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="3"/>
+
+    <text x="372" y="263" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="27" font-weight="800">React + Vite</text>
+    <text x="372" y="301" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="372" dy="0">state machine</tspan><tspan x="372" dy="29">docs hub</tspan></text>
+  </g><g>
+    <rect x="680" y="220" width="250" height="145" rx="24" fill="#FDF2F8" stroke="#DB2777" stroke-width="3"/>
+
+    <text x="702" y="263" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="27" font-weight="800">FastAPI /api/v1</text>
+    <text x="702" y="301" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="702" dy="0">security guard</tspan><tspan x="702" dy="29">API routers</tspan></text>
+  </g><g>
+    <rect x="350" y="500" width="240" height="145" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
+
+    <text x="372" y="543" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">RAM + Temp</text>
+    <text x="372" y="581" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="372" dy="0">jobs · attempts</tspan><tspan x="372" dy="29">raw/canonical/crops</tspan></text>
+  </g><g>
+    <rect x="680" y="500" width="250" height="145" rx="24" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
+
+    <text x="702" y="543" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="25" font-weight="800">Grouped generator</text>
+    <text x="702" y="581" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="702" dy="0">prompts · identity</tspan><tspan x="702" dy="29">grid QA · 512px</tspan></text>
+  </g><g>
+    <rect x="965" y="345" width="135" height="150" rx="24" fill="#F8FAFC" stroke="#64748B" stroke-width="3"/>
+
+    <text x="987" y="388" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="21" font-weight="800">Telegram</text>
+    <text x="987" y="426" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="16" font-weight="500"><tspan x="987" dy="0">pending</tspan><tspan x="987" dy="25">polling</tspan></text>
+  </g><g>
+    <rect x="1195" y="215" width="330" height="135" rx="24" fill="#ECFDF5" stroke="#059669" stroke-width="3"/>
+
+    <text x="1217" y="258" text-anchor="start" fill="#065F46" font-family="Arial, sans-serif" font-size="27" font-weight="800">Supabase</text>
+    <text x="1217" y="296" text-anchor="start" fill="#065F46" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1217" dy="0">Auth · Storage · PostgREST</tspan></text>
+  </g><g>
+    <rect x="1195" y="395" width="330" height="135" rx="24" fill="#FFF7ED" stroke="#EA580C" stroke-width="3"/>
+
+    <text x="1217" y="438" text-anchor="start" fill="#7C2D12" font-family="Arial, sans-serif" font-size="27" font-weight="800">Compatible Image API</text>
+    <text x="1217" y="476" text-anchor="start" fill="#7C2D12" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1217" dy="0">POST /images/edits</tspan><tspan x="1217" dy="29">1–3 references</tspan></text>
+  </g><g>
+    <rect x="1195" y="580" width="330" height="110" rx="24" fill="#FFF7ED" stroke="#EA580C" stroke-width="3"/>
+
+    <text x="1217" y="623" text-anchor="start" fill="#7C2D12" font-family="Arial, sans-serif" font-size="27" font-weight="800">Telegram Bot / QR</text>
+    <text x="1217" y="661" text-anchor="start" fill="#7C2D12" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1217" dy="0">20 sticker export</tspan></text>
+  </g><g><path d="M 245 405 L 350 292" fill="none" stroke="#0891B2" stroke-width="4" marker-end="url(#arrow-system-context-client)"/><rect x="242.5" y="314.5" width="110" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="297.5" y="336.5" text-anchor="middle" fill="#164E63" font-family="Arial, sans-serif" font-size="16" font-weight="700">UI</text></g><g><path d="M 590 292 L 680 292" fill="none" stroke="#5B3DF5" stroke-width="4" marker-end="url(#arrow-system-context-frontend)"/><rect x="567" y="258" width="136" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="635" y="280" text-anchor="middle" fill="#312E81" font-family="Arial, sans-serif" font-size="16" font-weight="700">REST + JWT</text></g><g><path d="M 805 365 L 805 500" fill="none" stroke="#DB2777" stroke-width="4" marker-end="url(#arrow-system-context-backend)"/><rect x="743.8" y="398.5" width="122.39999999999999" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="805" y="420.5" text-anchor="middle" fill="#831843" font-family="Arial, sans-serif" font-size="16" font-weight="700">async job</text></g><g><path d="M 680 572 L 590 572" fill="none" stroke="#DC2626" stroke-width="4" marker-end="url(#arrow-system-context-risk)"/><rect x="573.8" y="538" width="122.39999999999999" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="635" y="560" text-anchor="middle" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="16" font-weight="700">artifacts</text></g><g><path d="M 930 260 L 1195 282" fill="none" stroke="#059669" stroke-width="4" marker-end="url(#arrow-system-context-data)"/><rect x="967.3" y="237" width="190.4" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="1062.5" y="259" text-anchor="middle" fill="#065F46" font-family="Arial, sans-serif" font-size="16" font-weight="700">Auth / history</text></g><g><path d="M 930 572 L 1195 462" fill="none" stroke="#EA580C" stroke-width="4" marker-end="url(#arrow-system-context-external)"/><rect x="1010" y="526" width="110" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="1065" y="548" text-anchor="middle" fill="#7C2D12" font-family="Arial, sans-serif" font-size="16" font-weight="700">image[]</text></g><g><path d="M 1100 420 L 1140 420 L 1140 635 L 1195 635" fill="none" stroke="#EA580C" stroke-width="4" marker-end="url(#arrow-system-context-external)"/><rect x="1105" y="590" width="110" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="1160" y="612" text-anchor="middle" fill="#7C2D12" font-family="Arial, sans-serif" font-size="16" font-weight="700">Bot API</text></g></g>
+  <g><rect x="60" y="822" width="28" height="28" rx="8" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="2" /><text x="100" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Đã triển khai</text><rect x="265" y="822" width="28" height="28" rx="8" fill="#F8FAFC" stroke="#64748B" stroke-width="2" /><text x="305" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Suy ra từ source</text><rect x="503" y="822" width="28" height="28" rx="8" fill="#FEF2F2" stroke="#DC2626" stroke-width="2" /><text x="543" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Gap / rủi ro</text><rect x="697" y="822" width="28" height="28" rx="8" fill="#F0FDFA" stroke="#0D9488" stroke-width="2" /><text x="737" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Khuyến nghị</text></g>
+</svg>

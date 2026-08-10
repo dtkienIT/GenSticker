@@ -16,10 +16,26 @@ interface AuthApiResponse {
 }
 
 export class AuthService {
+  private static isTokenExpired(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      // exp is in seconds, Date.now() is in milliseconds
+      return payload.exp * 1000 < Date.now();
+    } catch {
+      return true; // Treat malformed tokens as expired
+    }
+  }
+
   static getCurrentUser(): User | null {
     try {
       const stored = localStorage.getItem(STORAGE_KEY_USER);
-      if (stored) {
+      const token = localStorage.getItem(STORAGE_KEY_TOKEN);
+      if (stored && token) {
+        if (AuthService.isTokenExpired(token)) {
+          console.info('[Auth] Session expired, clearing stored credentials.');
+          AuthService.logout();
+          return null;
+        }
         return JSON.parse(stored) as User;
       }
     } catch (e) {

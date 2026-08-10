@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <filter id="shadow-risk-control-map" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0F172A" flood-opacity="0.10"/></filter>
+    <marker id="arrow-risk-control-map-client" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0891B2"/></marker><marker id="arrow-risk-control-map-frontend" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5B3DF5"/></marker><marker id="arrow-risk-control-map-backend" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#DB2777"/></marker><marker id="arrow-risk-control-map-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#059669"/></marker><marker id="arrow-risk-control-map-external" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#EA580C"/></marker><marker id="arrow-risk-control-map-quality" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0D9488"/></marker><marker id="arrow-risk-control-map-risk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#DC2626"/></marker><marker id="arrow-risk-control-map-neutral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748B"/></marker><marker id="arrow-risk-control-map-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0F172A"/></marker>
+  </defs>
+  <rect width="1600" height="900" rx="36" fill="#FFFFFF"/>
+  <rect x="0" y="0" width="1600" height="112" rx="36" fill="#0F172A"/>
+  <rect x="0" y="76" width="1600" height="36" fill="#0F172A"/>
+  <circle cx="62" cy="55" r="22" fill="#5B3DF5"/>
+  <text x="62" y="63" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="20" font-weight="800">11</text>
+  <text x="102" y="50" text-anchor="start" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="34" font-weight="800">Security &amp; operations control map</text>
+  <text x="103" y="82" text-anchor="start" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="18" font-weight="500">Các trust boundary có dữ liệu chân dung, token hoặc quyền service-role</text>
+  <g filter="url(#shadow-risk-control-map)"><g><rect x="55" y="155" width="1490" height="580" rx="26" fill="#FEF2F2" fill-opacity="0.55" stroke="#DC2626" stroke-width="2" /><text x="79" y="192" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="21" font-weight="800">Trust boundaries</text></g><g>
+    <rect x="85" y="220" width="260" height="150" rx="24" fill="#ECFEFF" stroke="#0891B2" stroke-width="3"/>
+
+    <text x="107" y="263" text-anchor="start" fill="#164E63" font-family="Arial, sans-serif" font-size="27" font-weight="800">TB-0 Browser</text>
+    <text x="107" y="301" text-anchor="start" fill="#164E63" font-family="Arial, sans-serif" font-size="17" font-weight="500"><tspan x="107" dy="0">selfie · JWT localStorage</tspan><tspan x="107" dy="26">base64 sticker export</tspan></text>
+  </g><g>
+    <rect x="430" y="220" width="280" height="150" rx="24" fill="#FDF2F8" stroke="#DB2777" stroke-width="3"/>
+
+    <text x="452" y="263" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="27" font-weight="800">TB-2 FastAPI</text>
+    <text x="452" y="301" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="17" font-weight="500"><tspan x="452" dy="0">API keys · service-role</tspan><tspan x="452" dy="26">RAM/temp artifacts</tspan></text>
+  </g><g>
+    <rect x="795" y="220" width="280" height="150" rx="24" fill="#ECFDF5" stroke="#059669" stroke-width="3"/>
+
+    <text x="817" y="263" text-anchor="start" fill="#065F46" font-family="Arial, sans-serif" font-size="27" font-weight="800">TB-3 Supabase</text>
+    <text x="817" y="301" text-anchor="start" fill="#065F46" font-family="Arial, sans-serif" font-size="17" font-weight="500"><tspan x="817" dy="0">Auth · public URLs</tspan><tspan x="817" dy="26">external RLS state</tspan></text>
+  </g><g>
+    <rect x="1160" y="220" width="335" height="150" rx="24" fill="#FFF7ED" stroke="#EA580C" stroke-width="3"/>
+
+    <text x="1182" y="263" text-anchor="start" fill="#7C2D12" font-family="Arial, sans-serif" font-size="27" font-weight="800">TB-4/5 Providers</text>
+    <text x="1182" y="301" text-anchor="start" fill="#7C2D12" font-family="Arial, sans-serif" font-size="17" font-weight="500"><tspan x="1182" dy="0">Image API receives portrait refs</tspan><tspan x="1182" dy="26">Telegram/QR receives pack/deep link</tspan></text>
+  </g><g><path d="M 345 295 L 430 295" fill="none" stroke="#DC2626" stroke-width="4" marker-end="url(#arrow-risk-control-map-risk)"/><rect x="305.9" y="261" width="163.2" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="387.5" y="283" text-anchor="middle" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="16" font-weight="700">JWT + upload</text></g><g><path d="M 710 295 L 795 295" fill="none" stroke="#DC2626" stroke-width="4" marker-end="url(#arrow-risk-control-map-risk)"/><rect x="670.9" y="261" width="163.2" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="752.5" y="283" text-anchor="middle" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="16" font-weight="700">service-role</text></g><g><path d="M 1075 295 L 1160 295" fill="none" stroke="#DC2626" stroke-width="4" marker-end="url(#arrow-risk-control-map-risk)"/><rect x="1015.5" y="261" width="204" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="1117.5" y="283" text-anchor="middle" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="16" font-weight="700">portrait/export</text></g><g>
+    <rect x="85" y="465" width="300" height="170" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
+
+    <text x="107" y="508" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">P0 controls</text>
+    <text x="107" y="546" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="16" font-weight="500"><tspan x="107" dy="0">remove tracked user/base64</tspan><tspan x="107" dy="25">data from Git</tspan><tspan x="107" dy="25">remove/rotate demo credential</tspan><tspan x="107" dy="25">bound/auth Telegram export</tspan></text>
+  </g><g>
+    <rect x="465" y="465" width="300" height="170" rx="24" fill="#ECFDF5" stroke="#059669" stroke-width="3"/>
+
+    <text x="487" y="508" text-anchor="start" fill="#065F46" font-family="Arial, sans-serif" font-size="27" font-weight="800">P1 data controls</text>
+    <text x="487" y="546" text-anchor="start" fill="#065F46" font-family="Arial, sans-serif" font-size="16" font-weight="500"><tspan x="487" dy="0">private bucket + signed URL</tspan><tspan x="487" dy="25">retention/delete selfie</tspan><tspan x="487" dy="25">retention/delete outputs</tspan><tspan x="487" dy="25">versioned schema/RLS tests</tspan></text>
+  </g><g>
+    <rect x="845" y="465" width="300" height="170" rx="24" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
+
+    <text x="867" y="508" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="27" font-weight="800">P1 runtime controls</text>
+    <text x="867" y="546" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="16" font-weight="500"><tspan x="867" dy="0">durable job queue/store</tspan><tspan x="867" dy="25">multi-worker safe</tspan><tspan x="867" dy="25">pending store</tspan><tspan x="867" dy="25">structured redacted errors</tspan></text>
+  </g><g>
+    <rect x="1225" y="465" width="270" height="170" rx="24" fill="#F8FAFC" stroke="#64748B" stroke-width="3"/>
+
+    <text x="1247" y="508" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="27" font-weight="800">P2 assurance</text>
+    <text x="1247" y="546" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="17" font-weight="500"><tspan x="1247" dy="0">cost/latency telemetry</tspan><tspan x="1247" dy="26">security fuzz + audit</tspan><tspan x="1247" dy="26">incident/runbook drills</tspan></text>
+  </g></g>
+  <g><rect x="60" y="822" width="28" height="28" rx="8" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="2" /><text x="100" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Đã triển khai</text><rect x="265" y="822" width="28" height="28" rx="8" fill="#F8FAFC" stroke="#64748B" stroke-width="2" /><text x="305" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Suy ra từ source</text><rect x="503" y="822" width="28" height="28" rx="8" fill="#FEF2F2" stroke="#DC2626" stroke-width="2" /><text x="543" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Gap / rủi ro</text><rect x="697" y="822" width="28" height="28" rx="8" fill="#F0FDFA" stroke="#0D9488" stroke-width="2" /><text x="737" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Khuyến nghị</text></g>
+</svg>

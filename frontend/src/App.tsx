@@ -8,6 +8,7 @@ import { StickerGrid } from './components/gallery/StickerGrid';
 import { GenerationComparison } from './components/gallery/GenerationComparison';
 import { AuthModal } from './components/auth/AuthModal';
 import { HistoryModal } from './components/history/HistoryModal';
+import { DocumentationPage } from './components/docs/DocumentationPage';
 import { useStickerGenerator } from './hooks/useStickerGenerator';
 import { useAuth } from './hooks/useAuth';
 import { useTheme } from './hooks/useTheme';
@@ -17,13 +18,15 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export function App() {
   const { theme, toggleTheme } = useTheme();
+  const [activeView, setActiveView] = useState<'generator' | 'docs'>(() => (
+    window.location.hash === '#tai-lieu' ? 'docs' : 'generator'
+  ));
 
   const {
     state,
     setSelectedStyle,
     startGeneration,
     loadStickerPack,
-    retryGeneration,
     resetGenerator,
     toggleFavorite,
   } = useStickerGenerator();
@@ -33,10 +36,23 @@ export function App() {
   const [isHistoryLoading, setIsHistoryLoading] = useState<boolean>(false);
   const historyRequestIdRef = useRef(0);
 
-  // Scroll to top of window whenever page view state changes (idle, processing, completed, error)
+  useEffect(() => {
+    const syncViewWithLocation = () => {
+      setActiveView(window.location.hash === '#tai-lieu' ? 'docs' : 'generator');
+    };
+
+    window.addEventListener('hashchange', syncViewWithLocation);
+    window.addEventListener('popstate', syncViewWithLocation);
+    return () => {
+      window.removeEventListener('hashchange', syncViewWithLocation);
+      window.removeEventListener('popstate', syncViewWithLocation);
+    };
+  }, []);
+
+  // Scroll to top whenever the generator state or top-level view changes.
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [state.status]);
+  }, [activeView, state.status]);
 
   const {
     user,
@@ -94,12 +110,38 @@ export function App() {
 
   const handleSelectHistoryPack = (stickers: StickerItem[]) => {
     loadStickerPack(stickers);
+    // Switch to generator view if currently on docs page
+    if (activeView !== 'generator') {
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+      setActiveView('generator');
+    }
   };
 
   const handleDeleteHistoryPack = async (packId: string) => {
     await StickerService.deleteHistoryPack(packId);
     setHistoryPacks((packs) => packs.filter((pack) => pack.id !== packId));
   };
+
+  const openDocumentation = useCallback(() => {
+    if (window.location.hash !== '#tai-lieu') {
+      window.location.hash = 'tai-lieu';
+      return;
+    }
+    setActiveView('docs');
+  }, []);
+
+  const closeDocumentation = useCallback(() => {
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    setActiveView('generator');
+  }, []);
+
+  const handleReset = useCallback(() => {
+    if (window.location.hash === '#tai-lieu') {
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+      setActiveView('generator');
+    }
+    resetGenerator();
+  }, [resetGenerator]);
 
   return (
     <div className="app-shell">
@@ -112,7 +154,9 @@ export function App() {
         onToggleTheme={toggleTheme}
         onOpenAuth={openAuthModal}
         onLogout={handleLogout}
-        onReset={resetGenerator} 
+        onReset={handleReset}
+        onOpenDocs={openDocumentation}
+        isDocsActive={activeView === 'docs'}
         onOpenHistory={() => {
           if (!isAuthenticated) {
             openAuthModal('login');
@@ -126,9 +170,12 @@ export function App() {
 
       {/* Main Container */}
       <main className="main-content">
-        
+        {activeView === 'docs' && (
+          <DocumentationPage onBack={closeDocumentation} />
+        )}
+
         {/* State: Idle (Upload & Configuration) */}
-        {state.status === 'idle' && (
+        {activeView === 'generator' && state.status === 'idle' && (
           <ImageUploader 
             onStartGeneration={startGeneration}
             selectedStyle={state.selectedStyle}
@@ -139,21 +186,21 @@ export function App() {
         )}
 
         {/* State: Processing (AI Pipeline in Progress) */}
-        {state.status === 'processing' && (
+        {activeView === 'generator' && state.status === 'processing' && (
           <ProcessingPipeline state={state} />
         )}
 
         {/* State: Completed (20 Stickers Grid Gallery) */}
-        {state.status === 'completed' && (
+        {activeView === 'generator' && state.status === 'completed' && (
           <StickerGrid
             state={state}
-            onReset={resetGenerator}
+            onReset={handleReset}
             onToggleFavorite={toggleFavorite}
           />
         )}
 
         {/* State: Error */}
-        {state.status === 'error' && (
+        {activeView === 'generator' && state.status === 'error' && (
           <div className="glass-panel" style={{ maxWidth: state.qualityStatus === 'rejected' && state.previewImageUrl ? '1100px' : '600px', margin: '60px auto', padding: '40px', textAlign: 'center' }}>
             <div style={{
               width: '64px',
@@ -187,7 +234,7 @@ export function App() {
             )}
 
             <button
-              onClick={state.qualityStatus === 'rejected' && state.jobId ? retryGeneration : resetGenerator}
+              onClick={handleReset}
               className="btn-primary"
               style={{ marginTop: '24px' }}
             >

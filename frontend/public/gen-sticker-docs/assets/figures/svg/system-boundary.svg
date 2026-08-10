@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <filter id="shadow-system-boundary" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0F172A" flood-opacity="0.10"/></filter>
+    <marker id="arrow-system-boundary-client" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0891B2"/></marker><marker id="arrow-system-boundary-frontend" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5B3DF5"/></marker><marker id="arrow-system-boundary-backend" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#DB2777"/></marker><marker id="arrow-system-boundary-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#059669"/></marker><marker id="arrow-system-boundary-external" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#EA580C"/></marker><marker id="arrow-system-boundary-quality" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0D9488"/></marker><marker id="arrow-system-boundary-risk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#DC2626"/></marker><marker id="arrow-system-boundary-neutral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748B"/></marker><marker id="arrow-system-boundary-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0F172A"/></marker>
+  </defs>
+  <rect width="1600" height="900" rx="36" fill="#FFFFFF"/>
+  <rect x="0" y="0" width="1600" height="112" rx="36" fill="#0F172A"/>
+  <rect x="0" y="76" width="1600" height="36" fill="#0F172A"/>
+  <circle cx="62" cy="55" r="22" fill="#5B3DF5"/>
+  <text x="62" y="63" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="20" font-weight="800">03</text>
+  <text x="102" y="50" text-anchor="start" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="34" font-weight="800">Ranh giới hệ thống và actor</text>
+  <text x="103" y="82" text-anchor="start" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="18" font-weight="500">Những gì thuộc GenSticker, những gì do nền tảng bên ngoài quản lý</text>
+  <g filter="url(#shadow-system-boundary)"><g><rect x="360" y="160" width="830" height="560" rx="26" fill="#EEF2FF" fill-opacity="0.55" stroke="#5B3DF5" stroke-width="2" /><text x="384" y="197" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="21" font-weight="800">GENSTICKER — code trong repository</text></g><g>
+    <rect x="55" y="265" width="250" height="150" rx="24" fill="#ECFEFF" stroke="#0891B2" stroke-width="3"/>
+
+    <text x="77" y="308" text-anchor="start" fill="#164E63" font-family="Arial, sans-serif" font-size="27" font-weight="800">Người dùng</text>
+    <text x="77" y="346" text-anchor="start" fill="#164E63" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="77" dy="0">Upload chân dung</tspan><tspan x="77" dy="29">xem / tải / export</tspan></text>
+  </g><g>
+    <rect x="55" y="485" width="250" height="145" rx="24" fill="#F8FAFC" stroke="#64748B" stroke-width="3"/>
+
+    <text x="77" y="528" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="27" font-weight="800">Nhà vận hành</text>
+    <text x="77" y="566" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="77" dy="0">Cấu hình secrets</tspan><tspan x="77" dy="29">theo dõi lỗi / chi phí</tspan></text>
+  </g><g>
+    <rect x="415" y="240" width="300" height="155" rx="24" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="3"/>
+
+    <text x="437" y="283" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="27" font-weight="800">React + Vite</text>
+    <text x="437" y="321" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="437" dy="0">Auth · upload · state</tspan><tspan x="437" dy="29">polling · gallery · docs</tspan></text>
+  </g><g>
+    <rect x="835" y="240" width="300" height="155" rx="24" fill="#FDF2F8" stroke="#DB2777" stroke-width="3"/>
+
+    <text x="857" y="283" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="27" font-weight="800">FastAPI</text>
+    <text x="857" y="321" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="857" dy="0">JWT owner guard</tspan><tspan x="857" dy="29">job orchestration · API</tspan></text>
+  </g><g>
+    <rect x="625" y="500" width="300" height="150" rx="24" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
+
+    <text x="647" y="543" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="27" font-weight="800">Generation core</text>
+    <text x="647" y="581" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="647" dy="0">canonical · 3 sheets</tspan><tspan x="647" dy="29">grid gate · postprocess</tspan></text>
+  </g><g>
+    <rect x="1240" y="170" width="300" height="130" rx="24" fill="#ECFDF5" stroke="#059669" stroke-width="3"/>
+
+    <text x="1262" y="213" text-anchor="start" fill="#065F46" font-family="Arial, sans-serif" font-size="27" font-weight="800">Supabase</text>
+    <text x="1262" y="251" text-anchor="start" fill="#065F46" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1262" dy="0">Auth · Storage · data</tspan></text>
+  </g><g>
+    <rect x="1240" y="360" width="300" height="130" rx="24" fill="#FFF7ED" stroke="#EA580C" stroke-width="3"/>
+
+    <text x="1262" y="403" text-anchor="start" fill="#7C2D12" font-family="Arial, sans-serif" font-size="27" font-weight="800">Image API</text>
+    <text x="1262" y="441" text-anchor="start" fill="#7C2D12" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1262" dy="0">OpenAI-compatible edits</tspan><tspan x="1262" dy="29">nhận selfie/reference</tspan></text>
+  </g><g>
+    <rect x="1240" y="550" width="300" height="130" rx="24" fill="#FFF7ED" stroke="#EA580C" stroke-width="3"/>
+
+    <text x="1262" y="593" text-anchor="start" fill="#7C2D12" font-family="Arial, sans-serif" font-size="27" font-weight="800">Telegram + QR</text>
+    <text x="1262" y="631" text-anchor="start" fill="#7C2D12" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1262" dy="0">pending pack · Bot API</tspan><tspan x="1262" dy="29">dịch vụ QR ngoài</tspan></text>
+  </g><g><path d="M 305 340 L 415 315" fill="none" stroke="#0891B2" stroke-width="4" marker-end="url(#arrow-system-boundary-client)"/><rect x="305" y="293.5" width="110" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="360" y="315.5" text-anchor="middle" fill="#164E63" font-family="Arial, sans-serif" font-size="16" font-weight="700">UI</text></g><g><path d="M 715 315 L 835 315" fill="none" stroke="#5B3DF5" stroke-width="4" marker-end="url(#arrow-system-boundary-frontend)"/><rect x="707" y="281" width="136" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="775" y="303" text-anchor="middle" fill="#312E81" font-family="Arial, sans-serif" font-size="16" font-weight="700">REST + JWT</text></g><g><path d="M 985 395 L 865 500" fill="none" stroke="#DB2777" stroke-width="4" marker-end="url(#arrow-system-boundary-backend)"/><rect x="863.8" y="413.5" width="122.39999999999999" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="925" y="435.5" text-anchor="middle" fill="#831843" font-family="Arial, sans-serif" font-size="16" font-weight="700">điều phối</text></g><g><path d="M 1135 280 L 1240 235" fill="none" stroke="#059669" stroke-width="4" marker-end="url(#arrow-system-boundary-data)"/><rect x="1126.3" y="223.5" width="122.39999999999999" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="1187.5" y="245.5" text-anchor="middle" fill="#065F46" font-family="Arial, sans-serif" font-size="16" font-weight="700">Auth/data</text></g><g><path d="M 1135 330 L 1240 425" fill="none" stroke="#EA580C" stroke-width="4" marker-end="url(#arrow-system-boundary-external)"/><rect x="1132.5" y="343.5" width="110" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="1187.5" y="365.5" text-anchor="middle" fill="#7C2D12" font-family="Arial, sans-serif" font-size="16" font-weight="700">image[]</text></g><g><path d="M 1135 365 L 1240 615" fill="none" stroke="#EA580C" stroke-width="4" marker-end="url(#arrow-system-boundary-external)"/><rect x="1132.5" y="456" width="110" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="1187.5" y="478" text-anchor="middle" fill="#7C2D12" font-family="Arial, sans-serif" font-size="16" font-weight="700">export</text></g><g><path d="M 180 485 L 180 415" fill="none" stroke="#64748B" stroke-width="4" marker-end="url(#arrow-system-boundary-neutral)"/><rect x="125" y="416" width="110" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="180" y="438" text-anchor="middle" fill="#0F172A" font-family="Arial, sans-serif" font-size="16" font-weight="700">vận hành</text></g></g>
+  <g><rect x="60" y="822" width="28" height="28" rx="8" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="2" /><text x="100" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Đã triển khai</text><rect x="265" y="822" width="28" height="28" rx="8" fill="#F8FAFC" stroke="#64748B" stroke-width="2" /><text x="305" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Suy ra từ source</text><rect x="503" y="822" width="28" height="28" rx="8" fill="#FEF2F2" stroke="#DC2626" stroke-width="2" /><text x="543" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Gap / rủi ro</text><rect x="697" y="822" width="28" height="28" rx="8" fill="#F0FDFA" stroke="#0D9488" stroke-width="2" /><text x="737" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Khuyến nghị</text></g>
+</svg>

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <filter id="shadow-roadmap-now-next-later" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0F172A" flood-opacity="0.10"/></filter>
+    <marker id="arrow-roadmap-now-next-later-client" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0891B2"/></marker><marker id="arrow-roadmap-now-next-later-frontend" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5B3DF5"/></marker><marker id="arrow-roadmap-now-next-later-backend" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#DB2777"/></marker><marker id="arrow-roadmap-now-next-later-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#059669"/></marker><marker id="arrow-roadmap-now-next-later-external" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#EA580C"/></marker><marker id="arrow-roadmap-now-next-later-quality" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0D9488"/></marker><marker id="arrow-roadmap-now-next-later-risk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#DC2626"/></marker><marker id="arrow-roadmap-now-next-later-neutral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748B"/></marker><marker id="arrow-roadmap-now-next-later-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0F172A"/></marker>
+  </defs>
+  <rect width="1600" height="900" rx="36" fill="#FFFFFF"/>
+  <rect x="0" y="0" width="1600" height="112" rx="36" fill="#0F172A"/>
+  <rect x="0" y="76" width="1600" height="36" fill="#0F172A"/>
+  <circle cx="62" cy="55" r="22" fill="#5B3DF5"/>
+  <text x="62" y="63" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="20" font-weight="800">05</text>
+  <text x="102" y="50" text-anchor="start" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="34" font-weight="800">Roadmap Now / Next / Later</text>
+  <text x="103" y="82" text-anchor="start" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="18" font-weight="500">Ưu tiên đề xuất từ source audit; không phải cam kết lịch phát hành</text>
+  <g filter="url(#shadow-roadmap-now-next-later)"><g><rect x="55" y="160" width="470" height="590" rx="26" fill="#FEF2F2" fill-opacity="0.55" stroke="#DC2626" stroke-width="2" /><text x="79" y="197" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="21" font-weight="800">NOW — giảm rủi ro dữ liệu</text></g><g><rect x="565" y="160" width="470" height="590" rx="26" fill="#EEF2FF" fill-opacity="0.55" stroke="#5B3DF5" stroke-width="2" /><text x="589" y="197" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="21" font-weight="800">NEXT — tăng độ bền</text></g><g><rect x="1075" y="160" width="470" height="590" rx="26" fill="#F0FDFA" fill-opacity="0.55" stroke="#0D9488" stroke-width="2" /><text x="1099" y="197" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="21" font-weight="800">LATER — tối ưu vận hành</text></g><g>
+    <rect x="85" y="230" width="410" height="125" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
+
+    <text x="107" y="273" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">P0 · Runtime data</text>
+    <text x="107" y="311" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="107" dy="0">Bỏ base64 user images khỏi Git</tspan><tspan x="107" dy="29">tách/purge pending Telegram data</tspan></text>
+  </g><g>
+    <rect x="85" y="385" width="410" height="125" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
+
+    <text x="107" y="428" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">P0 · Credentials</text>
+    <text x="107" y="466" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="107" dy="0">Bỏ demo credential hard-code</tspan><tspan x="107" dy="29">rotate và đưa vào controlled config</tspan></text>
+  </g><g>
+    <rect x="85" y="540" width="410" height="135" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
+
+    <text x="107" y="583" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">P1 · Privacy</text>
+    <text x="107" y="621" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="107" dy="0">Private bucket + signed URL</tspan><tspan x="107" dy="29">retention/delete selfie rõ ràng</tspan></text>
+  </g><g>
+    <rect x="595" y="230" width="410" height="125" rx="24" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="3"/>
+
+    <text x="617" y="273" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="27" font-weight="800">P1 · Durable jobs</text>
+    <text x="617" y="311" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="617" dy="0">Persist job state/artifacts</tspan><tspan x="617" dy="29">hỗ trợ multi-worker/restart</tspan></text>
+  </g><g>
+    <rect x="595" y="385" width="410" height="125" rx="24" fill="#ECFDF5" stroke="#059669" stroke-width="3"/>
+
+    <text x="617" y="428" text-anchor="start" fill="#065F46" font-family="Arial, sans-serif" font-size="27" font-weight="800">P1 · Schema + RLS</text>
+    <text x="617" y="466" text-anchor="start" fill="#065F46" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="617" dy="0">Version-control DDL/policies</tspan><tspan x="617" dy="29">FK + ownership integration tests</tspan></text>
+  </g><g>
+    <rect x="595" y="540" width="410" height="135" rx="24" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="3"/>
+
+    <text x="617" y="583" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="27" font-weight="800">P1 · Automated UX</text>
+    <text x="617" y="621" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="617" dy="0">Frontend unit/E2E</tspan><tspan x="617" dy="29">a11y + responsive regression</tspan></text>
+  </g><g>
+    <rect x="1105" y="230" width="410" height="125" rx="24" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
+
+    <text x="1127" y="273" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="27" font-weight="800">P2 · Observability</text>
+    <text x="1127" y="311" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1127" dy="0">request_id · latency · actual cost</tspan><tspan x="1127" dy="29">provider error dashboard</tspan></text>
+  </g><g>
+    <rect x="1105" y="385" width="410" height="125" rx="24" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
+
+    <text x="1127" y="428" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="27" font-weight="800">P2 · QA mở rộng</text>
+    <text x="1127" y="466" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1127" dy="0">identity/anatomy/OCR review</tspan><tspan x="1127" dy="29">real-provider contract canary</tspan></text>
+  </g><g>
+    <rect x="1105" y="540" width="410" height="135" rx="24" fill="#F8FAFC" stroke="#64748B" stroke-width="3"/>
+
+    <text x="1127" y="583" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="27" font-weight="800">P2 · Deprecations</text>
+    <text x="1127" y="621" text-anchor="start" fill="#0F172A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1127" dy="0">Pydantic/FastAPI/datetime</tspan><tspan x="1127" dy="29">docs drift + dead retry branch</tspan></text>
+  </g></g>
+  <g><rect x="60" y="822" width="28" height="28" rx="8" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="2" /><text x="100" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Đã triển khai</text><rect x="265" y="822" width="28" height="28" rx="8" fill="#F8FAFC" stroke="#64748B" stroke-width="2" /><text x="305" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Suy ra từ source</text><rect x="503" y="822" width="28" height="28" rx="8" fill="#FEF2F2" stroke="#DC2626" stroke-width="2" /><text x="543" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Gap / rủi ro</text><rect x="697" y="822" width="28" height="28" rx="8" fill="#F0FDFA" stroke="#0D9488" stroke-width="2" /><text x="737" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Khuyến nghị</text></g>
+</svg>
