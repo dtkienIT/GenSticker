@@ -1,30 +1,147 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
   <defs>
     <filter id="shadow-value-flow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0F172A" flood-opacity="0.10"/></filter>
-    <marker id="arrow-value-flow-client" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0891B2"/></marker><marker id="arrow-value-flow-frontend" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5B3DF5"/></marker><marker id="arrow-value-flow-backend" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#DB2777"/></marker><marker id="arrow-value-flow-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#059669"/></marker><marker id="arrow-value-flow-external" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#EA580C"/></marker><marker id="arrow-value-flow-quality" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0D9488"/></marker><marker id="arrow-value-flow-risk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#DC2626"/></marker><marker id="arrow-value-flow-neutral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748B"/></marker><marker id="arrow-value-flow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0F172A"/></marker>
+    <marker id="arrow-value-flow-client" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0891B2"/></marker>
+    <marker id="arrow-value-flow-frontend" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5B3DF5"/></marker>
+    <marker id="arrow-value-flow-backend" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#DB2777"/></marker>
+    <marker id="arrow-value-flow-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#059669"/></marker>
+    <marker id="arrow-value-flow-external" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#EA580C"/></marker>
+    <marker id="arrow-value-flow-quality" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0D9488"/></marker>
+    <marker id="arrow-value-flow-risk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#DC2626"/></marker>
+    <marker id="arrow-value-flow-neutral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748B"/></marker>
+    <marker id="arrow-value-flow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0F172A"/></marker>
   </defs>
+
+  <!-- Background -->
   <rect width="1600" height="900" rx="36" fill="#FFFFFF"/>
+
+  <!-- Header bar -->
   <rect x="0" y="0" width="1600" height="112" rx="36" fill="#0F172A"/>
   <rect x="0" y="76" width="1600" height="36" fill="#0F172A"/>
   <circle cx="62" cy="55" r="22" fill="#5B3DF5"/>
-  <text x="62" y="63" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="20" font-weight="800">01</text>
-  <text x="102" y="50" text-anchor="start" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="34" font-weight="800">Dòng giá trị của GenSticker</text>
-  <text x="103" y="82" text-anchor="start" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="18" font-weight="500">Từ ảnh chân dung qua gate đúng một khuôn mặt đến bộ 20 sticker</text>
-  <g filter="url(#shadow-value-flow)"><g><rect x="45" y="142" width="1510" height="610" rx="26" fill="#EEF2FF" fill-opacity="0.55" stroke="#5B3DF5" stroke-width="2" /><text x="69" y="179" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="21" font-weight="800">Phạm vi MVP đang chạy</text></g><g><rect x="60" y="215" width="225" height="120" rx="22" fill="#ECFEFF" stroke="#0891B2" stroke-width="3"/><circle cx="102" cy="253" r="24" fill="#0891B2"/><text x="102" y="261" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="19" font-weight="800">1</text><text x="138" y="258" text-anchor="start" fill="#164E63" font-family="Arial, sans-serif" font-size="23" font-weight="800">Chọn ảnh</text><text x="84" y="296" text-anchor="start" fill="#164E63" font-family="Arial, sans-serif" font-size="17" font-weight="500"><tspan x="84" dy="0">JPEG · PNG · WebP</tspan><tspan x="84" dy="23">≤15 MiB</tspan></text></g><g><path d="M 285 275 L 315 275" fill="none" stroke="#5B3DF5" stroke-width="4" marker-end="url(#arrow-value-flow-frontend)"/></g><g><rect x="315" y="215" width="225" height="120" rx="22" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/><circle cx="357" cy="253" r="24" fill="#0D9488"/><text x="357" y="261" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="19" font-weight="800">2</text><text x="393" y="258" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="23" font-weight="800">Gate 1 mặt</text><text x="339" y="296" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="17" font-weight="500"><tspan x="339" dy="0">MediaPipe CPU/WASM</tspan><tspan x="339" dy="23">faceCount === 1</tspan></text></g><g><path d="M 540 275 L 570 275" fill="none" stroke="#0D9488" stroke-width="4" marker-end="url(#arrow-value-flow-quality)"/><rect x="500" y="241" width="110" height="32" rx="16" fill="#FFFFFF" opacity="0.96"/><text x="555" y="263" text-anchor="middle" fill="#134E4A" font-family="Arial, sans-serif" font-size="16" font-weight="700">PASS</text></g><g><rect x="570" y="215" width="225" height="120" rx="22" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="3"/><circle cx="612" cy="253" r="24" fill="#5B3DF5"/><text x="612" y="261" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="19" font-weight="800">3</text><text x="648" y="258" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="23" font-weight="800">Khóa nhận diện</text><text x="594" y="296" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="17" font-weight="500"><tspan x="594" dy="0">Selfie → canonical</tspan><tspan x="594" dy="23">1 image edit call</tspan></text></g><g><path d="M 795 275 L 825 275" fill="none" stroke="#DB2777" stroke-width="4" marker-end="url(#arrow-value-flow-backend)"/></g><g><rect x="825" y="215" width="225" height="120" rx="22" fill="#FDF2F8" stroke="#DB2777" stroke-width="3"/><circle cx="867" cy="253" r="24" fill="#DB2777"/><text x="867" y="261" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="19" font-weight="800">4</text><text x="903" y="258" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="23" font-weight="800">Sinh biểu cảm</text><text x="849" y="296" text-anchor="start" fill="#831843" font-family="Arial, sans-serif" font-size="17" font-weight="500"><tspan x="849" dy="0">3 sheet 4×2</tspan><tspan x="849" dy="23">8 + 8 + 4</tspan></text></g><g><path d="M 1050 275 L 1080 275" fill="none" stroke="#0D9488" stroke-width="4" marker-end="url(#arrow-value-flow-quality)"/></g><g><rect x="1080" y="215" width="225" height="120" rx="22" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/><circle cx="1122" cy="253" r="24" fill="#0D9488"/><text x="1122" y="261" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="19" font-weight="800">5</text><text x="1158" y="258" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="23" font-weight="800">QA + cắt</text><text x="1104" y="296" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="17" font-weight="500"><tspan x="1104" dy="0">Gutter · occupancy</tspan><tspan x="1104" dy="23">20 PNG 512px</tspan></text></g><g><path d="M 1305 275 L 1335 275" fill="none" stroke="#059669" stroke-width="4" marker-end="url(#arrow-value-flow-data)"/></g><g><rect x="1335" y="215" width="205" height="120" rx="22" fill="#ECFDF5" stroke="#059669" stroke-width="3"/><circle cx="1377" cy="253" r="24" fill="#059669"/><text x="1377" y="261" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="19" font-weight="800">6</text><text x="1413" y="258" text-anchor="start" fill="#065F46" font-family="Arial, sans-serif" font-size="23" font-weight="800">Sử dụng</text><text x="1359" y="296" text-anchor="start" fill="#065F46" font-family="Arial, sans-serif" font-size="17" font-weight="500"><tspan x="1359" dy="0">Gallery · ZIP</tspan><tspan x="1359" dy="23">History · Bot</tspan></text></g><g>
-    <rect x="90" y="455" width="420" height="180" rx="24" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
+  <text x="62" y="63" text-anchor="middle" fill="#FFFFFF" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="20" font-weight="800">01</text>
+  <text x="102" y="50" text-anchor="start" fill="#FFFFFF" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="34" font-weight="800">Dòng giá trị của GenSticker</text>
+  <text x="103" y="82" text-anchor="start" fill="#CBD5E1" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="18" font-weight="500">Từ ảnh chân dung qua gate đúng một khuôn mặt đến bộ 20 sticker</text>
 
-    <text x="112" y="498" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="27" font-weight="800">Gate miễn phí</text>
-    <text x="112" y="536" text-anchor="start" fill="#134E4A" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="112" dy="0">Chạy cục bộ trên CPU thiết bị</tspan><tspan x="112" dy="29">không GPU server · không paid vision API</tspan><tspan x="112" dy="29">0 hoặc &gt;1 mặt → không POST.</tspan></text>
-  </g><g>
-    <rect x="590" y="455" width="420" height="180" rx="24" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="3"/>
+  <!-- ═══════════ MVP Scope Container ═══════════ -->
+  <g filter="url(#shadow-value-flow)">
+    <rect x="40" y="142" width="1520" height="620" rx="26" fill="#EEF2FF" fill-opacity="0.55" stroke="#5B3DF5" stroke-width="2"/>
+    <text x="64" y="179" text-anchor="start" fill="#312E81" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="21" font-weight="800">Phạm vi MVP đang chạy</text>
 
-    <text x="612" y="498" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="27" font-weight="800">Trust boundary</text>
-    <text x="612" y="536" text-anchor="start" fill="#312E81" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="612" dy="0">Model TFLite cùng origin</tspan><tspan x="612" dy="29">WASM runtime tải từ CDN</tspan><tspan x="612" dy="29">ảnh không rời thiết bị khi preflight.</tspan></text>
-  </g><g>
-    <rect x="1090" y="455" width="420" height="180" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
+    <!-- ═══════════ Step 1: Chọn ảnh ═══════════ -->
+    <rect x="55" y="210" width="236" height="130" rx="22" fill="#ECFEFF" stroke="#0891B2" stroke-width="3"/>
+    <circle cx="97" cy="252" r="24" fill="#0891B2"/>
+    <text x="97" y="260" text-anchor="middle" fill="#FFFFFF" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="19" font-weight="800">1</text>
+    <text x="133" y="256" text-anchor="start" fill="#164E63" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="19" font-weight="800">Chọn ảnh</text>
+    <text x="79" y="294" text-anchor="start" fill="#164E63" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="15" font-weight="500">
+      <tspan x="79" dy="0">JPEG · PNG · WebP</tspan>
+      <tspan x="79" dy="22">≤15 MiB</tspan>
+    </text>
 
-    <text x="1112" y="498" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="27" font-weight="800">Giới hạn</text>
-    <text x="1112" y="536" text-anchor="start" fill="#7F1D1D" font-family="Arial, sans-serif" font-size="20" font-weight="500"><tspan x="1112" dy="0">Client gate có thể bị direct API bypass</tspan><tspan x="1112" dy="29">không chứng minh identity/liveness</tspan><tspan x="1112" dy="29">ảnh pass vẫn sang provider khi Generate.</tspan></text>
-  </g></g>
-  <g><rect x="60" y="822" width="28" height="28" rx="8" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="2" /><text x="100" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Đã triển khai</text><rect x="265" y="822" width="28" height="28" rx="8" fill="#F8FAFC" stroke="#64748B" stroke-width="2" /><text x="305" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Suy ra từ source</text><rect x="503" y="822" width="28" height="28" rx="8" fill="#FEF2F2" stroke="#DC2626" stroke-width="2" /><text x="543" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Gap / rủi ro</text><rect x="697" y="822" width="28" height="28" rx="8" fill="#F0FDFA" stroke="#0D9488" stroke-width="2" /><text x="737" y="843" text-anchor="start" fill="#475569" font-family="Arial, sans-serif" font-size="17" font-weight="600">Khuyến nghị</text></g>
+    <!-- Arrow 1→2 -->
+    <path d="M 291 275 L 313 275" fill="none" stroke="#5B3DF5" stroke-width="4" marker-end="url(#arrow-value-flow-frontend)"/>
+
+    <!-- ═══════════ Step 2: Gate 1 mặt ═══════════ -->
+    <rect x="313" y="210" width="236" height="130" rx="22" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
+    <circle cx="355" cy="252" r="24" fill="#0D9488"/>
+    <text x="355" y="260" text-anchor="middle" fill="#FFFFFF" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="19" font-weight="800">2</text>
+    <text x="391" y="256" text-anchor="start" fill="#134E4A" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="19" font-weight="800">Gate 1 mặt</text>
+    <text x="337" y="294" text-anchor="start" fill="#134E4A" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="15" font-weight="500">
+      <tspan x="337" dy="0">MediaPipe CPU/WASM</tspan>
+      <tspan x="337" dy="22">faceCount === 1</tspan>
+    </text>
+
+    <!-- Arrow 2→3 with PASS label -->
+    <path d="M 549 275 L 571 275" fill="none" stroke="#0D9488" stroke-width="4" marker-end="url(#arrow-value-flow-quality)"/>
+    <rect x="533" y="246" width="56" height="26" rx="13" fill="#FFFFFF" opacity="0.96"/>
+    <text x="561" y="264" text-anchor="middle" fill="#134E4A" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="14" font-weight="700">PASS</text>
+
+    <!-- ═══════════ Step 3: Khóa nhận diện ═══════════ -->
+    <rect x="571" y="210" width="236" height="130" rx="22" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="3"/>
+    <circle cx="613" cy="252" r="24" fill="#5B3DF5"/>
+    <text x="613" y="260" text-anchor="middle" fill="#FFFFFF" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="19" font-weight="800">3</text>
+    <text x="649" y="256" text-anchor="start" fill="#312E81" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="19" font-weight="800">Khóa nhận diện</text>
+    <text x="595" y="294" text-anchor="start" fill="#312E81" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="15" font-weight="500">
+      <tspan x="595" dy="0">Selfie → canonical</tspan>
+      <tspan x="595" dy="22">1 image edit call</tspan>
+    </text>
+
+    <!-- Arrow 3→4 -->
+    <path d="M 807 275 L 829 275" fill="none" stroke="#DB2777" stroke-width="4" marker-end="url(#arrow-value-flow-backend)"/>
+
+    <!-- ═══════════ Step 4: Sinh biểu cảm ═══════════ -->
+    <rect x="829" y="210" width="236" height="130" rx="22" fill="#FDF2F8" stroke="#DB2777" stroke-width="3"/>
+    <circle cx="871" cy="252" r="24" fill="#DB2777"/>
+    <text x="871" y="260" text-anchor="middle" fill="#FFFFFF" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="19" font-weight="800">4</text>
+    <text x="907" y="256" text-anchor="start" fill="#831843" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="19" font-weight="800">Sinh biểu cảm</text>
+    <text x="853" y="294" text-anchor="start" fill="#831843" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="15" font-weight="500">
+      <tspan x="853" dy="0">3 sheet 4×2</tspan>
+      <tspan x="853" dy="22">8 + 8 + 4</tspan>
+    </text>
+
+    <!-- Arrow 4→5 -->
+    <path d="M 1065 275 L 1087 275" fill="none" stroke="#0D9488" stroke-width="4" marker-end="url(#arrow-value-flow-quality)"/>
+
+    <!-- ═══════════ Step 5: QA + cắt ═══════════ -->
+    <rect x="1087" y="210" width="236" height="130" rx="22" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
+    <circle cx="1129" cy="252" r="24" fill="#0D9488"/>
+    <text x="1129" y="260" text-anchor="middle" fill="#FFFFFF" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="19" font-weight="800">5</text>
+    <text x="1165" y="256" text-anchor="start" fill="#134E4A" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="19" font-weight="800">QA + cắt</text>
+    <text x="1111" y="294" text-anchor="start" fill="#134E4A" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="15" font-weight="500">
+      <tspan x="1111" dy="0">Gutter · occupancy</tspan>
+      <tspan x="1111" dy="22">20 PNG 512px</tspan>
+    </text>
+
+    <!-- Arrow 5→6 -->
+    <path d="M 1323 275 L 1345 275" fill="none" stroke="#059669" stroke-width="4" marker-end="url(#arrow-value-flow-data)"/>
+
+    <!-- ═══════════ Step 6: Sử dụng ═══════════ -->
+    <rect x="1345" y="210" width="200" height="130" rx="22" fill="#ECFDF5" stroke="#059669" stroke-width="3"/>
+    <circle cx="1387" cy="252" r="24" fill="#059669"/>
+    <text x="1387" y="260" text-anchor="middle" fill="#FFFFFF" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="19" font-weight="800">6</text>
+    <text x="1423" y="256" text-anchor="start" fill="#065F46" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="19" font-weight="800">Sử dụng</text>
+    <text x="1369" y="294" text-anchor="start" fill="#065F46" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="15" font-weight="500">
+      <tspan x="1369" dy="0">Gallery · ZIP</tspan>
+      <tspan x="1369" dy="22">History · Bot</tspan>
+    </text>
+
+    <!-- ═══════════ Bottom Info Box: Gate miễn phí ═══════════ -->
+    <rect x="55" y="460" width="460" height="180" rx="24" fill="#F0FDFA" stroke="#0D9488" stroke-width="3"/>
+    <text x="80" y="503" text-anchor="start" fill="#134E4A" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="24" font-weight="800">Gate miễn phí</text>
+    <text x="80" y="538" text-anchor="start" fill="#134E4A" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="17" font-weight="500">
+      <tspan x="80" dy="0">Chạy cục bộ trên CPU thiết bị</tspan>
+      <tspan x="80" dy="27">không GPU server · không paid vision API</tspan>
+      <tspan x="80" dy="27">0 hoặc &gt;1 mặt → không POST.</tspan>
+    </text>
+
+    <!-- ═══════════ Bottom Info Box: Trust boundary ═══════════ -->
+    <rect x="555" y="460" width="460" height="180" rx="24" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="3"/>
+    <text x="580" y="503" text-anchor="start" fill="#312E81" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="24" font-weight="800">Trust boundary</text>
+    <text x="580" y="538" text-anchor="start" fill="#312E81" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="17" font-weight="500">
+      <tspan x="580" dy="0">Model TFLite cùng origin</tspan>
+      <tspan x="580" dy="27">WASM runtime tải từ CDN</tspan>
+      <tspan x="580" dy="27">ảnh không rời thiết bị khi preflight.</tspan>
+    </text>
+
+    <!-- ═══════════ Bottom Info Box: Giới hạn ═══════════ -->
+    <rect x="1055" y="460" width="460" height="180" rx="24" fill="#FEF2F2" stroke="#DC2626" stroke-width="3"/>
+    <text x="1080" y="503" text-anchor="start" fill="#7F1D1D" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="24" font-weight="800">Giới hạn</text>
+    <text x="1080" y="538" text-anchor="start" fill="#7F1D1D" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="17" font-weight="500">
+      <tspan x="1080" dy="0">Client gate có thể bị direct API bypass</tspan>
+      <tspan x="1080" dy="27">không chứng minh identity/liveness</tspan>
+      <tspan x="1080" dy="27">ảnh pass vẫn sang provider khi Generate.</tspan>
+    </text>
+  </g>
+
+  <!-- ═══════════ Legend ═══════════ -->
+  <g>
+    <rect x="60" y="822" width="28" height="28" rx="8" fill="#EEF2FF" stroke="#5B3DF5" stroke-width="2"/>
+    <text x="100" y="843" text-anchor="start" fill="#475569" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="17" font-weight="600">Đã triển khai</text>
+    <rect x="265" y="822" width="28" height="28" rx="8" fill="#F8FAFC" stroke="#64748B" stroke-width="2"/>
+    <text x="305" y="843" text-anchor="start" fill="#475569" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="17" font-weight="600">Suy ra từ source</text>
+    <rect x="503" y="822" width="28" height="28" rx="8" fill="#FEF2F2" stroke="#DC2626" stroke-width="2"/>
+    <text x="543" y="843" text-anchor="start" fill="#475569" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="17" font-weight="600">Gap / rủi ro</text>
+    <rect x="697" y="822" width="28" height="28" rx="8" fill="#F0FDFA" stroke="#0D9488" stroke-width="2"/>
+    <text x="737" y="843" text-anchor="start" fill="#475569" font-family="'Segoe UI', system-ui, -apple-system, 'Noto Sans', sans-serif" font-size="17" font-weight="600">Khuyến nghị</text>
+  </g>
 </svg>
