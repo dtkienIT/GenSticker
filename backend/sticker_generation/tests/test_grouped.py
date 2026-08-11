@@ -168,6 +168,54 @@ async def test_grouped_generator_uses_four_calls_and_three_eight_cell_sheets(
     assert progress[-1] == ("groups", 3, 3)
 
 
+@pytest.mark.asyncio
+async def test_grouped_generator_retries_one_transient_sheet_timeout(
+    tmp_path: Path,
+) -> None:
+    selfie = tmp_path / "selfie.png"
+    Image.new("RGB", (256, 256), "white").save(selfie)
+
+    class TimeoutOnceProvider(FakeProvider):
+        def __init__(self) -> None:
+            super().__init__()
+            self.did_timeout = False
+
+        async def generate(self, request):  # type: ignore[no-untyped-def]
+            self.calls.append(request)
+            sheet_index = request.metadata.get("sheet_index")
+            if sheet_index == 1 and not self.did_timeout:
+                self.did_timeout = True
+                raise RuntimeError("openai_timeout")
+            return ImageGenerationResult(
+                image_bytes=(
+                    _mock_eight_sheet(int(sheet_index))
+                    if sheet_index is not None
+                    else _mock_art()
+                ),
+                provider="fake",
+                model="fake-image",
+                latency_seconds=0.01,
+            )
+
+    provider = TimeoutOnceProvider()
+    generator = GroupedStickerGenerator(
+        provider=provider,
+        canvas_size=128,
+        max_provider_attempts=2,
+        retry_base_delay_seconds=0,
+    )
+
+    paths = await generator.generate(
+        selfie_path=selfie,
+        output_dir=tmp_path / "output",
+        style_prompt="clean hand-drawn portrait sticker",
+    )
+
+    assert len(paths) == 20
+    assert [call.metadata.get("sheet_index") for call in provider.calls].count(1) == 2
+    assert len(provider.calls) == 5
+
+
 def test_eight_sheet_split_returns_eight_cells_in_row_major_order() -> None:
     cells = GroupedStickerGenerator._split_eight_sheet(_mock_eight_sheet(2))
 
@@ -292,6 +340,66 @@ def test_eight_sheet_split_accepts_fragmented_decorations_near_gutter() -> None:
     image.save(buffer, format="PNG")
 
     assert len(GroupedStickerGenerator._split_eight_sheet(buffer.getvalue())) == 8
+
+
+def test_eight_sheet_split_accepts_dense_square_four_by_two_layout() -> None:
+    image = Image.new("RGBA", (1200, 1200), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    for row in range(2):
+        for column in range(4):
+            index = row * 4 + column
+            draw.rounded_rectangle(
+                (
+                    column * 300 + 8,
+                    row * 600 + 3,
+                    (column + 1) * 300 - 8,
+                    (row + 1) * 600 - 3,
+                ),
+                radius=60,
+                fill=(40 + index * 7, 70 + index * 5, 120 + index * 3, 255),
+            )
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+
+    cells = GroupedStickerGenerator._split_eight_sheet(buffer.getvalue())
+
+    assert len(cells) == 8
+    assert all(Image.open(BytesIO(cell)).size[1] > Image.open(BytesIO(cell)).size[0] for cell in cells)
+
+
+def test_eight_sheet_split_removes_checkerboard_background() -> None:
+    image = Image.new("RGBA", (1536, 1024), "white")
+    draw = ImageDraw.Draw(image)
+    tile_size = 24
+    for top in range(0, image.height, tile_size):
+        for left in range(0, image.width, tile_size):
+            shades = (180, 215, 245)
+            shade = shades[(left // tile_size + top // tile_size) % len(shades)]
+            draw.rectangle(
+                (left, top, left + tile_size, top + tile_size),
+                fill=(shade, shade, shade, 255),
+            )
+    for row in range(2):
+        for column in range(4):
+            draw.ellipse(
+                (
+                    column * 384 + 38,
+                    row * 512 + 28,
+                    (column + 1) * 384 - 38,
+                    (row + 1) * 512 - 28,
+                ),
+                fill=(80 + column * 20, 60 + row * 30, 140, 255),
+            )
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+
+    cells = GroupedStickerGenerator._split_eight_sheet(buffer.getvalue())
+
+    assert len(cells) == 8
+    decoded = [Image.open(BytesIO(cell)).convert("RGBA") for cell in cells]
+    assert all(cell.getpixel((0, 0))[3] == 0 for cell in decoded)
+    assert all(GroupedStickerGenerator._transparent_ratio(cell) > 0.25 for cell in decoded)
+    assert all(cell.getpixel((cell.width // 2, cell.height // 2))[3] == 255 for cell in decoded)
 
 
 @pytest.mark.asyncio

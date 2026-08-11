@@ -14,6 +14,7 @@ import { useAuth } from './hooks/useAuth';
 import { useTheme } from './hooks/useTheme';
 import { StickerService, type StickerPackHistoryItem } from './services/stickerService';
 import type { StickerItem } from './types/sticker';
+import { getErrorRecoveryAction } from './utils/errorRecovery';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export function App() {
@@ -27,6 +28,7 @@ export function App() {
     setSelectedStyle,
     startGeneration,
     loadStickerPack,
+    retryGeneration,
     resetGenerator,
     toggleFavorite,
   } = useStickerGenerator();
@@ -143,6 +145,12 @@ export function App() {
     resetGenerator();
   }, [resetGenerator]);
 
+  const errorRecoveryAction = getErrorRecoveryAction({
+    jobId: state.jobId,
+    qualityStatus: state.qualityStatus,
+    previewCount: state.previewImageUrls.length,
+  });
+
   return (
     <div className="app-shell">
       <MeteorBackground />
@@ -234,12 +242,16 @@ export function App() {
             )}
 
             <button
-              onClick={handleReset}
+              onClick={errorRecoveryAction === 'retry-partial' ? retryGeneration : handleReset}
               className="btn-primary"
               style={{ marginTop: '24px' }}
             >
               <RefreshCw size={18} />
-              <span>Thử Lại Ngay</span>
+              <span>
+                {errorRecoveryAction === 'retry-partial'
+                  ? 'Tiếp Tục Bảng Còn Thiếu'
+                  : 'Thử Lại Ngay'}
+              </span>
             </button>
           </div>
         )}

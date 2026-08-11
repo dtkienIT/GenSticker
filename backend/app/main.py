@@ -25,7 +25,9 @@ app.include_router(api_router)
 
 @app.on_event("startup")
 async def startup_event():
-  """Start Telegram Bot polling on app startup."""
+  """Restore local jobs before starting optional integrations."""
+  from app.services.sticker_pipeline import StickerPipelineService
+  StickerPipelineService.restore_persisted_jobs()
   if settings.TELEGRAM_BOT_TOKEN:
     from app.services.telegram_bot import TelegramBot
     await TelegramBot.ensure_polling_started()

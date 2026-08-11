@@ -16,6 +16,20 @@ interface AuthApiResponse {
 }
 
 export class AuthService {
+  static readonly SESSION_CHANGED_EVENT = 'gensticker:auth-session-changed';
+
+  private static notifySessionChanged(reason: 'signed-in' | 'signed-out' | 'expired'): void {
+    window.dispatchEvent(new CustomEvent(AuthService.SESSION_CHANGED_EVENT, {
+      detail: { reason },
+    }));
+  }
+
+  private static saveSession(user: User, token: string): void {
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+    localStorage.setItem(STORAGE_KEY_TOKEN, token);
+    AuthService.notifySessionChanged('signed-in');
+  }
+
   private static isTokenExpired(token: string): boolean {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
@@ -29,13 +43,8 @@ export class AuthService {
   static getCurrentUser(): User | null {
     try {
       const stored = localStorage.getItem(STORAGE_KEY_USER);
-      const token = localStorage.getItem(STORAGE_KEY_TOKEN);
+      const token = AuthService.getAccessToken();
       if (stored && token) {
-        if (AuthService.isTokenExpired(token)) {
-          console.info('[Auth] Session expired, clearing stored credentials.');
-          AuthService.logout();
-          return null;
-        }
         return JSON.parse(stored) as User;
       }
     } catch (e) {
@@ -45,7 +54,18 @@ export class AuthService {
   }
 
   static getAccessToken(): string | null {
-    return localStorage.getItem(STORAGE_KEY_TOKEN);
+    const token = localStorage.getItem(STORAGE_KEY_TOKEN);
+    if (!token) return null;
+    const isAllowedLocalDemoToken = (
+      token === 'local-dev-only' &&
+      import.meta.env.DEV &&
+      import.meta.env.VITE_DEV_BYPASS_AUTH === 'true'
+    );
+    if (!isAllowedLocalDemoToken && AuthService.isTokenExpired(token)) {
+      AuthService.invalidateSession();
+      return null;
+    }
+    return token;
   }
 
   static async login(email: string, password: string): Promise<User> {
@@ -78,8 +98,7 @@ export class AuthService {
       createdAt: new Date().toISOString(),
     };
 
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
-    localStorage.setItem(STORAGE_KEY_TOKEN, data.access_token);
+    AuthService.saveSession(user, data.access_token);
     return user;
   }
 
@@ -116,14 +135,20 @@ export class AuthService {
       createdAt: new Date().toISOString(),
     };
 
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
-    localStorage.setItem(STORAGE_KEY_TOKEN, data.access_token);
+    AuthService.saveSession(user, data.access_token);
     return user;
   }
 
   static logout(): void {
     localStorage.removeItem(STORAGE_KEY_USER);
     localStorage.removeItem(STORAGE_KEY_TOKEN);
+    AuthService.notifySessionChanged('signed-out');
+  }
+
+  static invalidateSession(): void {
+    localStorage.removeItem(STORAGE_KEY_USER);
+    localStorage.removeItem(STORAGE_KEY_TOKEN);
+    AuthService.notifySessionChanged('expired');
   }
 
   static async quickDemoLogin(): Promise<User> {
@@ -135,8 +160,7 @@ export class AuthService {
         avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=local-demo',
         createdAt: new Date().toISOString(),
       };
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(demoUser));
-      localStorage.setItem(STORAGE_KEY_TOKEN, 'local-dev-only');
+      AuthService.saveSession(demoUser, 'local-dev-only');
       return demoUser;
     }
     return AuthService.login('demo@gensticker.ai', 'Demo@2026!');

@@ -1,16 +1,16 @@
 import asyncio
 import base64
 import shutil
-import tempfile
 import uuid
 from contextlib import nullcontext
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Optional
 
 from app.config import settings
 from app.models.schemas import ProcessStepProgress, StickerItemResponse, StickerJobResponse
+from app.services.job_state_store import JobStateStore
 from app.services.supabase_service import SupabaseService
 from sticker_generation.catalog import DEFAULT_STICKER_CATALOG
 from sticker_generation.grouped import GroupedStickerGenerator
@@ -71,6 +71,84 @@ PIPELINE_STEPS_CONFIG = (
 
 
 class StickerPipelineService:
+  @staticmethod
+  def _state_store() -> JobStateStore:
+    return JobStateStore(Path(settings.JOB_STORAGE_ROOT))
+
+  @staticmethod
+  def _persist_job(job_id: str) -> None:
+    job = job_store.get(job_id)
+    owner_id = job_owners.get(job_id)
+    context = job_contexts.get(job_id)
+    if job is None or owner_id is None or context is None:
+      return
+    StickerPipelineService._state_store().save(
+      job_id,
+      {
+        "version": 1,
+        "owner_id": owner_id,
+        "context": asdict(context),
+        "retry_count": job_retries.get(job_id, 0),
+        "job": job.model_dump(mode="json"),
+      },
+    )
+
+  @staticmethod
+  def restore_persisted_jobs() -> int:
+    restored_count = 0
+    for artifact_dir, payload in StickerPipelineService._state_store().load_all():
+      try:
+        owner_id = payload.get("owner_id")
+        context_payload = payload.get("context")
+        retry_count = payload.get("retry_count", 0)
+        job_payload = payload.get("job")
+        if not isinstance(owner_id, str) or not owner_id or len(owner_id) > 200:
+          continue
+        if not isinstance(context_payload, dict) or not isinstance(job_payload, dict):
+          continue
+        job = StickerJobResponse.model_validate(job_payload)
+        if job.job_id != artifact_dir.name or job.job_id in job_store:
+          continue
+        context = JobContext(
+          style_id=str(context_payload.get("style_id", "")),
+          filename=Path(str(context_payload.get("filename", "portrait.png"))).name,
+          content_type=str(context_payload.get("content_type", "")),
+        )
+        if (
+          context.style_id not in STYLE_PROMPTS
+          or context.content_type not in {"image/jpeg", "image/png", "image/webp"}
+          or not isinstance(retry_count, int)
+          or retry_count < 0
+          or retry_count > MAX_SHEET_RETRIES
+        ):
+          continue
+
+        interrupted = job.status == "processing"
+        if interrupted:
+          job.status = "error"
+          job.error_message = (
+            "Phiên xử lý bị gián đoạn. Có thể tiếp tục từ các bảng đã hoàn thành."
+          )
+          if job.preview_image_urls:
+            job.quality_status = "rejected"
+          active_index = max(0, min(job.current_step - 1, len(job.steps) - 1))
+          job.steps[active_index].status = "error"
+
+        job_store[job.job_id] = job
+        job_owners[job.job_id] = owner_id
+        job_contexts[job.job_id] = context
+        job_artifacts[job.job_id] = artifact_dir
+        job_retries[job.job_id] = retry_count
+        if job.created_at >= datetime.utcnow() - timedelta(hours=1):
+          job_attempts[owner_id] = [*job_attempts.get(owner_id, []), job.created_at]
+        if interrupted:
+          StickerPipelineService._persist_job(job.job_id)
+        restored_count += 1
+      except (OSError, TypeError, ValueError):
+        continue
+    StickerPipelineService._prune_state(datetime.utcnow())
+    return restored_count
+
   @staticmethod
   def _drop_job(job_id: str) -> None:
     artifact_dir = job_artifacts.pop(job_id, None)
@@ -161,7 +239,9 @@ class StickerPipelineService:
     )
     job_store[job_id] = job
     job_owners[job_id] = owner_id
-    job_artifacts[job_id] = Path(tempfile.mkdtemp(prefix=f"gensticker-{job_id}-"))
+    artifact_dir = StickerPipelineService._state_store().job_dir(job_id)
+    artifact_dir.mkdir(parents=True, exist_ok=False)
+    job_artifacts[job_id] = artifact_dir
     job_contexts[job_id] = JobContext(
       style_id=style_id,
       filename=filename,
@@ -169,6 +249,7 @@ class StickerPipelineService:
     )
     job_retries[job_id] = 0
     job_attempts[owner_id] = [*job_attempts.get(owner_id, []), now]
+    StickerPipelineService._persist_job(job_id)
     task = asyncio.create_task(
       StickerPipelineService._run_pipeline_async(
         job_id=job_id,
@@ -208,14 +289,13 @@ class StickerPipelineService:
     job.status = "processing"
     job.error_message = None
     job.quality_status = "reviewing"
-    job.preview_image_url = None
-    job.preview_image_urls = []
     job.current_step = 4
     job.progress_percentage = 35
     job.steps[3].status = "processing"
     job.steps[3].progress = 0
     job.steps[4].status = "pending"
     job.steps[4].progress = 0
+    StickerPipelineService._persist_job(job_id)
     task = asyncio.create_task(StickerPipelineService._resume_pipeline_async(job_id))
     if task is not None:
       background_tasks.add(task)
@@ -248,6 +328,12 @@ class StickerPipelineService:
         api_key=settings.OPENAI_API_KEY,
         model_id=settings.OPENAI_IMAGE_MODEL,
         base_url=settings.OPENAI_BASE_URL,
+        timeout_seconds=settings.OPENAI_IMAGE_TIMEOUT_SECONDS,
+        trusted_result_domains=tuple(
+          domain.strip()
+          for domain in settings.OPENAI_IMAGE_RESULT_DOMAINS.split(",")
+          if domain.strip()
+        ),
       )
       artifact_dir = job_artifacts.get(job_id)
       if artifact_dir is None:
@@ -274,6 +360,7 @@ class StickerPipelineService:
           elif stage == "groups":
             job.steps[3].progress = round((current / total) * 100)
             job.progress_percentage = min(89, 35 + round((current / total) * 54))
+          StickerPipelineService._persist_job(job_id)
 
         preview_bytes_total = 0
 
@@ -287,10 +374,17 @@ class StickerPipelineService:
           encoded = base64.b64encode(image_bytes).decode("ascii")
           preview_url = f"data:image/png;base64,{encoded}"
           job.preview_image_url = preview_url
-          job.preview_image_urls = [*job.preview_image_urls, preview_url]
+          if preview_url not in job.preview_image_urls:
+            job.preview_image_urls = [*job.preview_image_urls, preview_url]
           job.quality_status = "reviewing"
+          StickerPipelineService._persist_job(job_id)
 
-        generator = GroupedStickerGenerator(provider=provider, canvas_size=512)
+        generator = GroupedStickerGenerator(
+          provider=provider,
+          canvas_size=512,
+          max_provider_attempts=settings.OPENAI_IMAGE_MAX_ATTEMPTS,
+          retry_base_delay_seconds=settings.OPENAI_IMAGE_RETRY_BASE_DELAY_SECONDS,
+        )
         paths = await generator.generate(
           selfie_path=selfie_path,
           output_dir=root / "result",
@@ -308,6 +402,7 @@ class StickerPipelineService:
         job.progress_percentage = 100
         job.status = "completed"
         job.quality_status = "accepted"
+        StickerPipelineService._persist_job(job_id)
         await StickerPipelineService._persist_completed_pack(job_id, style_id, paths)
     except Exception as error:
       job.status = "error"
@@ -316,6 +411,7 @@ class StickerPipelineService:
         job.quality_status = "rejected"
       active_index = max(0, min(job.current_step - 1, len(job.steps) - 1))
       job.steps[active_index].status = "error"
+      StickerPipelineService._persist_job(job_id)
     finally:
       if provider is not None:
         await provider.close()
@@ -334,6 +430,12 @@ class StickerPipelineService:
         api_key=settings.OPENAI_API_KEY,
         model_id=settings.OPENAI_IMAGE_MODEL,
         base_url=settings.OPENAI_BASE_URL,
+        timeout_seconds=settings.OPENAI_IMAGE_TIMEOUT_SECONDS,
+        trusted_result_domains=tuple(
+          domain.strip()
+          for domain in settings.OPENAI_IMAGE_RESULT_DOMAINS.split(",")
+          if domain.strip()
+        ),
       )
       preview_bytes_total = 0
 
@@ -341,6 +443,7 @@ class StickerPipelineService:
         if stage == "groups":
           job.steps[3].progress = round((current / total) * 100)
           job.progress_percentage = min(89, 35 + round((current / total) * 54))
+          StickerPipelineService._persist_job(job_id)
 
       def on_sheet(image_bytes: bytes) -> None:
         nonlocal preview_bytes_total
@@ -351,10 +454,17 @@ class StickerPipelineService:
           raise ValueError("preview_image_too_large")
         preview_url = f"data:image/png;base64,{base64.b64encode(image_bytes).decode('ascii')}"
         job.preview_image_url = preview_url
-        job.preview_image_urls = [*job.preview_image_urls, preview_url]
+        if preview_url not in job.preview_image_urls:
+          job.preview_image_urls = [*job.preview_image_urls, preview_url]
         job.quality_status = "reviewing"
+        StickerPipelineService._persist_job(job_id)
 
-      generator = GroupedStickerGenerator(provider=provider, canvas_size=512)
+      generator = GroupedStickerGenerator(
+        provider=provider,
+        canvas_size=512,
+        max_provider_attempts=settings.OPENAI_IMAGE_MAX_ATTEMPTS,
+        retry_base_delay_seconds=settings.OPENAI_IMAGE_RETRY_BASE_DELAY_SECONDS,
+      )
       paths = await generator.resume(
         output_dir=root / "result",
         style_prompt=STYLE_PROMPTS[context.style_id],
@@ -371,6 +481,7 @@ class StickerPipelineService:
       job.progress_percentage = 100
       job.status = "completed"
       job.quality_status = "accepted"
+      StickerPipelineService._persist_job(job_id)
       await StickerPipelineService._persist_completed_pack(job_id, context.style_id, paths)
     except Exception as error:
       job.status = "error"
@@ -379,6 +490,7 @@ class StickerPipelineService:
         job.quality_status = "rejected"
       active_index = max(0, min(job.current_step - 1, len(job.steps) - 1))
       job.steps[active_index].status = "error"
+      StickerPipelineService._persist_job(job_id)
     finally:
       if provider is not None:
         await provider.close()
@@ -457,10 +569,18 @@ class StickerPipelineService:
   @staticmethod
   def _safe_error(error: Exception) -> str:
     messages = {
+      "openai_safety_rejection": "Dịch vụ tạo ảnh từ chối ảnh theo chính sách an toàn. Vui lòng chọn ảnh khác.",
+      "openai_timeout": "Dịch vụ tạo ảnh phản hồi quá lâu. Vui lòng thử lại.",
+      "openai_provider_unavailable": "Dịch vụ tạo ảnh tạm thời không khả dụng. Vui lòng thử lại sau.",
       "openai_quota_or_billing_required": "Dịch vụ tạo ảnh đã hết credit/quota hoặc chưa bật billing.",
       "openai_rate_limit": "Dịch vụ tạo ảnh đang giới hạn tần suất. Vui lòng thử lại sau.",
       "openai_invalid_request": "Dịch vụ tạo ảnh từ chối cấu hình request hiện tại.",
       "openai_api_key_or_permission_invalid": "API key tạo ảnh không hợp lệ hoặc không có quyền dùng model ảnh.",
+      "openai_invalid_response": "Proxy tạo ảnh trả về dữ liệu không tương thích. Vui lòng kiểm tra cấu hình proxy.",
+      "openai_missing_image_result": "Proxy tạo ảnh không trả về tệp ảnh. Vui lòng kiểm tra cấu hình proxy.",
+      "openai_invalid_image_result": "Proxy tạo ảnh trả về định dạng ảnh không được hỗ trợ.",
+      "openai_invalid_image_data": "Proxy tạo ảnh trả về dữ liệu ảnh bị lỗi.",
+      "openai_untrusted_image_url": "Proxy tạo ảnh trả về đường dẫn ảnh không an toàn hoặc khác máy chủ.",
       "provider_output_too_large": "Ảnh trả về vượt giới hạn an toàn.",
       "pack_sheet_grid_not_detected": "Bảng ảnh đã được tạo nhưng bố cục không đủ sạch để tự động cắt thành 20 sticker. Bạn vẫn có thể xem ảnh gốc bên dưới.",
       "preview_image_too_large": "Bảng ảnh trả về quá lớn để hiển thị an toàn trên web.",

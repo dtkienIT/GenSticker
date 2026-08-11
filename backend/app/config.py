@@ -17,7 +17,8 @@ class Settings(BaseSettings):
   GENERATION_RATE_LIMIT_PER_HOUR: int = int(os.getenv("GENERATION_RATE_LIMIT_PER_HOUR", "3"))
   MAX_ACTIVE_GENERATIONS: int = int(os.getenv("MAX_ACTIVE_GENERATIONS", "2"))
   MAX_RETAINED_JOBS: int = int(os.getenv("MAX_RETAINED_JOBS", "4"))
-  JOB_TTL_SECONDS: int = int(os.getenv("JOB_TTL_SECONDS", "3600"))
+  JOB_TTL_SECONDS: int = int(os.getenv("JOB_TTL_SECONDS", "86400"))
+  JOB_STORAGE_ROOT: str = os.getenv("JOB_STORAGE_ROOT", "./data/jobs")
   
   # Supabase & Database
   DATABASE_URL: str = os.getenv("DATABASE_URL", "")
@@ -36,6 +37,12 @@ class Settings(BaseSettings):
     "https://api.openai.com/v1",
   )
   OPENAI_IMAGE_MODEL: str = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-1.5")
+  OPENAI_IMAGE_RESULT_DOMAINS: str = os.getenv("OPENAI_IMAGE_RESULT_DOMAINS", "")
+  OPENAI_IMAGE_TIMEOUT_SECONDS: float = float(os.getenv("OPENAI_IMAGE_TIMEOUT_SECONDS", "300"))
+  OPENAI_IMAGE_MAX_ATTEMPTS: int = int(os.getenv("OPENAI_IMAGE_MAX_ATTEMPTS", "2"))
+  OPENAI_IMAGE_RETRY_BASE_DELAY_SECONDS: float = float(
+    os.getenv("OPENAI_IMAGE_RETRY_BASE_DELAY_SECONDS", "2")
+  )
 
   # Telegram Bot Credentials
   TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")

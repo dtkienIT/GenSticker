@@ -129,14 +129,16 @@ Khóa API ảnh chỉ được đặt ở backend, không dùng biến `VITE_*` 
 trong bundle frontend.
 
 Có thể điều chỉnh nhà cung cấp tương thích OpenAI, model và giới hạn job bằng
-`OPENAI_BASE_URL`, `OPENAI_IMAGE_MODEL`,
-`GENERATION_RATE_LIMIT_PER_HOUR`, `MAX_ACTIVE_GENERATIONS` và `JOB_TTL_SECONDS`.
+`OPENAI_BASE_URL`, `OPENAI_IMAGE_MODEL`, `OPENAI_IMAGE_TIMEOUT_SECONDS`,
+`OPENAI_IMAGE_MAX_ATTEMPTS`, `GENERATION_RATE_LIMIT_PER_HOUR`,
+`MAX_ACTIVE_GENERATIONS`, `JOB_TTL_SECONDS` và `JOB_STORAGE_ROOT`.
 Một lượt tạo thật sử dụng nhà cung cấp API ảnh có thể phát sinh chi phí và cần
 tài khoản còn credit/quota.
 
-> Trạng thái job, giới hạn request và artifact trung gian hiện được giữ trong RAM
-> và thư mục tạm. Restart backend sẽ làm mất job đang chạy; chỉ lịch sử kết quả cuối
-> đã lưu thành công trên Supabase mới tồn tại lâu dài.
+> Trạng thái job và artifact trung gian được ghi atomically vào `JOB_STORAGE_ROOT`
+> (mặc định `data/jobs`) và tự dọn theo `JOB_TTL_SECONDS`. Sau khi backend restart,
+> job lỗi hoặc bị gián đoạn được khôi phục để người dùng tiếp tục từ canonical và
+> các sheet đã hoàn thành. Thư mục này chứa ảnh riêng tư, không được commit lên Git.
 
 ### 2. Áp Dụng Migration Lịch Sử
 

@@ -165,7 +165,7 @@ export class StickerService {
       body: form,
     });
     if (!startResponse.ok) {
-      if (startResponse.status === 401) AuthService.logout();
+      if (startResponse.status === 401) AuthService.invalidateSession();
       throw new Error(await StickerService.readApiError(startResponse));
     }
 
@@ -186,7 +186,10 @@ export class StickerService {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    if (!response.ok) throw new Error(await StickerService.readApiError(response));
+    if (!response.ok) {
+      if (response.status === 401) AuthService.invalidateSession();
+      throw new Error(await StickerService.readApiError(response));
+    }
     const job = await response.json() as BackendJobResponse;
     sessionStorage.setItem(StickerService.ACTIVE_JOB_KEY, job.job_id);
     return StickerService.pollJob(job, styleId, onStepProgress);
@@ -206,7 +209,10 @@ export class StickerService {
       sessionStorage.removeItem(StickerService.ACTIVE_JOB_KEY);
       return null;
     }
-    if (!response.ok) throw new Error(await StickerService.readApiError(response));
+    if (!response.ok) {
+      if (response.status === 401) AuthService.invalidateSession();
+      throw new Error(await StickerService.readApiError(response));
+    }
     return StickerService.pollJob(await response.json() as BackendJobResponse, styleId);
   }
 
@@ -230,7 +236,7 @@ export class StickerService {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!response.ok) {
-        if (response.status === 401) AuthService.logout();
+        if (response.status === 401) AuthService.invalidateSession();
         throw new Error(await StickerService.readApiError(response));
       }
       job = await response.json() as BackendJobResponse;
@@ -416,6 +422,7 @@ export class StickerService {
               .map(normalizeHistoryPack)
           : [];
       }
+      if (response.status === 401) AuthService.invalidateSession();
     } catch (err) {
       console.warn('Could not fetch user sticker history from backend:', err);
     }
@@ -434,6 +441,7 @@ export class StickerService {
     });
 
     if (!response.ok) {
+      if (response.status === 401) AuthService.invalidateSession();
       const errorData = await response.json().catch(() => null);
       throw new Error(errorData?.detail || 'Không thể xóa bộ sticker khỏi lịch sử. Vui lòng thử lại.');
     }

@@ -14,7 +14,15 @@ from app.config import settings
 from app.main import app
 from app.models.schemas import ProcessStepProgress, StickerJobResponse
 from app.security import require_user_id
-from app.services.sticker_pipeline import StickerPipelineService, job_attempts, job_owners, job_store
+from app.services.sticker_pipeline import (
+    StickerPipelineService,
+    job_artifacts,
+    job_attempts,
+    job_contexts,
+    job_owners,
+    job_retries,
+    job_store,
+)
 from app.services.supabase_service import SupabaseService
 
 
@@ -44,7 +52,8 @@ def _job(job_id: str = "job_test") -> StickerJobResponse:
 
 
 @pytest.fixture(autouse=True)
-def _clean_state(monkeypatch: pytest.MonkeyPatch) -> None:
+def _clean_state(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:  # type: ignore[no-untyped-def]
+    monkeypatch.setattr(settings, "JOB_STORAGE_ROOT", str(tmp_path / "jobs"))
     monkeypatch.setattr(
         SupabaseService,
         "upload_image_to_storage",
@@ -53,11 +62,17 @@ def _clean_state(monkeypatch: pytest.MonkeyPatch) -> None:
     job_store.clear()
     job_owners.clear()
     job_attempts.clear()
+    job_artifacts.clear()
+    job_contexts.clear()
+    job_retries.clear()
     app.dependency_overrides.clear()
     yield
     job_store.clear()
     job_owners.clear()
     job_attempts.clear()
+    job_artifacts.clear()
+    job_contexts.clear()
+    job_retries.clear()
     app.dependency_overrides.clear()
 
 

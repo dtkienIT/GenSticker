@@ -91,6 +91,11 @@ Telegram khi cần chức năng xuất pack.
 - `DELETE /api/v1/stickers/history/{pack_id}` : Xóa mềm một bộ sticker nếu bộ đó thuộc tài khoản đang đăng nhập.
 - `POST /api/v1/telegram/export` : Tạo request xuất sticker set sang Telegram Bot với thanh tiến độ thời gian thực.
 
+Job đang chạy và artifact riêng tư được lưu trong `JOB_STORAGE_ROOT` (mặc định
+`data/jobs`) để có thể khôi phục sau khi backend restart. Dữ liệu được dọn theo
+`JOB_TTL_SECONDS`; request ảnh tạm thời bị timeout/rate-limit được retry theo
+`OPENAI_IMAGE_MAX_ATTEMPTS` với backoff có giới hạn.
+
 ### 👤 Ranh Giới Gate Ảnh Đầu Vào
 
 Luồng web trên branch `kien_v5` có gate MediaPipe/BlazeFace chạy trong trình duyệt và chỉ gửi ảnh khi phát hiện đúng một khuôn mặt. Gate này không gọi backend, không dùng GPU server và không phát sinh phí API thị giác; do đó frontend có thể chạy trên Vercel Free mà không cần thuê GPU cho bước kiểm tra đầu vào.

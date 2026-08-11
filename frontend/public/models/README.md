@@ -5,7 +5,7 @@
 - Source: https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite
 - Package/runtime: `@mediapipe/tasks-vision@1.0.1`
 - WASM base URL: `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm`
-- Runtime settings: CPU delegate, image mode, detection confidence `0.6`, suppression threshold `0.3`
+- Runtime settings: CPU delegate, image mode, detection confidence `0.35`, suppression threshold `0.3`
 - Client timeout: 45 seconds
 - SHA-256: `B4578F35940BF5A1A655214A1CCE5CAB13EBA73C1297CD78E1A04C2380B0152F`
 - License: Apache-2.0 (MediaPipe)

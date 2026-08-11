@@ -26,6 +26,7 @@ const MODEL_URL = new URL(
   `${import.meta.env.BASE_URL}models/blaze_face_short_range.tflite`,
   self.location.origin,
 ).toString();
+const MIN_DETECTION_CONFIDENCE = 0.35;
 
 let detectorPromise: Promise<FaceDetector> | null = null;
 
@@ -39,7 +40,7 @@ function getDetector(): Promise<FaceDetector> {
           delegate: 'CPU',
         },
         runningMode: 'IMAGE',
-        minDetectionConfidence: 0.6,
+        minDetectionConfidence: MIN_DETECTION_CONFIDENCE,
         minSuppressionThreshold: 0.3,
       });
     })();

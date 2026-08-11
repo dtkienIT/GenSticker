@@ -11,10 +11,22 @@ export function useAuth() {
 
   // Restore session on mount
   useEffect(() => {
-    const currentUser = AuthService.getCurrentUser();
-    if (currentUser) {
+    const syncSession = (event?: Event) => {
+      const currentUser = AuthService.getCurrentUser();
       setUser(currentUser);
-    }
+      if (
+        !currentUser &&
+        event instanceof CustomEvent &&
+        event.detail?.reason === 'expired'
+      ) {
+        setAuthMode('login');
+        setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        setIsAuthModalOpen(true);
+      }
+    };
+    window.addEventListener(AuthService.SESSION_CHANGED_EVENT, syncSession);
+    syncSession();
+    return () => window.removeEventListener(AuthService.SESSION_CHANGED_EVENT, syncSession);
   }, []);
 
   const openAuthModal = useCallback((mode: AuthMode = 'login') => {

@@ -22,7 +22,13 @@ from app.services.sticker_pipeline import (
 
 
 @pytest.fixture(autouse=True)
-def _clean_jobs(monkeypatch: pytest.MonkeyPatch) -> None:
+def _clean_jobs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(
+        settings,
+        "JOB_STORAGE_ROOT",
+        str(tmp_path / "jobs"),
+        raising=False,
+    )
     monkeypatch.setattr(
         pipeline_module.SupabaseService,
         "has_storage_client",
@@ -52,6 +58,46 @@ def _clean_jobs(monkeypatch: pytest.MonkeyPatch) -> None:
 def _discard_task(coroutine):  # type: ignore[no-untyped-def]
     coroutine.close()
     return None
+
+
+def test_partial_job_is_restored_from_disk_after_process_restart(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "OPENAI_API_KEY", "test-key")
+    monkeypatch.setattr(asyncio, "create_task", _discard_task)
+    job = StickerPipelineService.create_job(
+        owner_id="user-a",
+        style_id="anime-kawaii",
+        file_bytes=b"image",
+        filename="portrait.png",
+        content_type="image/png",
+    )
+    job.status = "error"
+    job.current_step = 4
+    job.progress_percentage = 71
+    job.quality_status = "rejected"
+    job.preview_image_url = "data:image/png;base64,c2hlZXQtMg=="
+    job.preview_image_urls = [
+        "data:image/png;base64,c2hlZXQtMQ==",
+        "data:image/png;base64,c2hlZXQtMg==",
+    ]
+    StickerPipelineService._persist_job(job.job_id)
+    artifact_dir = job_artifacts[job.job_id]
+
+    job_store.clear()
+    job_owners.clear()
+    job_contexts.clear()
+    job_artifacts.clear()
+    job_retries.clear()
+
+    StickerPipelineService.restore_persisted_jobs()
+    restored = StickerPipelineService.get_job(job.job_id, owner_id="user-a")
+
+    assert restored is not None
+    assert restored.status == "error"
+    assert restored.preview_image_urls == job.preview_image_urls
+    assert job_artifacts[job.job_id] == artifact_dir
+    assert job_contexts[job.job_id].style_id == "anime-kawaii"
 
 
 def test_create_job_tracks_owner_and_blocks_duplicate(
@@ -364,6 +410,23 @@ def test_rate_limit_and_ttl_cleanup(monkeypatch: pytest.MonkeyPatch) -> None:
     assert job.job_id not in job_owners
 
 
+@pytest.mark.parametrize(
+    "error_code",
+    [
+        "openai_invalid_response",
+        "openai_missing_image_result",
+        "openai_invalid_image_result",
+        "openai_invalid_image_data",
+        "openai_untrusted_image_url",
+    ],
+)
+def test_safe_error_identifies_incompatible_proxy_response(error_code: str) -> None:
+    message = StickerPipelineService._safe_error(RuntimeError(error_code))
+
+    assert "proxy" in message.lower()
+    assert "chân dung rõ hơn" not in message.lower()
+
+
 def test_completed_job_store_evicts_oldest_over_retention_cap(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -409,11 +472,21 @@ async def test_retry_resumes_from_private_artifacts_without_new_canonical(
     )
     job.status = "error"
     job.quality_status = "rejected"
+    job.preview_image_url = "data:image/png;base64,c2hlZXQtMg=="
+    job.preview_image_urls = [
+        "data:image/png;base64,c2hlZXQtMQ==",
+        "data:image/png;base64,c2hlZXQtMg==",
+    ]
 
     retried = StickerPipelineService.retry_job(job.job_id, owner_id="user-a")
 
     assert retried is job
     assert job.status == "processing"
+    assert job.preview_image_urls == [
+        "data:image/png;base64,c2hlZXQtMQ==",
+        "data:image/png;base64,c2hlZXQtMg==",
+    ]
+    assert job.preview_image_url == "data:image/png;base64,c2hlZXQtMg=="
     assert job_retries[job.job_id] == 1
     assert job_artifacts[job.job_id].is_dir()
     with pytest.raises(ValueError, match="job_not_found"):

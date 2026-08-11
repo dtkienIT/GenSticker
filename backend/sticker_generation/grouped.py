@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable, Sequence
 from io import BytesIO
 from itertools import pairwise
@@ -9,8 +10,8 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 from sticker_generation.catalog import DEFAULT_STICKER_CATALOG
 from sticker_generation.identity import sanitize_reference_image
-from sticker_generation.models import ImageGenerationRequest, StickerTemplate
-from sticker_generation.postprocess import postprocess_sticker
+from sticker_generation.models import ImageGenerationRequest, ImageGenerationResult, StickerTemplate
+from sticker_generation.postprocess import postprocess_sticker, remove_border_background
 from sticker_generation.prompts import build_canonical_prompt, build_eight_sheet_prompt
 from sticker_generation.providers.base import ImageProvider
 
@@ -29,14 +30,44 @@ SHEET_NEGATIVE_PROMPT = (
 # decorative-accent heuristic intentionally ignores. A score this high is
 # never a safe gutter.
 SEVERE_TRANSPARENT_CUT_SCORE = 0.45
+TRANSIENT_PROVIDER_ERRORS = {
+    "openai_provider_unavailable",
+    "openai_rate_limit",
+    "openai_timeout",
+}
 
 
 class GroupedStickerGenerator:
     """Generate 20 stickers with one canonical and three strict 4x2 sheets."""
 
-    def __init__(self, *, provider: ImageProvider, canvas_size: int = 512) -> None:
+    def __init__(
+        self,
+        *,
+        provider: ImageProvider,
+        canvas_size: int = 512,
+        max_provider_attempts: int = 1,
+        retry_base_delay_seconds: float = 0,
+    ) -> None:
         self.provider = provider
         self.canvas_size = canvas_size
+        self.max_provider_attempts = max(1, max_provider_attempts)
+        self.retry_base_delay_seconds = max(0, retry_base_delay_seconds)
+
+    async def _generate_with_retry(
+        self,
+        request: ImageGenerationRequest,
+    ) -> ImageGenerationResult:
+        for attempt in range(self.max_provider_attempts):
+            try:
+                return await self.provider.generate(request)
+            except RuntimeError as error:
+                is_transient = str(error) in TRANSIENT_PROVIDER_ERRORS
+                if not is_transient or attempt + 1 >= self.max_provider_attempts:
+                    raise
+                delay = self.retry_base_delay_seconds * (2**attempt)
+                if delay:
+                    await asyncio.sleep(delay)
+        raise RuntimeError("provider_retry_exhausted")
 
     async def generate(
         self,
@@ -58,7 +89,7 @@ class GroupedStickerGenerator:
         )
         self._notify(on_progress, "identity", 1, 1)
 
-        canonical_result = await self.provider.generate(
+        canonical_result = await self._generate_with_retry(
             ImageGenerationRequest(
                 prompt=build_canonical_prompt(style_prompt),
                 reference_images=(sanitized_selfie,),
@@ -140,7 +171,7 @@ class GroupedStickerGenerator:
             raw_bytes, sheet_cells = self._read_valid_raw_sheet(raw_path)
             reused_raw_sheet = raw_bytes is not None and sheet_cells is not None
             if raw_bytes is None or sheet_cells is None:
-                result = await self.provider.generate(
+                result = await self._generate_with_retry(
                     ImageGenerationRequest(
                         prompt=build_eight_sheet_prompt(
                             sheet_templates,
@@ -278,7 +309,54 @@ class GroupedStickerGenerator:
             )
         )
         opaque_cut_rejected = not transparent_background and cut_score > 0.18
-        if transparent_cut_rejected or opaque_cut_rejected or minimum_occupancy < 0.03:
+        recovered_checkerboard = False
+        if opaque_cut_rejected:
+            cleaned_sheet = remove_border_background(
+                sheet.copy(),
+                tolerance=24,
+                multi_color=True,
+            )
+            if GroupedStickerGenerator._transparent_ratio(cleaned_sheet) > 0.15:
+                sheet = cleaned_sheet
+                transparent_background = True
+                foreground = GroupedStickerGenerator._foreground_mask(sheet)
+                (
+                    cut_score,
+                    minimum_occupancy,
+                    column_edges,
+                    row_edges,
+                ) = GroupedStickerGenerator._adaptive_grid_quality(
+                    foreground,
+                    4,
+                    2,
+                )
+                transparent_cut_rejected = cut_score > 0.10 and (
+                    cut_score >= SEVERE_TRANSPARENT_CUT_SCORE
+                    or GroupedStickerGenerator._has_dominant_gutter_crossing(
+                        foreground,
+                        column_edges,
+                        row_edges,
+                    )
+                )
+                opaque_cut_rejected = False
+                recovered_checkerboard = (
+                    cut_score < SEVERE_TRANSPARENT_CUT_SCORE
+                    and minimum_occupancy >= 0.35
+                )
+        dense_square_four_by_two = (
+            transparent_background
+            and 0.85 <= width / height <= 1.15
+            and 0.35 <= minimum_occupancy
+            and cut_score < SEVERE_TRANSPARENT_CUT_SCORE
+        )
+        if (
+            (
+                transparent_cut_rejected
+                and not (dense_square_four_by_two or recovered_checkerboard)
+            )
+            or opaque_cut_rejected
+            or minimum_occupancy < 0.03
+        ):
             raise ValueError("pack_sheet_grid_not_detected")
         outputs: list[bytes] = []
         for row in range(2):
