@@ -1,0 +1,77 @@
+.landing-page {
+  position: relative;
+  min-height: calc(100vh - 72px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  text-align: center;
+  padding: 24px;
+}
+
+.hero-section {
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  padding: 48px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 600px;
+}
+
+.hero-emoji {
+  font-size: 5rem;
+  margin-bottom: 16px;
+}
+
+.hero-title {
+  font-family: var(--font-sticker);
+  font-size: 3rem;
+  background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+  -webkit-background-clip: text;
+  color: transparent;
+  margin: 0 0 16px 0;
+}
+
+.hero-tagline {
+  font-size: 1.2rem;
+  color: var(--color-text-light);
+  margin-bottom: 32px;
+}
+
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+
+.bg-emojis {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.bg-emoji {
+  position: absolute;
+  font-size: 3rem;
+  opacity: 0.3;
+  animation: float 6s ease-in-out infinite;
+}
+
+.emoji-1 { top: 20%; left: 10%; animation-delay: 0s; }
+.emoji-2 { top: 70%; left: 20%; animation-delay: 1s; }
+.emoji-3 { top: 30%; right: 15%; animation-delay: 2s; }
+.emoji-4 { top: 80%; right: 25%; animation-delay: 3s; }
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+  100% { transform: translateY(0px); }
+}

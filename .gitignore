@@ -58,3 +58,5 @@ example
 # generated native folders
 /ios
 /android
+backend/.env
+backend/.u2net/u2net.onnx
