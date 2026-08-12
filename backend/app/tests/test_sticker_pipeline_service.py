@@ -17,6 +17,7 @@ from app.services.sticker_pipeline import (
     job_owners,
     job_retries,
     job_store,
+    job_tasks,
 )
 
 
@@ -38,10 +39,12 @@ def _clean_jobs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         "save_sticker_pack",
         staticmethod(lambda **_: None),
     )
+    monkeypatch.setattr(settings, "RUN_GENERATION_INLINE", False)
     job_store.clear()
     job_owners.clear()
     job_contexts.clear()
     job_retries.clear()
+    job_tasks.clear()
     yield
     for artifact_dir in job_artifacts.values():
         shutil.rmtree(artifact_dir, ignore_errors=True)
@@ -50,6 +53,7 @@ def _clean_jobs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     job_owners.clear()
     job_contexts.clear()
     job_retries.clear()
+    job_tasks.clear()
 
 
 def _discard_task(coroutine):  # type: ignore[no-untyped-def]
@@ -254,6 +258,72 @@ async def test_completed_pack_uses_storage_urls_for_database_history(
     stickers = saved["stickers"]
     assert isinstance(stickers, list) and len(stickers) == 20
     assert all(sticker["image_url"].startswith("https://storage.test/") for sticker in stickers)
+
+
+@pytest.mark.asyncio
+async def test_inline_completed_pack_uses_urls_and_drops_base64_previews(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "OPENAI_API_KEY", "test-key")
+    monkeypatch.setattr(settings, "RUN_GENERATION_INLINE", True)
+    monkeypatch.setattr(asyncio, "create_task", _discard_task)
+    job = StickerPipelineService.create_job(
+        owner_id="user-a",
+        style_id="anime-kawaii",
+        file_bytes=b"input-image",
+        filename="portrait.png",
+        content_type="image/png",
+    )
+    paths = []
+    for index in range(20):
+        path = tmp_path / f"{index:02d}.png"
+        path.write_bytes(f"png-{index}".encode())
+        paths.append(path)
+    path_tuple = tuple(paths)
+    job.stickers = StickerPipelineService._build_responses(path_tuple, "anime-kawaii")
+    job.preview_image_url = "data:image/png;base64,cHJldmlldw=="
+    job.preview_image_urls = [job.preview_image_url]
+
+    monkeypatch.setattr(
+        pipeline_module.SupabaseService,
+        "has_storage_client",
+        staticmethod(lambda: True),
+    )
+    monkeypatch.setattr(
+        pipeline_module.SupabaseService,
+        "upload_image_to_storage",
+        staticmethod(lambda _data, name, _type: f"https://storage.test/{name}"),
+    )
+
+    await StickerPipelineService._persist_completed_pack(
+        job.job_id,
+        "anime-kawaii",
+        path_tuple,
+    )
+    StickerPipelineService._compact_inline_job(job)
+
+    assert job.stickers is not None
+    assert all(item.image_url.startswith("https://storage.test/") for item in job.stickers)
+    assert job.preview_image_url is None
+    assert job.preview_image_urls == []
+
+
+def test_inline_responses_skip_base64_but_keep_file_size(tmp_path: Path) -> None:
+    paths = []
+    for index in range(20):
+        path = tmp_path / f"{index:02d}.png"
+        path.write_bytes(b"x" * 2048)
+        paths.append(path)
+
+    responses = StickerPipelineService._build_responses(
+        tuple(paths),
+        "anime-kawaii",
+        include_data_urls=False,
+    )
+
+    assert all(item.image_url == "" for item in responses)
+    assert all(item.file_size_kb == 2 for item in responses)
 
 
 @pytest.mark.asyncio

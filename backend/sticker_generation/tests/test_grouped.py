@@ -1,3 +1,4 @@
+import asyncio
 from io import BytesIO
 from pathlib import Path
 
@@ -214,6 +215,57 @@ async def test_grouped_generator_retries_one_transient_sheet_timeout(
     assert len(paths) == 20
     assert [call.metadata.get("sheet_index") for call in provider.calls].count(1) == 2
     assert len(provider.calls) == 5
+
+
+@pytest.mark.asyncio
+async def test_grouped_generator_can_generate_three_sheets_concurrently(
+    tmp_path: Path,
+) -> None:
+    selfie = tmp_path / "selfie.png"
+    Image.new("RGB", (256, 256), "white").save(selfie)
+
+    class ConcurrentProvider(FakeProvider):
+        def __init__(self) -> None:
+            super().__init__()
+            self.active_sheets = 0
+            self.max_active_sheets = 0
+
+        async def generate(self, request):  # type: ignore[no-untyped-def]
+            self.calls.append(request)
+            sheet_index = request.metadata.get("sheet_index")
+            if sheet_index is None:
+                return ImageGenerationResult(
+                    image_bytes=_mock_art(),
+                    provider="fake",
+                    model="fake-image",
+                    latency_seconds=0.01,
+                )
+            self.active_sheets += 1
+            self.max_active_sheets = max(self.max_active_sheets, self.active_sheets)
+            await asyncio.sleep(0)
+            self.active_sheets -= 1
+            return ImageGenerationResult(
+                image_bytes=_mock_eight_sheet(int(sheet_index)),
+                provider="fake",
+                model="fake-image",
+                latency_seconds=0.01,
+            )
+
+    provider = ConcurrentProvider()
+    generator = GroupedStickerGenerator(
+        provider=provider,
+        canvas_size=128,
+        sheet_concurrency=3,
+    )
+
+    paths = await generator.generate(
+        selfie_path=selfie,
+        output_dir=tmp_path / "output",
+        style_prompt="clean hand-drawn portrait sticker",
+    )
+
+    assert len(paths) == 20
+    assert provider.max_active_sheets == 3
 
 
 def test_eight_sheet_split_returns_eight_cells_in_row_major_order() -> None:

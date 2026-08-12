@@ -177,6 +177,36 @@ async def test_generate_passes_authenticated_owner_to_job(
 
 
 @pytest.mark.asyncio
+async def test_generate_waits_for_inline_job(
+    client: httpx.AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app.dependency_overrides[require_user_id] = lambda: "user-a"
+    job = _job()
+
+    monkeypatch.setattr(settings, "OPENAI_API_KEY", "test-key")
+    monkeypatch.setattr(settings, "RUN_GENERATION_INLINE", True)
+    monkeypatch.setattr(StickerPipelineService, "create_job", lambda **_: job)
+
+    async def fake_wait(job_id: str) -> StickerJobResponse:
+        assert job_id == job.job_id
+        job.status = "error"
+        job.error_message = "inline-finished"
+        return job
+
+    monkeypatch.setattr(StickerPipelineService, "wait_for_job", fake_wait)
+
+    response = await client.post(
+        "/api/v1/stickers/generate",
+        files={"file": ("portrait.png", _png_bytes(), "image/png")},
+        data={"style_id": "anime-kawaii"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["error_message"] == "inline-finished"
+
+
+@pytest.mark.asyncio
 async def test_user_cannot_poll_another_users_job(client: httpx.AsyncClient) -> None:
     app.dependency_overrides[require_user_id] = lambda: "user-b"
     job_store["job_private"] = _job("job_private")

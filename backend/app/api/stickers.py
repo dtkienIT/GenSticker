@@ -79,13 +79,16 @@ async def generate_stickers(
   print(f"Uploaded source image to Supabase: {public_url}")
 
   try:
-    return StickerPipelineService.create_job(
+    job = StickerPipelineService.create_job(
       owner_id=user_id,
       style_id=style_id,
       file_bytes=file_bytes,
       filename=safe_filename,
       content_type=content_type,
     )
+    if settings.RUN_GENERATION_INLINE:
+      return await StickerPipelineService.wait_for_job(job.job_id) or job
+    return job
   except ValueError as error:
     error_code = str(error)
     if error_code == "openai_api_key_required":
@@ -118,7 +121,10 @@ async def retry_failed_sheet(
 ):
   """Retry a rejected sheet while reusing its private canonical artifacts."""
   try:
-    return StickerPipelineService.retry_job(job_id, owner_id=user_id)
+    job = StickerPipelineService.retry_job(job_id, owner_id=user_id)
+    if settings.RUN_GENERATION_INLINE:
+      return await StickerPipelineService.wait_for_job(job.job_id) or job
+    return job
   except ValueError as error:
     error_code = str(error)
     if error_code == "job_not_found":

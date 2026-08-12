@@ -19,6 +19,7 @@ from sticker_generation.providers.openai_image import OpenAIImageProvider
 job_store: Dict[str, StickerJobResponse] = {}
 job_owners: Dict[str, str] = {}
 background_tasks: set[asyncio.Task[None]] = set()
+job_tasks: Dict[str, asyncio.Task[None]] = {}
 job_artifacts: Dict[str, Path] = {}
 job_retries: Dict[str, int] = {}
 
@@ -70,6 +71,33 @@ PIPELINE_STEPS_CONFIG = (
 
 
 class StickerPipelineService:
+  @staticmethod
+  def _track_task(job_id: str, task: asyncio.Task[None] | None) -> None:
+    if task is None:
+      return
+    background_tasks.add(task)
+    job_tasks[job_id] = task
+
+    def forget(completed: asyncio.Task[None]) -> None:
+      background_tasks.discard(completed)
+      job_tasks.pop(job_id, None)
+
+    task.add_done_callback(forget)
+
+  @staticmethod
+  async def wait_for_job(job_id: str) -> StickerJobResponse | None:
+    task = job_tasks.get(job_id)
+    if task is not None:
+      await task
+    return job_store.get(job_id)
+
+  @staticmethod
+  def _compact_inline_job(job: StickerJobResponse) -> None:
+    if not settings.RUN_GENERATION_INLINE:
+      return
+    job.preview_image_url = None
+    job.preview_image_urls = []
+
   @staticmethod
   def _state_store() -> JobStateStore:
     return JobStateStore(Path(settings.JOB_STORAGE_ROOT))
@@ -245,9 +273,7 @@ class StickerPipelineService:
         content_type=content_type,
       )
     )
-    if task is not None:
-      background_tasks.add(task)
-      task.add_done_callback(background_tasks.discard)
+    StickerPipelineService._track_task(job_id, task)
     return job
 
   @staticmethod
@@ -280,9 +306,7 @@ class StickerPipelineService:
     job.steps[4].progress = 0
     StickerPipelineService._persist_job(job_id)
     task = asyncio.create_task(StickerPipelineService._resume_pipeline_async(job_id))
-    if task is not None:
-      background_tasks.add(task)
-      task.add_done_callback(background_tasks.discard)
+    StickerPipelineService._track_task(job_id, task)
     return job
 
   @staticmethod
@@ -351,6 +375,8 @@ class StickerPipelineService:
           nonlocal preview_bytes_total
           if len(image_bytes) > 8 * 1024 * 1024:
             raise ValueError("preview_image_too_large")
+          if settings.RUN_GENERATION_INLINE:
+            return
           preview_bytes_total += len(image_bytes)
           if preview_bytes_total > 16 * 1024 * 1024:
             raise ValueError("preview_image_too_large")
@@ -367,6 +393,7 @@ class StickerPipelineService:
           canvas_size=512,
           max_provider_attempts=settings.OPENAI_IMAGE_MAX_ATTEMPTS,
           retry_base_delay_seconds=settings.OPENAI_IMAGE_RETRY_BASE_DELAY_SECONDS,
+          sheet_concurrency=settings.OPENAI_IMAGE_SHEET_CONCURRENCY,
         )
         paths = await generator.generate(
           selfie_path=selfie_path,
@@ -380,18 +407,24 @@ class StickerPipelineService:
 
         StickerPipelineService._complete_step(job, 3)
         StickerPipelineService._activate_step(job, 4, 92)
-        job.stickers = StickerPipelineService._build_responses(paths, style_id)
+        job.stickers = StickerPipelineService._build_responses(
+          paths,
+          style_id,
+          include_data_urls=not settings.RUN_GENERATION_INLINE,
+        )
         StickerPipelineService._complete_step(job, 4)
         job.progress_percentage = 100
-        job.status = "completed"
         job.quality_status = "accepted"
-        StickerPipelineService._persist_job(job_id)
         await StickerPipelineService._persist_completed_pack(job_id, style_id, paths)
+        StickerPipelineService._compact_inline_job(job)
+        job.status = "completed"
+        StickerPipelineService._persist_job(job_id)
     except Exception as error:
       job.status = "error"
       job.error_message = StickerPipelineService._safe_error(error)
       if job.preview_image_url:
         job.quality_status = "rejected"
+      StickerPipelineService._compact_inline_job(job)
       active_index = max(0, min(job.current_step - 1, len(job.steps) - 1))
       job.steps[active_index].status = "error"
       StickerPipelineService._persist_job(job_id)
@@ -432,6 +465,8 @@ class StickerPipelineService:
         nonlocal preview_bytes_total
         if len(image_bytes) > 8 * 1024 * 1024:
           raise ValueError("preview_image_too_large")
+        if settings.RUN_GENERATION_INLINE:
+          return
         preview_bytes_total += len(image_bytes)
         if preview_bytes_total > 16 * 1024 * 1024:
           raise ValueError("preview_image_too_large")
@@ -447,6 +482,7 @@ class StickerPipelineService:
         canvas_size=512,
         max_provider_attempts=settings.OPENAI_IMAGE_MAX_ATTEMPTS,
         retry_base_delay_seconds=settings.OPENAI_IMAGE_RETRY_BASE_DELAY_SECONDS,
+        sheet_concurrency=settings.OPENAI_IMAGE_SHEET_CONCURRENCY,
       )
       paths = await generator.resume(
         output_dir=root / "result",
@@ -459,18 +495,24 @@ class StickerPipelineService:
 
       StickerPipelineService._complete_step(job, 3)
       StickerPipelineService._activate_step(job, 4, 92)
-      job.stickers = StickerPipelineService._build_responses(paths, context.style_id)
+      job.stickers = StickerPipelineService._build_responses(
+        paths,
+        context.style_id,
+        include_data_urls=not settings.RUN_GENERATION_INLINE,
+      )
       StickerPipelineService._complete_step(job, 4)
       job.progress_percentage = 100
-      job.status = "completed"
       job.quality_status = "accepted"
-      StickerPipelineService._persist_job(job_id)
       await StickerPipelineService._persist_completed_pack(job_id, context.style_id, paths)
+      StickerPipelineService._compact_inline_job(job)
+      job.status = "completed"
+      StickerPipelineService._persist_job(job_id)
     except Exception as error:
       job.status = "error"
       job.error_message = StickerPipelineService._safe_error(error)
       if job.preview_image_url:
         job.quality_status = "rejected"
+      StickerPipelineService._compact_inline_job(job)
       active_index = max(0, min(job.current_step - 1, len(job.steps) - 1))
       job.steps[active_index].status = "error"
       StickerPipelineService._persist_job(job_id)
@@ -493,8 +535,11 @@ class StickerPipelineService:
     style_name = STYLE_NAMES.get(style_id, style_id.replace("-", " ").title())
     try:
       sticker_payloads = [sticker.model_dump() for sticker in job.stickers]
-      if SupabaseService.has_storage_client():
-        for sticker, path, payload in zip(job.stickers, paths, sticker_payloads, strict=True):
+      has_storage = SupabaseService.has_storage_client()
+      if settings.RUN_GENERATION_INLINE and not has_storage:
+        raise RuntimeError("sticker_storage_unavailable")
+      if has_storage:
+        async def upload_sticker(sticker, path: Path, payload: dict) -> None:
           public_url = await asyncio.to_thread(
             SupabaseService.upload_image_to_storage,
             path.read_bytes(),
@@ -503,6 +548,25 @@ class StickerPipelineService:
           )
           if public_url and "api.dicebear.com" not in public_url:
             payload["image_url"] = public_url
+            if settings.RUN_GENERATION_INLINE:
+              sticker.image_url = public_url
+          elif settings.RUN_GENERATION_INLINE:
+            raise RuntimeError("sticker_storage_unavailable")
+
+        upload_items = tuple(zip(job.stickers, paths, sticker_payloads, strict=True))
+        if settings.RUN_GENERATION_INLINE:
+          upload_semaphore = asyncio.Semaphore(5)
+
+          async def upload_bounded(sticker, path: Path, payload: dict) -> None:
+            async with upload_semaphore:
+              await upload_sticker(sticker, path, payload)
+
+          await asyncio.gather(
+            *(upload_bounded(sticker, path, payload) for sticker, path, payload in upload_items)
+          )
+        else:
+          for sticker, path, payload in upload_items:
+            await upload_sticker(sticker, path, payload)
 
       await asyncio.to_thread(
         SupabaseService.save_sticker_pack,
@@ -514,26 +578,37 @@ class StickerPipelineService:
         stickers=sticker_payloads,
       )
     except Exception as error:
+      if settings.RUN_GENERATION_INLINE:
+        raise RuntimeError("sticker_storage_unavailable") from error
       # Persistence must not turn an already generated pack into an AI failure.
       print(f"[WARN] Auto-saving pack to DB failed: {error}")
 
   @staticmethod
-  def _build_responses(paths: tuple[Path, ...], style_id: str) -> list[StickerItemResponse]:
+  def _build_responses(
+    paths: tuple[Path, ...],
+    style_id: str,
+    *,
+    include_data_urls: bool = True,
+  ) -> list[StickerItemResponse]:
     responses: list[StickerItemResponse] = []
     for template, path in zip(DEFAULT_STICKER_CATALOG, paths, strict=True):
-      data = path.read_bytes()
-      encoded = base64.b64encode(data).decode("ascii")
+      file_size = path.stat().st_size
+      image_url = ""
+      if include_data_urls:
+        data = path.read_bytes()
+        encoded = base64.b64encode(data).decode("ascii")
+        image_url = f"data:image/png;base64,{encoded}"
       responses.append(
         StickerItemResponse(
           id=f"stk_{template.display_order:02d}",
           title=template.label,
           emotion=template.emotion_prompt,
           tags=[template.template_id, template.emotion_prompt],
-          image_url=f"data:image/png;base64,{encoded}",
+          image_url=image_url,
           style_id=style_id,
           width=512,
           height=512,
-          file_size_kb=max(1, round(len(data) / 1024)),
+          file_size_kb=max(1, round(file_size / 1024)),
         )
       )
     return responses
@@ -568,6 +643,7 @@ class StickerPipelineService:
       "pack_sheet_grid_not_detected": "Bảng ảnh đã được tạo nhưng bố cục không đủ sạch để tự động cắt thành 20 sticker. Bạn vẫn có thể xem ảnh gốc bên dưới.",
       "preview_image_too_large": "Bảng ảnh trả về quá lớn để hiển thị an toàn trên web.",
       "pack_sheet_invalid_image": "Dịch vụ tạo ảnh không trả về một tệp ảnh hợp lệ để hiển thị.",
+      "sticker_storage_unavailable": "Không thể lưu bộ sticker lên kho ảnh. Vui lòng thử lại.",
     }
     return messages.get(
       str(error),

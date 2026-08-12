@@ -18,6 +18,7 @@ class Settings(BaseSettings):
   MAX_RETAINED_JOBS: int = int(os.getenv("MAX_RETAINED_JOBS", "4"))
   JOB_TTL_SECONDS: int = int(os.getenv("JOB_TTL_SECONDS", "86400"))
   JOB_STORAGE_ROOT: str = os.getenv("JOB_STORAGE_ROOT", "./data/jobs")
+  RUN_GENERATION_INLINE: bool = os.getenv("RUN_GENERATION_INLINE", "false").lower() == "true"
   
   # Supabase & Database
   DATABASE_URL: str = os.getenv("DATABASE_URL", "")
@@ -41,6 +42,9 @@ class Settings(BaseSettings):
   OPENAI_IMAGE_MAX_ATTEMPTS: int = int(os.getenv("OPENAI_IMAGE_MAX_ATTEMPTS", "2"))
   OPENAI_IMAGE_RETRY_BASE_DELAY_SECONDS: float = float(
     os.getenv("OPENAI_IMAGE_RETRY_BASE_DELAY_SECONDS", "2")
+  )
+  OPENAI_IMAGE_SHEET_CONCURRENCY: int = int(
+    os.getenv("OPENAI_IMAGE_SHEET_CONCURRENCY", "1")
   )
 
   # Telegram Bot Credentials

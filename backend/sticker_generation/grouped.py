@@ -47,11 +47,13 @@ class GroupedStickerGenerator:
         canvas_size: int = 512,
         max_provider_attempts: int = 1,
         retry_base_delay_seconds: float = 0,
+        sheet_concurrency: int = 1,
     ) -> None:
         self.provider = provider
         self.canvas_size = canvas_size
         self.max_provider_attempts = max(1, max_provider_attempts)
         self.retry_base_delay_seconds = max(0, retry_base_delay_seconds)
+        self.sheet_concurrency = max(1, min(3, sheet_concurrency))
 
     async def _generate_with_retry(
         self,
@@ -158,64 +160,92 @@ class GroupedStickerGenerator:
         sticker_dir = output_dir / "stickers"
         sticker_dir.mkdir(parents=True, exist_ok=True)
         sheet_plan = ((0, 8), (8, 8), (16, 4))
-        for sheet_index, (start, keep_count) in enumerate(sheet_plan, start=1):
+        completed_sheets = 0
+
+        async def generate_sheet(
+            sheet_index: int,
+            start: int,
+            keep_count: int,
+        ) -> None:
+            nonlocal completed_sheets
             sheet_templates = templates[start : start + keep_count]
             sheet_paths = tuple(
                 sticker_dir / template.reference_filename
                 for template in sheet_templates
             )
             if all(path.is_file() for path in sheet_paths):
-                self._notify(on_progress, "groups", sheet_index, 3)
-                continue
-            raw_path = output_dir / f"raw-sheet-{sheet_index}.png"
-            raw_bytes, sheet_cells = self._read_valid_raw_sheet(raw_path)
-            reused_raw_sheet = raw_bytes is not None and sheet_cells is not None
-            if raw_bytes is None or sheet_cells is None:
-                result = await self._generate_with_retry(
-                    ImageGenerationRequest(
-                        prompt=build_eight_sheet_prompt(
-                            sheet_templates,
-                            style_prompt,
-                            reserve_count=8 - keep_count,
-                        ),
-                        reference_images=(
-                            sanitized_selfie,
-                            canonical_path,
-                            layout_guide_path,
-                        ),
-                        negative_prompt=SHEET_NEGATIVE_PROMPT,
-                        size="1536x1024",
-                        metadata={
-                            "stage": "pack_sheet",
-                            "sheet_index": sheet_index,
-                            "first_order": start + 1,
-                            "last_order": start + keep_count,
-                            "keep_count": keep_count,
-                        },
+                completed_sheets += 1
+                self._notify(on_progress, "groups", completed_sheets, 3)
+                return
+
+            async with semaphore:
+                raw_path = output_dir / f"raw-sheet-{sheet_index}.png"
+                raw_bytes, sheet_cells = self._read_valid_raw_sheet(raw_path)
+                reused_raw_sheet = raw_bytes is not None and sheet_cells is not None
+                if raw_bytes is None or sheet_cells is None:
+                    result = await self._generate_with_retry(
+                        ImageGenerationRequest(
+                            prompt=build_eight_sheet_prompt(
+                                sheet_templates,
+                                style_prompt,
+                                reserve_count=8 - keep_count,
+                            ),
+                            reference_images=(
+                                sanitized_selfie,
+                                canonical_path,
+                                layout_guide_path,
+                            ),
+                            negative_prompt=SHEET_NEGATIVE_PROMPT,
+                            size="1536x1024",
+                            metadata={
+                                "stage": "pack_sheet",
+                                "sheet_index": sheet_index,
+                                "first_order": start + 1,
+                                "last_order": start + keep_count,
+                                "keep_count": keep_count,
+                            },
+                        )
                     )
-                )
-                raw_bytes = result.image_bytes
-                try:
-                    with Image.open(BytesIO(raw_bytes)) as raw_sheet:
-                        raw_sheet.verify()
-                except (OSError, ValueError) as error:
-                    raise ValueError("pack_sheet_invalid_image") from error
-                raw_path.write_bytes(raw_bytes)
-                if on_sheet:
+                    raw_bytes = result.image_bytes
+                    try:
+                        with Image.open(BytesIO(raw_bytes)) as raw_sheet:
+                            raw_sheet.verify()
+                    except (OSError, ValueError) as error:
+                        raise ValueError("pack_sheet_invalid_image") from error
+                    raw_path.write_bytes(raw_bytes)
+                    if on_sheet:
+                        on_sheet(raw_bytes)
+                    sheet_cells = self._split_eight_sheet(raw_bytes)
+                if reused_raw_sheet and on_sheet:
                     on_sheet(raw_bytes)
-                sheet_cells = self._split_eight_sheet(raw_bytes)
-            if reused_raw_sheet and on_sheet:
-                on_sheet(raw_bytes)
-            for template, sticker_bytes in zip(
-                sheet_templates,
-                sheet_cells[:keep_count],
-                strict=True,
-            ):
-                path = sticker_dir / template.reference_filename
-                path.write_bytes(
-                    postprocess_sticker(sticker_bytes, canvas_size=self.canvas_size)
-                )
-            self._notify(on_progress, "groups", sheet_index, 3)
+                for template, sticker_bytes in zip(
+                    sheet_templates,
+                    sheet_cells[:keep_count],
+                    strict=True,
+                ):
+                    path = sticker_dir / template.reference_filename
+                    path.write_bytes(
+                        postprocess_sticker(sticker_bytes, canvas_size=self.canvas_size)
+                    )
+            completed_sheets += 1
+            self._notify(on_progress, "groups", completed_sheets, 3)
+
+        semaphore = asyncio.Semaphore(self.sheet_concurrency)
+        if self.sheet_concurrency == 1:
+            for sheet_index, (start, keep_count) in enumerate(sheet_plan, start=1):
+                await generate_sheet(sheet_index, start, keep_count)
+        else:
+            tasks = [
+                asyncio.create_task(generate_sheet(sheet_index, start, keep_count))
+                for sheet_index, (start, keep_count) in enumerate(sheet_plan, start=1)
+            ]
+            try:
+                await asyncio.gather(*tasks)
+            except BaseException:
+                for task in tasks:
+                    task.cancel()
+                await asyncio.gather(*tasks, return_exceptions=True)
+                raise
         output_paths = tuple(
             sticker_dir / template.reference_filename for template in templates
         )
