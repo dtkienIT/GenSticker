@@ -66,3 +66,5 @@ example
 
 .venv/
 .env
+backend/.vercel
+backend/.env*

@@ -33,6 +33,7 @@ class JobContext:
 
 job_contexts: Dict[str, JobContext] = {}
 MAX_SHEET_RETRIES = 2
+INLINE_STORAGE_UPLOAD_CONCURRENCY = 2
 
 STYLE_PROMPTS = {
   "3d-chibi": "polished soft 3D chibi sticker, gentle studio lighting, identity-faithful proportions",
@@ -555,7 +556,7 @@ class StickerPipelineService:
 
         upload_items = tuple(zip(job.stickers, paths, sticker_payloads, strict=True))
         if settings.RUN_GENERATION_INLINE:
-          upload_semaphore = asyncio.Semaphore(5)
+          upload_semaphore = asyncio.Semaphore(INLINE_STORAGE_UPLOAD_CONCURRENCY)
 
           async def upload_bounded(sticker, path: Path, payload: dict) -> None:
             async with upload_semaphore:

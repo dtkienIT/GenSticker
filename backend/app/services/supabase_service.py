@@ -1,10 +1,15 @@
 import asyncio
 import re
+import time
 import uuid
 from datetime import datetime, timezone
 
 from app.config import settings
 from app.database import supabase, supabase_admin
+
+
+STORAGE_UPLOAD_MAX_ATTEMPTS = 3
+STORAGE_UPLOAD_RETRY_BASE_SECONDS = 0.5
 
 
 class SupabaseService:
@@ -52,16 +57,30 @@ class SupabaseService:
     bucket_name = settings.SUPABASE_STORAGE_BUCKET
     unique_path = f"uploads/{uuid.uuid4()}_{file_name}"
 
-    try:
-      client.storage.from_(bucket_name).upload(
-        path=unique_path,
-        file=file_bytes,
-        file_options={"content-type": content_type, "x-upsert": "true"}
-      )
-      return client.storage.from_(bucket_name).get_public_url(unique_path)
-    except Exception as error:
-      print(f"[WARN] Error uploading to Supabase Storage: {error}")
-      return f"https://api.dicebear.com/7.x/bottts/svg?seed={file_name}"
+    for attempt in range(1, STORAGE_UPLOAD_MAX_ATTEMPTS + 1):
+      try:
+        bucket = client.storage.from_(bucket_name)
+        bucket.upload(
+          path=unique_path,
+          file=file_bytes,
+          file_options={"content-type": content_type, "x-upsert": "true"}
+        )
+        public_url = bucket.get_public_url(unique_path)
+        if attempt > 1:
+          print(
+            "[OK] Supabase Storage upload recovered on attempt "
+            f"{attempt}/{STORAGE_UPLOAD_MAX_ATTEMPTS}"
+          )
+        return public_url
+      except Exception as error:
+        print(
+          "[WARN] Supabase Storage upload attempt "
+          f"{attempt}/{STORAGE_UPLOAD_MAX_ATTEMPTS} failed: {error}"
+        )
+        if attempt < STORAGE_UPLOAD_MAX_ATTEMPTS:
+          time.sleep(STORAGE_UPLOAD_RETRY_BASE_SECONDS * (2 ** (attempt - 1)))
+
+    return f"https://api.dicebear.com/7.x/bottts/svg?seed={file_name}"
 
   @staticmethod
   async def authenticate_user(email: str, pass_word: str):
