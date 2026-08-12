@@ -1,1 +1,0 @@
-# GenSticker Backend Package Root
