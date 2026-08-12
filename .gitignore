@@ -1,20 +1,42 @@
-# Ignore PRD document
-PRD_Sticker_Generation_V1_VI.md
-
 # Environment & local files
 .env
 .env.local
+.env.*.local
+!.env.example
 
 # Node dependencies
 node_modules/
+.expo/
+dist/
+web-build/
 
 # Python / Virtualenv
 __pycache__/
 *.pyc
 venv/
 .venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local backend runtime data
+backend/data/
+backend/storage/
+*.sqlite3
+*.db-journal
 
 # IDE & OS files
 .DS_Store
 .idea/
 .vscode/
+
+# Mobile build credentials and native build output
+mobile/android/
+mobile/ios/
+mobile/.eas/
+
+# Private docs
+docs/PRD_Sticker_Generation_V1_VI.md
+
