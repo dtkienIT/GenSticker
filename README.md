@@ -159,6 +159,18 @@ cp .env.example .env
 ```
 > Backend runs at: `http://localhost:8000` (Health check: `http://localhost:8000/api/health`)
 
+> [!IMPORTANT]
+> **🧠 AI Background Removal Model (`u2net.onnx`) Setup**
+> 
+> The background removal feature relies on the `u2net.onnx` model (~176MB). Because single files over 100MB cannot be committed directly to GitHub repositories, `backend/.u2net/` is included in `.gitignore`.
+> 
+> - **Automatic Setup (Default)**: Upon the first sticker generation request, the backend automatically fetches `u2net.onnx` from GitHub releases and saves it into `backend/.u2net/`.
+> - **Manual Setup**: If you want to pre-download the model file manually or are working in a restricted network:
+>   ```bash
+>   mkdir -p backend/.u2net
+>   curl -L "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx" -o backend/.u2net/u2net.onnx
+>   ```
+
 ---
 
 ### 2. Setup Frontend (Vite + React)
@@ -235,11 +247,80 @@ Generates 8 sticker variants concurrently using `gemini-3.1-flash-image` and str
 
 ---
 
+## 🤖 Native Android Application (`android_app/`)
+
+A native Android app built with **Kotlin** & **Jetpack Compose (Material 3)**.
+
+### Android Architecture & Features
+- **UI Framework**: 100% Jetpack Compose with Material 3 design tokens.
+- **Networking**: `OkHttp 4` + `OkHttp SSE` (Server-Sent Events) for real-time sticker streaming from the FastAPI server (`http://10.0.2.2:8000` / host LAN).
+- **Text Overlay Compositing**: Native Android `Canvas`, `Paint`, `Typeface` pill banner rendering.
+- **Storage**: Image file storage (`filesDir/stickers/`) + `SharedPreferences` JSON metadata persistence.
+- **Image Picker & Camera**: Native Android `ActivityResultContracts` image launcher.
+- **i18n Localization**: `I18nManager` state provider supporting instant **EN ↔ VI** UI language toggling.
+
+### 📖 Complete Guide: Building & Running the Android App
+
+#### Step 1: Set Up Java 17 Environment
+Ensure `JAVA_HOME` is set to JDK 17 (pre-installed in `$HOME/.local/jdk-17`):
+```bash
+export JAVA_HOME=$HOME/.local/jdk-17
+export PATH=$JAVA_HOME/bin:$PATH
+```
+
+#### Step 2: Build the Debug APK
+Navigate to `android_app` directory and compile with the Gradle wrapper:
+```bash
+cd android_app
+./gradlew assembleDebug
+```
+Upon completion, the generated APK file is located at:
+`android_app/app/build/outputs/apk/debug/app-debug.apk`
+
+---
+
+#### Step 3: Start the Backend Server
+Make sure the FastAPI backend server is active so the Android app can generate stickers:
+```bash
+cd backend
+./venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+> 💡 **Backend Network Address Configuration**:
+> - **Android Emulator**: The app connects to `http://10.0.2.2:8000` by default (the standard Android Emulator alias for host `localhost`).
+> - **Physical Android Phone**: Update `serverUrl` in [ApiService.kt](file:///home/quanld5/Documents/duhat_stickergen/android_app/app/src/main/java/com/example/duhatstickerai/data/ApiService.kt#L16) to your computer's local Wi-Fi IP address (e.g., `http://192.168.1.X:8000`).
+
+---
+
+#### Step 4: Install & Launch the App
+
+##### Option A: Using ADB (Command Line)
+```bash
+# Verify connected emulator or phone
+adb devices
+
+# Install APK to device
+adb install app/build/outputs/apk/debug/app-debug.apk
+
+# Launch DUHAT AI Sticker Studio
+adb shell am start -n com.example.duhatstickerai/.MainActivity
+```
+
+##### Option B: Using Android Studio
+1. Launch **Android Studio** and click **Open**.
+2. Select the `/home/quanld5/Documents/duhat_stickergen/android_app` directory.
+3. Wait for Gradle Sync to complete.
+4. Select your connected Virtual Device (AVD) or Physical USB Device.
+5. Click **Run ▶** (or press `Shift + F10`).
+
+---
+
 ## 🧪 Verification & Build Status
 
 - **TypeScript Type Check**: `npx tsc --noEmit` — ✅ Passed (0 errors)
 - **Frontend Production Build**: `npx vite build` — ✅ Passed (64 modules transformed)
 - **Backend Python Syntax**: `python3 -m py_compile` — ✅ Passed (0 syntax errors)
+- **Native Android Gradle Build**: `./gradlew assembleDebug` — ✅ **BUILD SUCCESSFUL** (`app-debug.apk` generated)
 
 ---
 
