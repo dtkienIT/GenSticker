@@ -56,7 +56,7 @@ async def test_openai_provider_sends_multiple_images_and_extracts_result(
     assert "1536x1024" in seen_body
     assert 'name="input_fidelity"' in seen_body and "high" in seen_body
     assert 'name="output_format"' in seen_body and "png" in seen_body
-    assert 'name="response_format"' in seen_body and "b64_json" in seen_body
+    assert 'name="response_format"' not in seen_body
     assert seen_headers is not None
     assert seen_headers["authorization"] == "Bearer secret-key"
     assert "secret-key" not in seen_body

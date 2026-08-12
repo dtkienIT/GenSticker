@@ -130,8 +130,9 @@ trong bundle frontend.
 
 Có thể điều chỉnh nhà cung cấp tương thích OpenAI, model và giới hạn job bằng
 `OPENAI_BASE_URL`, `OPENAI_IMAGE_MODEL`, `OPENAI_IMAGE_TIMEOUT_SECONDS`,
-`OPENAI_IMAGE_MAX_ATTEMPTS`, `GENERATION_RATE_LIMIT_PER_HOUR`,
-`MAX_ACTIVE_GENERATIONS`, `JOB_TTL_SECONDS` và `JOB_STORAGE_ROOT`.
+`OPENAI_IMAGE_MAX_ATTEMPTS`, `MAX_ACTIVE_GENERATIONS`, `JOB_TTL_SECONDS` và
+`JOB_STORAGE_ROOT`. Ứng dụng không giới hạn số lượt tạo theo giờ; nhà cung cấp
+ảnh vẫn có thể áp dụng rate limit và backend sẽ retry các lỗi tạm thời theo cấu hình.
 Một lượt tạo thật sử dụng nhà cung cấp API ảnh có thể phát sinh chi phí và cần
 tài khoản còn credit/quota.
 

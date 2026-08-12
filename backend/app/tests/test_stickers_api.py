@@ -17,7 +17,6 @@ from app.security import require_user_id
 from app.services.sticker_pipeline import (
     StickerPipelineService,
     job_artifacts,
-    job_attempts,
     job_contexts,
     job_owners,
     job_retries,
@@ -61,7 +60,6 @@ def _clean_state(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:  # type: ig
     )
     job_store.clear()
     job_owners.clear()
-    job_attempts.clear()
     job_artifacts.clear()
     job_contexts.clear()
     job_retries.clear()
@@ -69,7 +67,6 @@ def _clean_state(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:  # type: ig
     yield
     job_store.clear()
     job_owners.clear()
-    job_attempts.clear()
     job_artifacts.clear()
     job_contexts.clear()
     job_retries.clear()

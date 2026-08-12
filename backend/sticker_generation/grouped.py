@@ -449,7 +449,7 @@ class GroupedStickerGenerator:
                     )
                 )
                 occupancies.append(
-                    sum(cell.get_flattened_data()) / (255 * cell.width * cell.height)
+                    sum(cell.tobytes()) / (255 * cell.width * cell.height)
                 )
         return (
             max((*column_scores, *row_scores), default=0.0),
@@ -490,7 +490,7 @@ class GroupedStickerGenerator:
                     strip = foreground.crop(
                         (0, position - band, width, position + band)
                     )
-                score = sum(strip.get_flattened_data()) / (
+                score = sum(strip.tobytes()) / (
                     255 * strip.width * strip.height
                 )
                 candidates.append((score, abs(position - ideal), position))
@@ -569,13 +569,13 @@ class GroupedStickerGenerator:
             center = column * width // columns
             strip = foreground.crop((center - band, 0, center + band, height))
             boundary_samples.append(
-                sum(strip.get_flattened_data()) / (255 * strip.width * strip.height)
+                sum(strip.tobytes()) / (255 * strip.width * strip.height)
             )
         for row in range(1, rows):
             center = row * height // rows
             strip = foreground.crop((0, center - band, width, center + band))
             boundary_samples.append(
-                sum(strip.get_flattened_data()) / (255 * strip.width * strip.height)
+                sum(strip.tobytes()) / (255 * strip.width * strip.height)
             )
 
         occupancies = []
@@ -590,7 +590,7 @@ class GroupedStickerGenerator:
                     )
                 )
                 occupancies.append(
-                    sum(cell.get_flattened_data()) / (255 * cell.width * cell.height)
+                    sum(cell.tobytes()) / (255 * cell.width * cell.height)
                 )
         return max(boundary_samples, default=0.0), min(occupancies)
 

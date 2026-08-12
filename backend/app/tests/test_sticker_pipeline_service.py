@@ -13,7 +13,6 @@ from app.services import sticker_pipeline as pipeline_module
 from app.services.sticker_pipeline import (
     StickerPipelineService,
     job_artifacts,
-    job_attempts,
     job_contexts,
     job_owners,
     job_retries,
@@ -41,7 +40,6 @@ def _clean_jobs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     )
     job_store.clear()
     job_owners.clear()
-    job_attempts.clear()
     job_contexts.clear()
     job_retries.clear()
     yield
@@ -50,7 +48,6 @@ def _clean_jobs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     job_artifacts.clear()
     job_store.clear()
     job_owners.clear()
-    job_attempts.clear()
     job_contexts.clear()
     job_retries.clear()
 
@@ -383,9 +380,10 @@ async def test_provider_constructor_failure_marks_job_error(
     assert "private provider" not in (job.error_message or "")
 
 
-def test_rate_limit_and_ttl_cleanup(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_repeated_jobs_are_not_hourly_limited_and_ttl_cleanup_still_runs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(settings, "OPENAI_API_KEY", "test-key")
-    monkeypatch.setattr(settings, "GENERATION_RATE_LIMIT_PER_HOUR", 1)
     monkeypatch.setattr(settings, "JOB_TTL_SECONDS", 60)
     monkeypatch.setattr(asyncio, "create_task", _discard_task)
     job = StickerPipelineService.create_job(
@@ -396,18 +394,19 @@ def test_rate_limit_and_ttl_cleanup(monkeypatch: pytest.MonkeyPatch) -> None:
         content_type="image/png",
     )
     job.status = "completed"
-    with pytest.raises(ValueError, match="generation_rate_limit_exceeded"):
-        StickerPipelineService.create_job(
-            owner_id="user-a",
-            style_id="anime-kawaii",
-            file_bytes=b"input-image",
-            filename="portrait.png",
-            content_type="image/png",
-        )
+    second = StickerPipelineService.create_job(
+        owner_id="user-a",
+        style_id="anime-kawaii",
+        file_bytes=b"input-image",
+        filename="portrait.png",
+        content_type="image/png",
+    )
+    second.status = "completed"
 
     job.created_at -= timedelta(minutes=2)
     assert StickerPipelineService.get_job(job.job_id, owner_id="user-a") is None
     assert job.job_id not in job_owners
+    assert second.job_id in job_store
 
 
 @pytest.mark.parametrize(
@@ -425,6 +424,14 @@ def test_safe_error_identifies_incompatible_proxy_response(error_code: str) -> N
 
     assert "proxy" in message.lower()
     assert "chân dung rõ hơn" not in message.lower()
+
+
+def test_safe_error_does_not_blame_portrait_for_unknown_system_error() -> None:
+    message = StickerPipelineService._safe_error(
+        AttributeError("Image object has no attribute get_flattened_data")
+    )
+
+    assert message == "Hệ thống xử lý sticker gặp lỗi. Vui lòng thử lại."
 
 
 def test_completed_job_store_evicts_oldest_over_retention_cap(
@@ -493,12 +500,21 @@ async def test_retry_resumes_from_private_artifacts_without_new_canonical(
         StickerPipelineService.retry_job(job.job_id, owner_id="user-b")
 
 
-def test_retry_respects_generation_rate_limit(
+def test_retry_is_not_blocked_by_prior_completed_jobs(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(settings, "OPENAI_API_KEY", "test-key")
-    monkeypatch.setattr(settings, "GENERATION_RATE_LIMIT_PER_HOUR", 1)
     monkeypatch.setattr(asyncio, "create_task", _discard_task)
+    for _ in range(3):
+        completed = StickerPipelineService.create_job(
+            owner_id="user-a",
+            style_id="anime-kawaii",
+            file_bytes=b"input-image",
+            filename="portrait.png",
+            content_type="image/png",
+        )
+        completed.status = "completed"
+
     job = StickerPipelineService.create_job(
         owner_id="user-a",
         style_id="anime-kawaii",
@@ -509,5 +525,8 @@ def test_retry_respects_generation_rate_limit(
     job.status = "error"
     job.quality_status = "rejected"
 
-    with pytest.raises(ValueError, match="generation_rate_limit_exceeded"):
-        StickerPipelineService.retry_job(job.job_id, owner_id="user-a")
+    retried = StickerPipelineService.retry_job(job.job_id, owner_id="user-a")
+
+    assert retried is job
+    assert retried.status == "processing"
+    assert job_retries[job.job_id] == 1

@@ -18,7 +18,6 @@ from sticker_generation.providers.openai_image import OpenAIImageProvider
 
 job_store: Dict[str, StickerJobResponse] = {}
 job_owners: Dict[str, str] = {}
-job_attempts: Dict[str, list[datetime]] = {}
 background_tasks: set[asyncio.Task[None]] = set()
 job_artifacts: Dict[str, Path] = {}
 job_retries: Dict[str, int] = {}
@@ -139,8 +138,6 @@ class StickerPipelineService:
         job_contexts[job.job_id] = context
         job_artifacts[job.job_id] = artifact_dir
         job_retries[job.job_id] = retry_count
-        if job.created_at >= datetime.utcnow() - timedelta(hours=1):
-          job_attempts[owner_id] = [*job_attempts.get(owner_id, []), job.created_at]
         if interrupted:
           StickerPipelineService._persist_job(job.job_id)
         restored_count += 1
@@ -181,14 +178,6 @@ class StickerPipelineService:
     for _, job_id in completed[max(0, settings.MAX_RETAINED_JOBS):]:
       StickerPipelineService._drop_job(job_id)
 
-    rate_cutoff = now - timedelta(hours=1)
-    for owner_id, attempts in tuple(job_attempts.items()):
-      recent = [attempt for attempt in attempts if attempt >= rate_cutoff]
-      if recent:
-        job_attempts[owner_id] = recent
-      else:
-        job_attempts.pop(owner_id, None)
-
   @staticmethod
   def create_job(
     *,
@@ -205,8 +194,6 @@ class StickerPipelineService:
 
     now = datetime.utcnow()
     StickerPipelineService._prune_state(now)
-    if len(job_attempts.get(owner_id, [])) >= settings.GENERATION_RATE_LIMIT_PER_HOUR:
-      raise ValueError("generation_rate_limit_exceeded")
     active_jobs = sum(job.status == "processing" for job in job_store.values())
     if active_jobs >= settings.MAX_ACTIVE_GENERATIONS:
       raise ValueError("generation_capacity_reached")
@@ -248,7 +235,6 @@ class StickerPipelineService:
       content_type=content_type,
     )
     job_retries[job_id] = 0
-    job_attempts[owner_id] = [*job_attempts.get(owner_id, []), now]
     StickerPipelineService._persist_job(job_id)
     task = asyncio.create_task(
       StickerPipelineService._run_pipeline_async(
@@ -279,13 +265,10 @@ class StickerPipelineService:
     retry_count = job_retries.get(job_id, 0)
     if retry_count >= MAX_SHEET_RETRIES:
       raise ValueError("job_retry_limit_reached")
-    if len(job_attempts.get(owner_id, [])) >= settings.GENERATION_RATE_LIMIT_PER_HOUR:
-      raise ValueError("generation_rate_limit_exceeded")
     if sum(item.status == "processing" for item in job_store.values()) >= settings.MAX_ACTIVE_GENERATIONS:
       raise ValueError("generation_capacity_reached")
 
     job_retries[job_id] = retry_count + 1
-    job_attempts[owner_id] = [*job_attempts.get(owner_id, []), now]
     job.status = "processing"
     job.error_message = None
     job.quality_status = "reviewing"
@@ -588,5 +571,5 @@ class StickerPipelineService:
     }
     return messages.get(
       str(error),
-      "Không thể sinh sticker từ ảnh này. Vui lòng thử ảnh chân dung rõ hơn.",
+      "Hệ thống xử lý sticker gặp lỗi. Vui lòng thử lại.",
     )

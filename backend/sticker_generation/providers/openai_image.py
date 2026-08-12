@@ -86,7 +86,6 @@ class OpenAIImageProvider:
                     "input_fidelity": "high",
                     "background": "transparent",
                     "output_format": "png",
-                    "response_format": "b64_json",
                 },
                 files=files,
             )

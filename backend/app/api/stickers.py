@@ -92,8 +92,6 @@ async def generate_stickers(
       raise HTTPException(status_code=503, detail="Backend OpenAI API key is not configured.") from error
     if error_code == "generation_already_in_progress":
       raise HTTPException(status_code=409, detail="A sticker generation job is already running.") from error
-    if error_code == "generation_rate_limit_exceeded":
-      raise HTTPException(status_code=429, detail="Hourly sticker generation limit reached.") from error
     if error_code == "generation_capacity_reached":
       raise HTTPException(status_code=503, detail="Sticker generation is busy. Please try again later.") from error
     raise HTTPException(status_code=400, detail="Unsupported sticker style.") from error
@@ -127,8 +125,6 @@ async def retry_failed_sheet(
       raise HTTPException(status_code=404, detail="Sticker generation job was not found.") from error
     if error_code in {"job_not_retryable", "job_artifacts_missing", "job_retry_limit_reached"}:
       raise HTTPException(status_code=409, detail="This sticker job cannot be retried.") from error
-    if error_code == "generation_rate_limit_exceeded":
-      raise HTTPException(status_code=429, detail="Hourly sticker generation limit reached.") from error
     if error_code == "generation_capacity_reached":
       raise HTTPException(status_code=503, detail="Sticker generation is busy. Please try again later.") from error
     raise

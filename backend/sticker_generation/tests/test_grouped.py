@@ -228,6 +228,17 @@ def test_eight_sheet_split_returns_eight_cells_in_row_major_order() -> None:
     ]
 
 
+def test_eight_sheet_split_supports_pillow_without_get_flattened_data(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    image_bytes = _mock_eight_sheet(1)
+    monkeypatch.delattr(Image.Image, "get_flattened_data", raising=False)
+
+    cells = GroupedStickerGenerator._split_eight_sheet(image_bytes)
+
+    assert len(cells) == 8
+
+
 def test_eight_sheet_split_finds_shifted_gutters_near_nominal_boundaries() -> None:
     image = Image.new("RGBA", (1536, 1024), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
