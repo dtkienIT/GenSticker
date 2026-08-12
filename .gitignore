@@ -1,0 +1,20 @@
+# Ignore PRD document
+PRD_Sticker_Generation_V1_VI.md
+
+# Environment & local files
+.env
+.env.local
+
+# Node dependencies
+node_modules/
+
+# Python / Virtualenv
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# IDE & OS files
+.DS_Store
+.idea/
+.vscode/
