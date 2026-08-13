@@ -25,6 +25,7 @@ A full-stack web application that transforms user selfie photos into personalize
   - *Client-side*: File format (JPEG/PNG/WebP), size limit (10MB), resolution check.
   - *Server-side AI*: Gemini vision (`gemini-3.6-flash`) evaluates face count (exactly 1), face clarity, lighting/blur quality, and content safety.
 - **⚡ Parallel Progressive SSE Generation**: Fires 8 concurrent calls to `gemini-3.1-flash-image` via FastAPI SSE stream, showing stickers on the UI as each completes.
+- **🔌 Multi-Provider AI Architecture**: Seamlessly switch between **Google Gemini API** (`gemini-3.1-flash-image`), **OpenAI API** (`dall-e-3` / `gpt-4o-mini`), and **Cloudflare Workers AI** (`@cf/black-forest-labs/flux-1-schnell`) via a simple `.env` flag.
 - **✂️ Automatic AI Background Removal**: Integrated `rembg` (U-2-Net AI cutout) pipeline that removes backgrounds from raw generated stickers, outputting transparent PNG cutouts ready for chat messaging.
 - **🎨 Smart Text Compositing**: Post-generation client-side HTML5 Canvas compositing renders styled, color-coded pill text banners over stickers.
 - **🌐 Full i18n (Bilingual)**: Instant language switching between **English (EN)** and **Vietnamese (VI)** for both UI controls and sticker wording.
@@ -148,8 +149,17 @@ cd backend
 # Create .env file from template
 cp .env.example .env
 
-# Edit .env and set your Gemini API key:
-# GEMINI_API_KEY=AIzaSy...
+# Edit .env and select your AI provider:
+# Option 1: Google Gemini API (Default)
+AI_PROVIDER=gemini
+GEMINI_API_KEY=AIzaSy...
+
+# Option 2: Cloudflare Workers AI
+# AI_PROVIDER=cloudflare
+# CF_ACCOUNT_ID=your_account_id
+# CF_API_TOKEN=your_api_token
+# CF_IMAGE_MODEL=@cf/black-forest-labs/flux-1-schnell
+# CF_VISION_MODEL=@cf/meta/llama-3.2-11b-vision-instruct
 
 # Install dependencies into virtualenv (already set up in venv/)
 ./venv/bin/pip install -r requirements.txt

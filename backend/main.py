@@ -19,6 +19,16 @@ from models import (
 from prompts import EXPRESSIONS, get_sticker_prompt
 from validators import validate_image
 from bg_remover import remove_bg_base64
+from cloudflare_provider import (
+    call_cloudflare_generation, 
+    DEFAULT_CF_IMAGE_MODEL, 
+    DEFAULT_CF_VISION_MODEL
+)
+from openai_provider import (
+    call_openai_generation,
+    DEFAULT_OPENAI_IMAGE_MODEL,
+    DEFAULT_OPENAI_VISION_MODEL
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -26,9 +36,35 @@ logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
-API_KEY = os.getenv("GEMINI_API_KEY")
-if not API_KEY:
-    logger.warning("GEMINI_API_KEY is not set in environment variables.")
+
+AI_PROVIDER = os.getenv("AI_PROVIDER", "gemini").lower() # "gemini", "cloudflare", or "openai"
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+
+CF_ACCOUNT_ID = os.getenv("CF_ACCOUNT_ID", "")
+CF_API_TOKEN = os.getenv("CF_API_TOKEN", "")
+CF_IMAGE_MODEL = os.getenv("CF_IMAGE_MODEL", DEFAULT_CF_IMAGE_MODEL)
+CF_VISION_MODEL = os.getenv("CF_VISION_MODEL", DEFAULT_CF_VISION_MODEL)
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_IMAGE_MODEL = os.getenv("OPENAI_IMAGE_MODEL", DEFAULT_OPENAI_IMAGE_MODEL)
+OPENAI_VISION_MODEL = os.getenv("OPENAI_VISION_MODEL", DEFAULT_OPENAI_VISION_MODEL)
+
+if AI_PROVIDER == "cloudflare":
+    if not CF_ACCOUNT_ID or not CF_API_TOKEN:
+        logger.warning("AI_PROVIDER is set to 'cloudflare', but CF_ACCOUNT_ID or CF_API_TOKEN is missing.")
+    else:
+        logger.info(f"AI Provider initialized: Cloudflare Workers AI (Image: {CF_IMAGE_MODEL})")
+elif AI_PROVIDER == "openai":
+    if not OPENAI_API_KEY:
+        logger.warning("AI_PROVIDER is set to 'openai', but OPENAI_API_KEY is missing.")
+    else:
+        logger.info(f"AI Provider initialized: OpenAI API (Image: {OPENAI_IMAGE_MODEL})")
+else:
+    if not GEMINI_API_KEY:
+        logger.warning("AI_PROVIDER is set to 'gemini', but GEMINI_API_KEY is missing.")
+    else:
+        logger.info("AI Provider initialized: Google Gemini API (gemini-3.1-flash-image)")
 
 # Initialize FastAPI app
 app = FastAPI(title="AI Sticker Generation API")
@@ -36,7 +72,7 @@ app = FastAPI(title="AI Sticker Generation API")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -44,14 +80,46 @@ app.add_middleware(
 
 @app.get("/api/health")
 async def health_check():
-    return {"status": "ok"}
+    image_model = "gemini-3.1-flash-image"
+    vision_model = "gemini-3.6-flash"
+    if AI_PROVIDER == "cloudflare":
+        image_model = CF_IMAGE_MODEL
+        vision_model = CF_VISION_MODEL
+    elif AI_PROVIDER == "openai":
+        image_model = OPENAI_IMAGE_MODEL
+        vision_model = OPENAI_VISION_MODEL
+
+    return {
+        "status": "ok",
+        "provider": AI_PROVIDER,
+        "models": {
+            "image": image_model,
+            "vision": vision_model
+        }
+    }
 
 @app.post("/api/validate", response_model=ValidationResult)
 async def validate_endpoint(request: ValidationRequest):
-    if not API_KEY:
-        raise HTTPException(status_code=500, detail="API key not configured")
+    if AI_PROVIDER == "cloudflare":
+        if not CF_ACCOUNT_ID or not CF_API_TOKEN:
+            raise HTTPException(status_code=500, detail="Cloudflare credentials not configured in .env")
+    elif AI_PROVIDER == "openai":
+        if not OPENAI_API_KEY:
+            raise HTTPException(status_code=500, detail="OpenAI API key not configured in .env")
+    else:
+        if not GEMINI_API_KEY:
+            raise HTTPException(status_code=500, detail="Gemini API key not configured in .env")
         
-    result = await validate_image(request.image_base64, request.mime_type, API_KEY)
+    result = await validate_image(
+        request.image_base64, 
+        request.mime_type,
+        provider=AI_PROVIDER,
+        api_key=GEMINI_API_KEY,
+        cf_account_id=CF_ACCOUNT_ID,
+        cf_api_token=CF_API_TOKEN,
+        openai_api_key=OPENAI_API_KEY,
+        openai_vision_model=OPENAI_VISION_MODEL
+    )
     return result
 
 def _call_gemini_generation(image_base64: str, mime_type: str, expression: ExpressionConfig, api_key: str) -> str:
@@ -68,12 +136,35 @@ def _call_gemini_generation(image_base64: str, mime_type: str, expression: Expre
     )
     return interaction.output_image.data
 
-async def generate_single_sticker(image_base64: str, mime_type: str, expression: ExpressionConfig, api_key: str) -> GenerateResult:
+async def generate_single_sticker(image_base64: str, mime_type: str, expression: ExpressionConfig) -> GenerateResult:
     try:
-        # Run synchronous API call in a thread
-        raw_result_base64 = await asyncio.to_thread(
-            _call_gemini_generation, image_base64, mime_type, expression, api_key
-        )
+        if AI_PROVIDER == "cloudflare":
+            raw_result_base64 = await asyncio.to_thread(
+                call_cloudflare_generation,
+                image_base64,
+                mime_type,
+                expression,
+                CF_ACCOUNT_ID,
+                CF_API_TOKEN,
+                CF_IMAGE_MODEL
+            )
+        elif AI_PROVIDER == "openai":
+            raw_result_base64 = await asyncio.to_thread(
+                call_openai_generation,
+                image_base64,
+                mime_type,
+                expression,
+                OPENAI_API_KEY,
+                OPENAI_IMAGE_MODEL
+            )
+        else:
+            raw_result_base64 = await asyncio.to_thread(
+                _call_gemini_generation,
+                image_base64,
+                mime_type,
+                expression,
+                GEMINI_API_KEY
+            )
         
         # Remove background to get transparent PNG
         clean_bg_base64 = await asyncio.to_thread(
@@ -86,8 +177,7 @@ async def generate_single_sticker(image_base64: str, mime_type: str, expression:
             success=True
         )
     except Exception as e:
-        logger.error(f"Error generating sticker for {expression.id}: {str(e)}")
-        # Check if it was filtered by safety blocks
+        logger.error(f"Error generating sticker for {expression.id} ({AI_PROVIDER}): {str(e)}")
         error_msg = str(e).lower()
         filtered = "safety" in error_msg or "blocked" in error_msg or "filtered" in error_msg
         return GenerateResult(
@@ -99,29 +189,30 @@ async def generate_single_sticker(image_base64: str, mime_type: str, expression:
 
 @app.post("/api/generate-pack")
 async def generate_pack_endpoint(request: PackGenerateRequest):
-    if not API_KEY:
-        raise HTTPException(status_code=500, detail="API key not configured")
+    if AI_PROVIDER == "cloudflare":
+        if not CF_ACCOUNT_ID or not CF_API_TOKEN:
+            raise HTTPException(status_code=500, detail="Cloudflare credentials not configured in .env")
+    elif AI_PROVIDER == "openai":
+        if not OPENAI_API_KEY:
+            raise HTTPException(status_code=500, detail="OpenAI API key not configured in .env")
+    else:
+        if not GEMINI_API_KEY:
+            raise HTTPException(status_code=500, detail="Gemini API key not configured in .env")
         
     async def sse_generator() -> AsyncGenerator[str, None]:
-        # Start all generation tasks in parallel
         tasks = [
-            generate_single_sticker(request.image_base64, request.mime_type, expr, API_KEY)
+            generate_single_sticker(request.image_base64, request.mime_type, expr)
             for expr in EXPRESSIONS
         ]
         
-        # We can either await them as they complete using asyncio.as_completed
-        # This allows sending SSE events as soon as any sticker finishes.
         for completed_task in asyncio.as_completed(tasks):
             try:
                 result = await completed_task
                 yield f"data: {result.model_dump_json()}\n\n"
             except Exception as e:
                 logger.error(f"Unexpected error in parallel generation: {str(e)}")
-                # generate_single_sticker already catches and returns GenerateResult for API errors,
-                # so this would only catch truly unexpected asyncio errors
                 pass
                 
-        # Send a final 'done' event
         yield "data: {\"done\": true}\n\n"
 
     return StreamingResponse(sse_generator(), media_type="text/event-stream")
