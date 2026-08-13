@@ -184,7 +184,7 @@ for each row execute function public.enforce_exact_eight_variants();
 
 drop trigger if exists sticker_variants_exact_eight on public.sticker_variants;
 create constraint trigger sticker_variants_exact_eight
-after insert or update of set_id, owner_id, moderation_status or delete
+after insert or update of set_id, owner_id, moderation_status or delete on public.sticker_variants
 deferrable initially deferred
 for each row execute function public.enforce_exact_eight_variants();
 

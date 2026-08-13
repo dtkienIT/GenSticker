@@ -12,11 +12,13 @@ import { retrySafeMutation, safeErrorMessage } from '@/api/errors';
 import { Button, Card, Pill, Screen } from '@/components/ui';
 import { CONSENT_VERSION, IS_DEMO } from '@/config/env';
 import { useIdempotencyKey } from '@/features/use-idempotency-key';
+import { useI18n } from '@/i18n';
 import { useActiveJob } from '@/providers/active-job';
 import { colors, radii, spacing } from '@/theme/tokens';
 import { SourceCacheLifecycle } from '@/utils/source-cache-lifecycle';
 
 export default function CreateScreen() {
+  const { t } = useI18n();
   const { setActiveJobId } = useActiveJob();
   const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset>();
   const [consent, setConsent] = useState(false);
@@ -92,7 +94,7 @@ export default function CreateScreen() {
   const chooseFromLibrary = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      setPermissionError('Bạn cần cấp quyền thư viện để chọn ảnh.');
+      setPermissionError(t('create.permissionLibrary'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -109,7 +111,7 @@ export default function CreateScreen() {
   const takePhoto = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
-      setPermissionError('Bạn cần cấp quyền camera để chụp ảnh.');
+      setPermissionError(t('create.permissionCamera'));
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -128,9 +130,9 @@ export default function CreateScreen() {
   return (
     <Screen>
       <View style={styles.intro}>
-        <Pill>BƯỚC 1 / 2</Pill>
-        <Text style={styles.title}>Chọn khoảnh khắc{`\n`}bạn muốn biến hóa</Text>
-        <Text style={styles.subtitle}>Ảnh nguồn chỉ được gửi sau khi bạn đồng ý và bấm kiểm tra.</Text>
+        <Pill>{t('create.step')}</Pill>
+        <Text style={styles.title}>{t('create.title')}</Text>
+        <Text style={styles.subtitle}>{t('create.subtitle')}</Text>
       </View>
 
       <Card style={styles.photoCard}>
@@ -145,13 +147,13 @@ export default function CreateScreen() {
         ) : (
           <View style={styles.photoEmpty}>
             <Ionicons color={colors.primary} name="image-outline" size={42} />
-            <Text style={styles.photoEmptyTitle}>Một ảnh, một chủ thể</Text>
-            <Text style={styles.photoEmptyBody}>Người, thú cưng hoặc vật thể rõ ràng</Text>
+            <Text style={styles.photoEmptyTitle}>{t('create.emptyTitle')}</Text>
+            <Text style={styles.photoEmptyBody}>{t('create.emptyBody')}</Text>
           </View>
         )}
         <View style={styles.sourceButtons}>
-          <View style={styles.half}><Button full label="Camera" icon="camera-outline" onPress={takePhoto} variant="secondary" /></View>
-          <View style={styles.half}><Button disabled={validation.isPending} full label="Thư viện" icon="images-outline" onPress={chooseFromLibrary} variant="secondary" /></View>
+          <View style={styles.half}><Button full label={t('create.camera')} icon="camera-outline" onPress={takePhoto} variant="secondary" /></View>
+          <View style={styles.half}><Button disabled={validation.isPending} full label={t('create.library')} icon="images-outline" onPress={chooseFromLibrary} variant="secondary" /></View>
         </View>
       </Card>
 
@@ -160,17 +162,17 @@ export default function CreateScreen() {
           <View style={styles.row}>
             <Ionicons color={colors.danger} name="lock-closed-outline" size={22} />
             <View style={styles.rowBody}>
-              <Text style={styles.errorTitle}>Chưa có quyền truy cập</Text>
+              <Text style={styles.errorTitle}>{t('create.permissionTitle')}</Text>
               <Text style={styles.errorBody}>{permissionError}</Text>
             </View>
           </View>
-          <Button label="Mở cài đặt" onPress={() => void Linking.openSettings()} variant="ghost" />
+          <Button label={t('create.openSettings')} onPress={() => void Linking.openSettings()} variant="ghost" />
         </Card>
       ) : null}
 
       <View style={styles.requirements}>
-        <Text style={styles.sectionTitle}>Ảnh phù hợp cần có</Text>
-        {['Chính xác một chủ thể chính', 'Khuôn mặt rõ nếu là ảnh người', 'Đủ sáng, không nhòe hoặc bị che'].map((item) => (
+        <Text style={styles.sectionTitle}>{t('create.reqTitle')}</Text>
+        {[t('create.req1'), t('create.req2'), t('create.req3')].map((item) => (
           <View key={item} style={styles.requirement}>
             <Ionicons color={colors.success} name="checkmark-circle" size={21} />
             <Text style={styles.requirementText}>{item}</Text>
@@ -180,7 +182,7 @@ export default function CreateScreen() {
 
       {asset ? (
         <Pressable
-          accessibilityLabel="Xác nhận quyền sử dụng ảnh"
+          accessibilityLabel={t('create.consent')}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: consent }}
           onPress={() => {
@@ -195,7 +197,7 @@ export default function CreateScreen() {
             {consent ? <Ionicons color={colors.white} name="checkmark" size={17} /> : null}
           </View>
           <Text style={styles.consentText}>
-            Tôi xác nhận mình sở hữu hoặc có quyền sử dụng ảnh này để tạo sticker.
+            {t('create.consent')}
           </Text>
         </Pressable>
       ) : null}
@@ -212,11 +214,9 @@ export default function CreateScreen() {
           <View style={styles.row}>
             <View style={styles.readyIcon}><Ionicons color={colors.success} name="shield-checkmark" size={24} /></View>
             <View style={styles.rowBody}>
-              <Text style={styles.readyTitle}>Ảnh đã sẵn sàng</Text>
+              <Text style={styles.readyTitle}>{t('create.readyTitle')}</Text>
               <Text style={styles.readyBody}>
-                {IS_DEMO
-                  ? 'Đã hoàn tất kiểm tra đầu vào mô phỏng. Bạn chủ động bắt đầu ở bước tiếp theo.'
-                  : 'Đã hoàn tất kiểm tra đầu vào. Bạn chủ động bắt đầu ở bước tiếp theo.'}
+                {IS_DEMO ? t('create.readyBodyDemo') : t('create.readyBody')}
               </Text>
             </View>
           </View>
@@ -224,7 +224,7 @@ export default function CreateScreen() {
       ) : (
         <Button
           disabled={!asset || !consent}
-          label="Kiểm tra ảnh"
+          label={t('create.checkButton')}
           loading={validation.isPending}
           onPress={() => validation.mutate(asset!)}
         />
@@ -235,7 +235,7 @@ export default function CreateScreen() {
           {generation.isError ? <Text style={styles.generationError}>{safeErrorMessage(generation.error)}</Text> : null}
           <Button
             icon="sparkles"
-            label="Tạo 8 sticker Chibi 3D"
+            label={t('create.generateButton')}
             loading={generation.isPending}
             onPress={() => generation.mutate()}
           />

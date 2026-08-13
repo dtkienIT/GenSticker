@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type PropsWithChildren, useState } from 'react';
 
+import { I18nProvider } from '@/i18n';
 import { ActiveJobProvider } from './active-job';
 
 export function AppProviders({ children }: PropsWithChildren) {
@@ -15,7 +16,9 @@ export function AppProviders({ children }: PropsWithChildren) {
   );
   return (
     <QueryClientProvider client={queryClient}>
-      <ActiveJobProvider>{children}</ActiveJobProvider>
+      <I18nProvider>
+        <ActiveJobProvider>{children}</ActiveJobProvider>
+      </I18nProvider>
     </QueryClientProvider>
   );
 }

@@ -16,10 +16,12 @@ import { Button, Card, Pill, Screen, StateView } from '@/components/ui';
 import { IS_DEMO } from '@/config/env';
 import { shareSticker } from '@/features/share';
 import { useIdempotencyKey } from '@/features/use-idempotency-key';
+import { useI18n } from '@/i18n';
 import { useActiveJob } from '@/providers/active-job';
 import { colors, spacing } from '@/theme/tokens';
 
 export default function PreviewScreen() {
+  const { t } = useI18n();
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
   const { setActiveJobId } = useActiveJob();
@@ -107,27 +109,31 @@ export default function PreviewScreen() {
 
   const confirmRegenerate = () => {
     Alert.alert(
-      'Tạo lại toàn bộ?',
-      'Một job mới sẽ tạo đủ 8 sticker từ cùng ảnh nguồn. Các lựa chọn hiện tại chưa được lưu.',
+      t('preview.confirmRegenerateTitle'),
+      t('preview.confirmRegenerateBody'),
       [
-        { text: 'Ở lại', style: 'cancel' },
-        { text: 'Tạo lại', onPress: () => regenerate.mutate() },
+        { text: t('preview.stay'), style: 'cancel' },
+        { text: t('preview.regenerate'), onPress: () => regenerate.mutate() },
       ],
     );
   };
 
   if (job.isLoading || set.isLoading) {
-    return <Screen scroll={false}><StateView body="Đang tải đủ 8 kết quả đã qua kiểm duyệt…" icon="images-outline" loading title="Chuẩn bị bản xem trước" /></Screen>;
+    return (
+      <Screen scroll={false}>
+        <StateView body={t('preview.loadingBody')} icon="images-outline" loading title={t('preview.loadingTitle')} />
+      </Screen>
+    );
   }
   const error = job.error ?? set.error;
   if (error || !set.data) {
     return (
       <Screen scroll={false}>
         <StateView
-          action={<Button label="Thử tải lại" onPress={() => void Promise.all([job.refetch(), set.refetch()])} />}
-          body={error ? safeErrorMessage(error) : 'Bộ sticker chưa sẵn sàng.'}
+          action={<Button label={t('preview.retryLoad')} onPress={() => void Promise.all([job.refetch(), set.refetch()])} />}
+          body={error ? safeErrorMessage(error) : t('preview.errorBody')}
           icon="alert-circle-outline"
-          title="Chưa mở được bản xem trước"
+          title={t('preview.errorTitle')}
         />
       </Screen>
     );
@@ -137,21 +143,21 @@ export default function PreviewScreen() {
     <Screen>
       <View style={styles.heading}>
         <Pill tone="green">
-          {IS_DEMO ? 'ĐỦ 8 STICKER · KIỂM DUYỆT MOCK' : 'ĐỦ 8 STICKER · ĐÃ KIỂM DUYỆT'}
+          {IS_DEMO ? t('preview.pillDemo') : t('preview.pillReal')}
         </Pill>
-        <Text style={styles.title}>Chọn những sticker{`\n`}bạn thật sự thích</Text>
-        <Text style={styles.body}>Mặc định chọn cả 8 cho MVP. Chạm từng sticker để bỏ hoặc chọn lại.</Text>
+        <Text style={styles.title}>{t('preview.title')}</Text>
+        <Text style={styles.body}>{t('preview.body')}</Text>
       </View>
 
       <Card style={styles.selectionCard}>
         <View>
           <Text style={styles.selectionNumber}>{selectedCount}/8</Text>
-          <Text style={styles.selectionLabel}>đang được chọn để lưu</Text>
+          <Text style={styles.selectionLabel}>{t('preview.selectedLabel')}</Text>
         </View>
         <Button
           disabled={save.isPending}
           full={false}
-          label={selectedCount === 8 ? 'Bỏ chọn hết' : 'Chọn tất cả'}
+          label={selectedCount === 8 ? t('preview.deselectAll') : t('preview.selectAll')}
           onPress={() =>
             replaceSelection(
               selectedCount === 8 ? new Set() : new Set(sortedStickers.map((item) => item.id)),
@@ -171,8 +177,8 @@ export default function PreviewScreen() {
       {shareError ? <Text style={styles.error}>{shareError}</Text> : null}
       {save.isError ? (
         <Card style={styles.errorCard}>
-          <Text style={styles.errorTitle}>Lưu chưa thành công</Text>
-          <Text style={styles.errorBody}>{safeErrorMessage(save.error)} Bản xem trước vẫn còn để bạn thử lại.</Text>
+          <Text style={styles.errorTitle}>{t('preview.saveErrorTitle')}</Text>
+          <Text style={styles.errorBody}>{safeErrorMessage(save.error)} {t('preview.saveErrorBody')}</Text>
         </Card>
       ) : null}
       {regenerate.isError ? <Text style={styles.error}>{safeErrorMessage(regenerate.error)}</Text> : null}
@@ -180,14 +186,14 @@ export default function PreviewScreen() {
         <Button
           disabled={selectedCount === 0}
           icon="bookmark"
-          label={`Lưu ${selectedCount} sticker`}
+          label={t('preview.saveButton', { count: selectedCount })}
           loading={save.isPending}
           onPress={() => save.mutate()}
         />
         <Button
           disabled={save.isPending}
           icon="refresh"
-          label="Tạo lại toàn bộ 8 sticker"
+          label={t('preview.regenerateButton')}
           loading={regenerate.isPending}
           onPress={confirmRegenerate}
           variant="ghost"

@@ -554,10 +554,11 @@ npx expo-doctor
 npx expo export --platform android --output-dir /tmp/gensticker-expo-export
 ```
 
-Kết quả tại thời điểm bàn giao: backend 26 test pass; mobile 15 test pass;
+Kết quả tại thời điểm bàn giao: backend 26 test pass; mobile 19 test pass;
 Ruff, Python compile, TypeScript, ESLint, Expo Doctor (18/18) và Android
 bundle/export đều pass. Test mobile gồm contract exact-eight, MIME inference,
-idempotency intent, ánh xạ Problem Details an toàn và vòng đời file ảnh nguồn:
+idempotency intent, ánh xạ Problem Details an toàn, vòng đời file ảnh nguồn
+và hệ thống đa ngôn ngữ i18n (Tiếng Việt 🇻🇳 & Tiếng Anh 🇬🇧 với SecureStore persistence):
 chỉ xóa file con trong cache riêng của app, trì hoãn xóa khi upload còn đọc file,
 cleanup sau upload thành công, khi thay ảnh và khi rời màn hình. Cleanup là
 best-effort và không tác động ảnh gốc nằm ngoài cache của app.

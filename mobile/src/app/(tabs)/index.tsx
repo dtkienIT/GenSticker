@@ -5,12 +5,15 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { getJob } from '@/api/client';
 import { isTerminalJob } from '@/api/contracts';
+import { LanguageToggle } from '@/components/language-toggle';
 import { Card, Button, Pill, Screen } from '@/components/ui';
 import { IS_DEMO } from '@/config/env';
+import { useI18n } from '@/i18n';
 import { useActiveJob } from '@/providers/active-job';
 import { colors, radii, spacing } from '@/theme/tokens';
 
 export default function HomeScreen() {
+  const { t } = useI18n();
   const { activeJobId, hydrated } = useActiveJob();
   const activeJob = useQuery({
     queryKey: ['job', activeJobId],
@@ -35,16 +38,19 @@ export default function HomeScreen() {
     <Screen contentStyle={styles.screen}>
       <View style={styles.top}>
         <View>
-          <Text style={styles.eyebrow}>DUHAT STUDIO</Text>
-          <Text style={styles.brand}>Gen Sticker</Text>
+          <Text style={styles.eyebrow}>{t('home.eyebrow')}</Text>
+          <Text style={styles.brand}>{t('home.brand')}</Text>
         </View>
-        <View style={styles.avatar}><Ionicons color={colors.plum} name="happy" size={28} /></View>
+        <View style={styles.topRight}>
+          <LanguageToggle />
+          <View style={styles.avatar}><Ionicons color={colors.plum} name="happy" size={24} /></View>
+        </View>
       </View>
 
       {IS_DEMO ? (
         <View accessibilityRole="text" style={styles.demoBanner}>
           <Ionicons color={colors.warning} name="flask" size={18} />
-          <Text style={styles.demoText}>MVP đang dùng 8 ảnh mock — chưa có AI/image processing.</Text>
+          <Text style={styles.demoText}>{t('common.demoNotice')}</Text>
         </View>
       ) : null}
 
@@ -52,16 +58,16 @@ export default function HomeScreen() {
         <Card style={styles.activeCard}>
           <View style={styles.activeHeader}>
             <Pill tone={activeJob.data.status === 'succeeded' ? 'green' : 'warm'}>
-              {activeJob.data.status === 'succeeded' ? 'ĐÃ SẴN SÀNG' : 'ĐANG THỰC HIỆN'}
+              {activeJob.data.status === 'succeeded' ? t('home.activeJob.ready') : t('home.activeJob.inProgress')}
             </Pill>
             <Text style={styles.percent}>{activeJob.data.progress}%</Text>
           </View>
-          <Text style={styles.cardTitle}>Bộ sticker gần nhất</Text>
-          <Text style={styles.body}>Bạn có thể tiếp tục công việc mà không mất job đã gửi.</Text>
+          <Text style={styles.cardTitle}>{t('home.activeJob.title')}</Text>
+          <Text style={styles.body}>{t('home.activeJob.body')}</Text>
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${activeJob.data.progress}%` }]} />
           </View>
-          <Button label="Tiếp tục" onPress={openActiveJob} variant="secondary" />
+          <Button label={t('home.activeJob.continue')} onPress={openActiveJob} variant="secondary" />
         </Card>
       ) : null}
 
@@ -69,19 +75,17 @@ export default function HomeScreen() {
         <View style={styles.orbitOne} />
         <View style={styles.orbitTwo} />
         <View style={styles.heroIcon}><Text style={styles.heroEmoji}>✨</Text></View>
-        <Text style={styles.heroTitle}>Một tấm ảnh.{`\n`}Tám sticker mang chất riêng.</Text>
-        <Text style={styles.heroBody}>
-          Chọn một người, thú cưng hoặc vật thể. Duhat sẽ chuẩn bị bộ Chibi 3D để bạn chọn, lưu và chia sẻ.
-        </Text>
-        <Button icon="camera" label="Bắt đầu tạo sticker" onPress={() => router.push('/create')} />
+        <Text style={styles.heroTitle}>{t('home.hero.title')}</Text>
+        <Text style={styles.heroBody}>{t('home.hero.body')}</Text>
+        <Button icon="camera" label={t('home.hero.startButton')} onPress={() => router.push('/create')} />
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Ảnh đẹp, sticker xinh</Text>
+        <Text style={styles.sectionTitle}>{t('home.tips.title')}</Text>
         {[
-          ['person-outline', 'Chỉ một chủ thể chính'],
-          ['sunny-outline', 'Ảnh rõ nét và đủ sáng'],
-          ['shield-checkmark-outline', 'Bạn có quyền sử dụng ảnh'],
+          ['person-outline', t('home.tips.tip1')],
+          ['sunny-outline', t('home.tips.tip2')],
+          ['shield-checkmark-outline', t('home.tips.tip3')],
         ].map(([icon, label]) => (
           <View key={label} style={styles.tip}>
             <View style={styles.tipIcon}>
@@ -98,9 +102,10 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: { paddingTop: 54 },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  topRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   eyebrow: { color: colors.primary, fontWeight: '900', fontSize: 11, letterSpacing: 2.2 },
   brand: { color: colors.ink, fontWeight: '900', fontSize: 28 },
-  avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#F2E4F6', alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#F2E4F6', alignItems: 'center', justifyContent: 'center' },
   demoBanner: { flexDirection: 'row', gap: spacing.sm, borderRadius: radii.md, padding: spacing.md, backgroundColor: colors.warningSoft, alignItems: 'center' },
   demoText: { color: colors.warning, fontWeight: '700', fontSize: 13, flex: 1 },
   hero: { overflow: 'hidden', backgroundColor: colors.surfaceWarm, borderRadius: 30, padding: spacing.xl, gap: spacing.lg, borderWidth: 1, borderColor: '#F5D5C3' },

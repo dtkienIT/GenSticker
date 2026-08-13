@@ -10,18 +10,12 @@ import { messageForCode, retrySafeMutation, safeErrorMessage } from '@/api/error
 import { Button, Card, Pill, Screen, StateView } from '@/components/ui';
 import { IS_DEMO } from '@/config/env';
 import { useIdempotencyKey } from '@/features/use-idempotency-key';
+import { useI18n, type TranslationKey } from '@/i18n';
 import { useActiveJob } from '@/providers/active-job';
 import { colors, radii, spacing } from '@/theme/tokens';
 
-const stageText: Record<string, string> = {
-  queued: 'Đang xếp hàng an toàn',
-  generating: 'Đang tạo 8 biến thể Chibi 3D',
-  moderating: 'Đang kiểm tra an toàn đầu ra',
-  moderating_outputs: 'Đang kiểm tra an toàn đầu ra',
-  ready: 'Bộ sticker đã sẵn sàng',
-};
-
 export default function JobScreen() {
+  const { t } = useI18n();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { setActiveJobId } = useActiveJob();
   const retryIntent = useIdempotencyKey();
@@ -51,16 +45,20 @@ export default function JobScreen() {
   }, [job.data]);
 
   if (job.isLoading) {
-    return <Screen scroll={false}><StateView body="Đang khôi phục job đã gửi…" icon="cloud-download-outline" loading title="Đang kết nối" /></Screen>;
+    return (
+      <Screen scroll={false}>
+        <StateView body={t('job.restoring')} icon="cloud-download-outline" loading title={t('job.connecting')} />
+      </Screen>
+    );
   }
   if (job.isError) {
     return (
       <Screen scroll={false}>
         <StateView
-          action={<Button label="Thử kết nối lại" onPress={() => void job.refetch()} />}
+          action={<Button label={t('job.retryConnection')} onPress={() => void job.refetch()} />}
           body={safeErrorMessage(job.error)}
           icon="cloud-offline-outline"
-          title="Chưa tải được tiến trình"
+          title={t('job.errorTitle')}
         />
       </Screen>
     );
@@ -75,40 +73,51 @@ export default function JobScreen() {
           action={
             <View style={styles.actions}>
               {retry.isError ? <Text style={styles.error}>{safeErrorMessage(retry.error)}</Text> : null}
-              <Button label="Thử tạo lại cả bộ" loading={retry.isPending} onPress={() => retry.mutate()} />
-              <Button label="Chọn ảnh khác" onPress={() => router.replace('/create')} variant="ghost" />
+              <Button label={t('job.retryAll')} loading={retry.isPending} onPress={() => retry.mutate()} />
+              <Button label={t('job.chooseOtherPhoto')} onPress={() => router.replace('/create')} variant="ghost" />
             </View>
           }
           body={messageForCode(job.data.errorCode)}
           icon={job.data.errorCode === 'OUTPUT_BLOCKED' ? 'shield-outline' : 'refresh-circle-outline'}
-          title={job.data.status === 'timed_out' ? 'Job đã quá giờ' : 'Chưa tạo được sticker'}
+          title={job.data.status === 'timed_out' ? t('job.timedOutTitle') : t('job.failedTitle')}
         />
       </Screen>
     );
   }
 
+  const stageKey: Record<string, TranslationKey> = {
+    queued: 'job.stage.queued',
+    generating: 'job.stage.generating',
+    moderating: 'job.stage.moderating',
+    moderating_outputs: 'job.stage.moderating',
+    ready: 'job.stage.ready',
+  };
+
+  const matchedKey = stageKey[job.data.stage];
+  const currentStageText = matchedKey ? t(matchedKey) : t('job.stage.processing');
+
   return (
     <Screen contentStyle={styles.screen} scroll={false}>
       <View style={styles.head}>
-        <Pill>{IS_DEMO ? 'MOCK PIPELINE' : 'CHIBI 3D'}</Pill>
-        <Text style={styles.title}>Phép màu đang{`\n`}được chuẩn bị ✨</Text>
-        <Text style={styles.subtitle}>Bạn có thể rời màn hình. Job đã gửi vẫn được lưu và tiếp tục xử lý.</Text>
+        <Pill>{IS_DEMO ? t('job.pipelineDemo') : t('job.pipelineChibi')}</Pill>
+        <Text style={styles.title}>{t('job.title')}</Text>
+        <Text style={styles.subtitle}>{t('job.subtitle')}</Text>
       </View>
       <Card style={styles.progressCard}>
         <View style={styles.rings}>
           <View style={styles.ringOne}><View style={styles.ringTwo}><Text style={styles.progressText}>{job.data.progress}%</Text></View></View>
         </View>
         <Text accessibilityLiveRegion="polite" style={styles.stage}>
-          {stageText[job.data.stage] ?? 'Đang xử lý bộ sticker'}
+          {currentStageText}
         </Text>
         <View style={styles.track}>
           <View style={[styles.fill, { width: `${job.data.progress}%` }]} />
         </View>
         <View style={styles.steps}>
           {[
-            ['checkmark-circle', 'Đã kiểm tra ảnh', job.data.progress >= 10],
-            ['color-wand', 'Tạo Chibi 3D', job.data.progress >= 15],
-            ['shield-checkmark', 'Kiểm duyệt đầu ra', job.data.progress >= 65],
+            ['checkmark-circle', t('job.step.check'), job.data.progress >= 10],
+            ['color-wand', t('job.step.generate'), job.data.progress >= 15],
+            ['shield-checkmark', t('job.step.moderate'), job.data.progress >= 65],
           ].map(([icon, label, active]) => (
             <View key={String(label)} style={styles.step}>
               <Ionicons color={active ? colors.primary : colors.line} name={icon as keyof typeof Ionicons.glyphMap} size={22} />
@@ -117,7 +126,7 @@ export default function JobScreen() {
           ))}
         </View>
       </Card>
-      <Button label="Về trang chủ" onPress={() => router.replace('/(tabs)')} variant="ghost" />
+      <Button label={t('job.backHome')} onPress={() => router.replace('/(tabs)')} variant="ghost" />
     </Screen>
   );
 }

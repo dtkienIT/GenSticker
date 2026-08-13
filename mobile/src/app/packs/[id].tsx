@@ -8,9 +8,11 @@ import { safeErrorMessage } from '@/api/errors';
 import { StickerGrid } from '@/components/sticker-grid';
 import { Button, Pill, Screen, StateView } from '@/components/ui';
 import { shareSticker } from '@/features/share';
+import { useI18n } from '@/i18n';
 import { colors, spacing } from '@/theme/tokens';
 
 export default function PackScreen() {
+  const { t } = useI18n();
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
   const [sharingId, setSharingId] = useState<string | null>(null);
@@ -39,28 +41,41 @@ export default function PackScreen() {
 
   const confirmDelete = () => {
     Alert.alert(
-      'Gỡ khỏi thư viện?',
-      'Liên kết bộ sticker đã lưu sẽ được gỡ. Ảnh nguồn và output demo vẫn tuân theo thời hạn lưu trữ chưa được chốt; đây chưa phải xóa dữ liệu toàn hệ thống.',
+      t('pack.confirmRemoveTitle'),
+      t('pack.confirmRemoveBody'),
       [
-        { text: 'Hủy', style: 'cancel' },
-        { text: 'Gỡ khỏi thư viện', style: 'destructive', onPress: () => remove.mutate() },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('pack.confirmRemoveButton'), style: 'destructive', onPress: () => remove.mutate() },
       ],
     );
   };
 
   if (pack.isLoading) {
-    return <Screen scroll={false}><StateView body="Đang tải sticker đã lưu…" icon="albums-outline" loading title="Mở bộ sticker" /></Screen>;
+    return (
+      <Screen scroll={false}>
+        <StateView body={t('pack.loadingBody')} icon="albums-outline" loading title={t('pack.loadingTitle')} />
+      </Screen>
+    );
   }
   if (pack.isError || !pack.data) {
-    return <Screen scroll={false}><StateView action={<Button label="Quay lại thư viện" onPress={() => router.replace('/(tabs)/library')} />} body={pack.isError ? safeErrorMessage(pack.error) : 'Không tìm thấy bộ sticker.'} icon="alert-circle-outline" title="Chưa mở được bộ sticker" /></Screen>;
+    return (
+      <Screen scroll={false}>
+        <StateView
+          action={<Button label={t('pack.backToLibrary')} onPress={() => router.replace('/(tabs)/library')} />}
+          body={pack.isError ? safeErrorMessage(pack.error) : t('pack.notFound')}
+          icon="alert-circle-outline"
+          title={t('pack.errorTitle')}
+        />
+      </Screen>
+    );
   }
 
   return (
     <Screen>
       <View style={styles.heading}>
-        <Pill tone="green">RIÊNG TƯ · ĐÃ LƯU</Pill>
+        <Pill tone="green">{t('pack.pill')}</Pill>
         <Text style={styles.title}>{pack.data.name}</Text>
-        <Text style={styles.body}>Chạm biểu tượng chia sẻ trên từng sticker để mở bảng chia sẻ của điện thoại.</Text>
+        <Text style={styles.body}>{t('pack.body')}</Text>
       </View>
       <StickerGrid
         onShare={(stickerId) => void share(stickerId)}
@@ -69,11 +84,8 @@ export default function PackScreen() {
       />
       {shareError ? <Text style={styles.error}>{shareError}</Text> : null}
       {remove.isError ? <Text style={styles.error}>{safeErrorMessage(remove.error)}</Text> : null}
-      <Button label="Gỡ khỏi thư viện" loading={remove.isPending} onPress={confirmDelete} variant="danger" />
-      <Text style={styles.footnote}>
-        Thao tác này chỉ gỡ saved-pack association. Bản đã chia sẻ ra ngoài không thể thu hồi;
-        source/output demo còn theo retention chưa chốt.
-      </Text>
+      <Button label={t('pack.remove')} loading={remove.isPending} onPress={confirmDelete} variant="danger" />
+      <Text style={styles.footnote}>{t('pack.footnote')}</Text>
     </Screen>
   );
 }

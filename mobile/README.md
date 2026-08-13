@@ -43,6 +43,7 @@ Chỉ `activeJobId` (metadata khôi phục giao diện, không phải token hay 
 - Preview chỉ mở khi full-set có đúng 8 sticker; chọn/bỏ, lưu, tạo lại toàn bộ.
 - Chia sẻ từng output qua native share sheet; asset được tải tạm với auth rồi xóa cache.
 - Xóa pack với xác nhận và failure/loading/empty state an toàn.
+- Đa ngôn ngữ (i18n): Chuyển đổi linh hoạt giữa Tiếng Việt 🇻🇳 và Tiếng Anh 🇬🇧 thông qua `LanguageToggle` pill component, hỗ trợ lưu thiết lập bằng SecureStore (`duhat.app_language`).
 
 Ảnh nguồn không được ghi log hoặc persist vào AsyncStorage/SecureStore. Bản crop/copy tạm do ImagePicker tạo chỉ tồn tại trong state bộ nhớ; app cố gắng xóa file thuộc cache riêng sau upload thành công, khi thay ảnh hoặc rời màn hình và không xóa khi upload còn chạy. Đây là best-effort: hệ điều hành/thư viện ảnh có thể giữ cache hoặc ảnh gốc ngoài phạm vi app; backend quyết định retention sau upload.
 
@@ -56,7 +57,6 @@ npx expo config --type public
 ```
 
 Test hiện bao phủ contract dữ liệu/invariant exact-8, suy luận MIME upload, key
-idempotency theo user intent, ánh xạ lỗi API an toàn và lifecycle file ảnh nguồn
-(cache boundary, replace/unmount, upload success/failure và race khi upload còn
-đọc file). Kiểm thử native camera/share sheet vẫn cần thiết bị hoặc simulator
-Android/iOS.
+idempotency theo user intent, ánh xạ lỗi API an toàn, lifecycle file ảnh nguồn
+và hệ thống đa ngôn ngữ i18n (dịch thuật vi/en, tham số động và fallback dictionary).
+Kiểm thử native camera/share sheet vẫn cần thiết bị hoặc simulator Android/iOS.

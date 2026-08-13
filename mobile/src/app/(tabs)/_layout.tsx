@@ -1,9 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
+import { useI18n } from '@/i18n';
 import { colors } from '@/theme/tokens';
 
 export default function TabsLayout() {
+  const { t } = useI18n();
+
   return (
     <Tabs
       screenOptions={{
@@ -17,14 +20,14 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Trang chủ',
+          title: t('tabs.home'),
           tabBarIcon: ({ color, size }) => <Ionicons color={color} name="sparkles" size={size} />,
         }}
       />
       <Tabs.Screen
         name="library"
         options={{
-          title: 'Thư viện',
+          title: t('tabs.library'),
           tabBarIcon: ({ color, size }) => <Ionicons color={color} name="albums" size={size} />,
         }}
       />
