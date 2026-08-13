@@ -9,7 +9,7 @@ import {
   regenerateJob,
   saveStickerSet,
 } from '@/api/client';
-import { assertExactlyEight } from '@/api/contracts';
+import { assertPublishablePack } from '@/api/contracts';
 import { retrySafeMutation, safeErrorMessage } from '@/api/errors';
 import { StickerGrid } from '@/components/sticker-grid';
 import { Button, Card, Pill, Screen, StateView } from '@/components/ui';
@@ -36,7 +36,7 @@ export default function PreviewScreen() {
     queryKey: ['set', job.data?.setId],
     queryFn: async () => {
       const result = await getStickerSet(job.data!.setId!);
-      assertExactlyEight(result.stickers);
+      assertPublishablePack(result.stickers);
       return result;
     },
     enabled: job.data?.status === 'succeeded' && Boolean(job.data.setId),
@@ -143,7 +143,9 @@ export default function PreviewScreen() {
     <Screen>
       <View style={styles.heading}>
         <Pill tone="green">
-          {IS_DEMO ? t('preview.pillDemo') : t('preview.pillReal')}
+          {IS_DEMO
+            ? t('preview.pillDemo', { count: sortedStickers.length })
+            : t('preview.pillReal', { count: sortedStickers.length })}
         </Pill>
         <Text style={styles.title}>{t('preview.title')}</Text>
         <Text style={styles.body}>{t('preview.body')}</Text>
@@ -151,16 +153,16 @@ export default function PreviewScreen() {
 
       <Card style={styles.selectionCard}>
         <View>
-          <Text style={styles.selectionNumber}>{selectedCount}/8</Text>
+          <Text style={styles.selectionNumber}>{selectedCount}/{sortedStickers.length}</Text>
           <Text style={styles.selectionLabel}>{t('preview.selectedLabel')}</Text>
         </View>
         <Button
           disabled={save.isPending}
           full={false}
-          label={selectedCount === 8 ? t('preview.deselectAll') : t('preview.selectAll')}
+          label={selectedCount === sortedStickers.length ? t('preview.deselectAll') : t('preview.selectAll')}
           onPress={() =>
             replaceSelection(
-              selectedCount === 8 ? new Set() : new Set(sortedStickers.map((item) => item.id)),
+              selectedCount === sortedStickers.length ? new Set() : new Set(sortedStickers.map((item) => item.id)),
             )
           }
           variant="ghost"

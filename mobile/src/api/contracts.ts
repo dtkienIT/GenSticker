@@ -2,8 +2,11 @@ import { z } from 'zod';
 
 export const jobStatusSchema = z.enum([
   'queued',
+  'validating',
+  'canonicalizing',
   'generating',
-  'processing',
+  'splitting',
+  'quality_checking',
   'moderating',
   'succeeded',
   'failed',
@@ -47,7 +50,14 @@ const setWireSchema = z
     set_id: z.string().optional(),
     sticker_set_id: z.string().optional(),
     job_id: z.string(),
-    stickers: z.array(stickerSchema),
+    style: z.enum(['chibi_2d', 'chibi_3d', 'plush', 'pixel']).default('chibi_3d'),
+    subject_type: z.enum(['person', 'pet', 'object']).default('person'),
+    locale: z.enum(['vi', 'en']).default('vi'),
+    catalog_version: z.string().default('v1'),
+    target_count: z.literal(8).default(8),
+    published_count: z.number().int().min(6).max(8).optional(),
+    rejected_count: z.number().int().min(0).max(2).default(0),
+    stickers: z.array(stickerSchema).min(6).max(8),
   })
   .passthrough();
 
@@ -55,6 +65,11 @@ export type StickerSet = {
   id: string;
   jobId: string;
   stickers: Sticker[];
+  style: 'chibi_2d' | 'chibi_3d' | 'plush' | 'pixel';
+  subjectType: 'person' | 'pet' | 'object';
+  locale: 'vi' | 'en';
+  publishedCount: number;
+  rejectedCount: number;
 };
 
 export const stickerSetSchema = setWireSchema.transform((wire, context): StickerSet => {
@@ -63,7 +78,15 @@ export const stickerSetSchema = setWireSchema.transform((wire, context): Sticker
     context.addIssue({ code: 'custom', message: 'Bộ sticker thiếu ID' });
     return z.NEVER;
   }
-  return { id, jobId: wire.job_id, stickers: wire.stickers };
+  const ordinals = new Set(wire.stickers.map((sticker) => sticker.ordinal));
+  if (ordinals.size !== wire.stickers.length) {
+    context.addIssue({ code: 'custom', message: 'Sticker ordinals must be unique' });
+    return z.NEVER;
+  }
+  return { id, jobId: wire.job_id, stickers: wire.stickers, style: wire.style,
+    subjectType: wire.subject_type, locale: wire.locale,
+    publishedCount: wire.published_count ?? wire.stickers.length,
+    rejectedCount: wire.rejected_count };
 });
 
 const sourceWireSchema = z
@@ -93,6 +116,8 @@ const jobWireSchema = z
     id: z.string().optional(),
     job_id: z.string().optional(),
     source_image_id: z.string(),
+    style_id: z.enum(['chibi_2d', 'chibi_3d', 'plush', 'pixel']).default('chibi_3d'),
+    locale: z.enum(['vi', 'en']).default('vi'),
     status: jobStatusSchema,
     stage: z.string().default('queued'),
     progress: z.number().min(0).max(100).default(0),
@@ -110,6 +135,8 @@ export type GenerationJob = {
   progress: number;
   errorCode?: string;
   setId?: string;
+  styleId: 'chibi_2d' | 'chibi_3d' | 'plush' | 'pixel';
+  locale: 'vi' | 'en';
 };
 
 export const generationJobSchema = jobWireSchema.transform(
@@ -127,6 +154,8 @@ export const generationJobSchema = jobWireSchema.transform(
       status: wire.status,
       stage: wire.stage,
       progress: wire.progress,
+      styleId: wire.style_id,
+      locale: wire.locale,
       ...(errorCode ? { errorCode } : {}),
       ...(setId ? { setId } : {}),
     };
@@ -173,12 +202,12 @@ export const packsSchema = z
   ])
   .transform((wire) => (Array.isArray(wire) ? wire : 'items' in wire ? wire.items : wire.packs));
 
-export function assertExactlyEight(stickers: Sticker[]): Sticker[] {
-  if (stickers.length !== 8) {
+export function assertPublishablePack(stickers: Sticker[]): Sticker[] {
+  if (stickers.length < 6 || stickers.length > 8) {
     throw new Error('INVALID_STICKER_COUNT');
   }
   const ordinals = new Set(stickers.map((sticker) => sticker.ordinal));
-  if (ordinals.size !== 8) {
+  if (ordinals.size !== stickers.length) {
     throw new Error('INVALID_STICKER_ORDINALS');
   }
   return stickers;

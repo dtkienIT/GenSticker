@@ -1,5 +1,8 @@
 import { Platform } from 'react-native';
 
+import { resolveAuthMode } from './auth-mode';
+import { resolveSupabasePublicKey } from './supabase-key';
+
 const fallbackOrigin = Platform.select({
   android: 'http://10.0.2.2:8000',
   default: 'http://127.0.0.1:8000',
@@ -21,6 +24,12 @@ export const CONSENT_VERSION =
 // compile-time để không thể vô tình tắt disclosure bằng một biến môi trường.
 export const IS_DEMO = true as const;
 export const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim() || '';
-export const SUPABASE_ANON_KEY =
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim() || '';
-export const USE_SUPABASE_AUTH = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+export const SUPABASE_ANON_KEY = resolveSupabasePublicKey(
+  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+);
+export const AUTH_MODE = resolveAuthMode(
+  process.env.EXPO_PUBLIC_AUTH_MODE,
+  Boolean(SUPABASE_URL && SUPABASE_ANON_KEY),
+);
+export const USE_SUPABASE_AUTH = AUTH_MODE === 'supabase';

@@ -18,11 +18,30 @@ class MockScenario(StrEnum):
     FAILURE = "failure"
     TIMEOUT = "timeout"
     BLOCKED = "blocked"
+    PARTIAL_SIX = "partial_six"
+    PARTIAL_SEVEN = "partial_seven"
+
+
+class SubjectType(StrEnum):
+    PERSON = "person"
+    PET = "pet"
+    OBJECT = "object"
+
+
+class StickerStyle(StrEnum):
+    CHIBI_2D = "chibi_2d"
+    CHIBI_3D = "chibi_3d"
+    PLUSH = "plush"
+    PIXEL = "pixel"
 
 
 class JobStatus(StrEnum):
     QUEUED = "queued"
+    VALIDATING = "validating"
+    CANONICALIZING = "canonicalizing"
     GENERATING = "generating"
+    SPLITTING = "splitting"
+    QUALITY_CHECKING = "quality_checking"
     MODERATING = "moderating"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
@@ -48,4 +67,3 @@ class JobSnapshot:
     stage: str
     progress: int
     safe_error_code: str | None = None
-

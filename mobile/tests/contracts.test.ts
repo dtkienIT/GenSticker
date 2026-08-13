@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  assertExactlyEight,
+  assertPublishablePack,
   generationJobSchema,
   packsSchema,
   stickerSetSchema,
@@ -33,14 +33,15 @@ describe('API contracts', () => {
     expect(result).toMatchObject({ id: 'job-1', status: 'succeeded', setId: 'set-1' });
   });
 
-  it('requires exactly eight unique ordinals for a full-set preview', () => {
+  it('accepts six to eight unique ordinals for a publishable preview', () => {
     const set = stickerSetSchema.parse({
       id: 'set-1',
       job_id: 'job-1',
       stickers: Array.from({ length: 8 }, (_, index) => wireSticker(index + 1)),
     });
-    expect(assertExactlyEight(set.stickers)).toHaveLength(8);
-    expect(() => assertExactlyEight(set.stickers.slice(0, 7))).toThrow('INVALID_STICKER_COUNT');
+    expect(assertPublishablePack(set.stickers)).toHaveLength(8);
+    expect(assertPublishablePack(set.stickers.slice(0, 6))).toHaveLength(6);
+    expect(() => assertPublishablePack(set.stickers.slice(0, 5))).toThrow('INVALID_STICKER_COUNT');
   });
 
   it('maps backend pack title and list envelope', () => {

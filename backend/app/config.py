@@ -37,6 +37,13 @@ class Settings(BaseSettings):
     allow_local_demo_auth: bool = True
     mock_stage_seconds: float = Field(default=0.6, ge=0.0, le=60.0)
     max_upload_bytes: int = Field(default=10 * 1024 * 1024, ge=1)
+    temp_asset_ttl_seconds: int = Field(default=86_400, ge=3_600, le=604_800)
+    max_regenerations_per_source: int = Field(default=2, ge=0, le=20)
+    min_publishable_outputs: int = Field(default=6, ge=6, le=8)
+    target_outputs: int = Field(default=8, ge=8, le=8)
+    quality_baseline_version: str | None = None
+    safety_policy_version: str | None = None
+    report_retention_days: int | None = Field(default=None, ge=1, le=3650)
 
     supabase_url: str | None = None
     supabase_service_role_key: str | None = None
@@ -107,6 +114,20 @@ class Settings(BaseSettings):
                 "Refusing to start production with PIPELINE_BACKEND=mock. "
                 "A reviewed real pipeline adapter is required."
             )
+        if self.app_env == "production":
+            missing = [
+                name
+                for name, value in {
+                    "QUALITY_BASELINE_VERSION": self.quality_baseline_version,
+                    "SAFETY_POLICY_VERSION": self.safety_policy_version,
+                    "REPORT_RETENTION_DAYS": self.report_retention_days,
+                }.items()
+                if value in (None, "")
+            ]
+            if missing:
+                raise RuntimeError(
+                    "Production policy configuration is incomplete: " + ", ".join(missing)
+                )
 
 
 @lru_cache

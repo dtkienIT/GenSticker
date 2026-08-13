@@ -11,6 +11,8 @@ create table if not exists public.source_images (
     byte_size bigint not null check (byte_size > 0),
     checksum_sha256 text not null check (length(checksum_sha256) = 64),
     status text not null check (status in ('ready', 'rejected', 'deleted')),
+    subject_type text not null default 'person' check (subject_type in ('person', 'pet', 'object')),
+    expires_at timestamptz not null default (now() + interval '24 hours'),
     created_at timestamptz not null default now()
 );
 
@@ -43,11 +45,14 @@ create table if not exists public.generation_jobs (
     source_image_id uuid not null references public.source_images(id),
     regenerated_from_job_id uuid references public.generation_jobs(id),
     status text not null check (
-        status in ('queued', 'generating', 'moderating', 'succeeded', 'failed', 'timed_out')
+        status in ('queued', 'validating', 'canonicalizing', 'generating', 'splitting', 'quality_checking', 'moderating', 'succeeded', 'failed', 'timed_out')
     ),
     stage text not null,
     progress smallint not null check (progress between 0 and 100),
-    mock_scenario text not null check (mock_scenario in ('success', 'failure', 'timeout', 'blocked')),
+    mock_scenario text not null check (mock_scenario in ('success', 'failure', 'timeout', 'blocked', 'partial_six', 'partial_seven')),
+    style_id text not null default 'chibi_3d' check (style_id in ('chibi_2d', 'chibi_3d', 'plush', 'pixel')),
+    locale text not null default 'vi' check (locale in ('vi', 'en')),
+    catalog_version text not null default 'v1',
     idempotency_key text not null check (length(idempotency_key) between 8 and 128),
     request_hash text not null check (length(request_hash) = 64),
     safe_error_code text,
@@ -66,7 +71,13 @@ create table if not exists public.sticker_sets (
     id uuid primary key default gen_random_uuid(),
     owner_id uuid not null references auth.users(id) on delete cascade,
     job_id uuid not null unique references public.generation_jobs(id) on delete cascade,
-    style text not null check (style = 'chibi_3d'),
+    style text not null check (style in ('chibi_2d', 'chibi_3d', 'plush', 'pixel')),
+    subject_type text not null default 'person' check (subject_type in ('person', 'pet', 'object')),
+    locale text not null default 'vi' check (locale in ('vi', 'en')),
+    catalog_version text not null default 'v1',
+    target_count smallint not null default 8 check (target_count = 8),
+    published_count smallint not null check (published_count between 6 and 8),
+    rejected_count smallint not null check (rejected_count between 0 and 2),
     status text not null check (status in ('preview', 'deleted')),
     created_at timestamptz not null default now()
 );
@@ -109,8 +120,8 @@ create table if not exists public.saved_pack_items (
     unique (pack_id, ordinal)
 );
 
--- A successful generation is only valid when its set contains exactly 8 items.
-create or replace function public.enforce_exact_eight_variants()
+-- A successful generation publishes 6-8 moderated items from eight candidates.
+create or replace function public.enforce_publishable_variants()
 returns trigger
 language plpgsql
 set search_path = public
@@ -158,8 +169,8 @@ begin
     from public.sticker_variants
     where set_id = target_set_id
       and moderation_status = 'passed';
-    if item_count <> 8 then
-        raise exception 'A successful sticker set requires exactly 8 passed variants'
+    if item_count not between 6 and 8 then
+        raise exception 'A successful sticker set requires 6-8 passed variants'
             using errcode = '23514';
     end if;
     if exists (
@@ -177,18 +188,20 @@ end;
 $$;
 
 drop trigger if exists generation_jobs_exact_eight on public.generation_jobs;
-create constraint trigger generation_jobs_exact_eight
+drop trigger if exists generation_jobs_publishable on public.generation_jobs;
+create constraint trigger generation_jobs_publishable
 after insert or update of status on public.generation_jobs
 deferrable initially deferred
-for each row execute function public.enforce_exact_eight_variants();
+for each row execute function public.enforce_publishable_variants();
 
 drop trigger if exists sticker_variants_exact_eight on public.sticker_variants;
-create constraint trigger sticker_variants_exact_eight
-after insert or update of set_id, owner_id, moderation_status or delete on public.sticker_variants
+drop trigger if exists sticker_variants_publishable on public.sticker_variants;
+create constraint trigger sticker_variants_publishable
+after insert or update of set_id, owner_id, moderation_status or delete
 deferrable initially deferred
-for each row execute function public.enforce_exact_eight_variants();
+for each row execute function public.enforce_publishable_variants();
 
--- Prevent a set row mutation from detaching or cascading away the exact-eight
+-- Prevent a set row mutation from detaching or cascading away the publishable
 -- contract while its parent job still exists as succeeded. If the job itself is
 -- already being deleted, the parent lookup is empty and owner cascade can proceed.
 create or replace function public.protect_succeeded_sticker_set()
@@ -259,8 +272,8 @@ begin
     if current_job.status in ('failed', 'timed_out') then
         raise exception 'Terminal job cannot be completed' using errcode = '23514';
     end if;
-    if jsonb_typeof(p_variants) <> 'array' or jsonb_array_length(p_variants) <> 8 then
-        raise exception 'Exactly 8 variants are required' using errcode = '23514';
+    if jsonb_typeof(p_variants) <> 'array' or jsonb_array_length(p_variants) not between 6 and 8 then
+        raise exception 'Between 6 and 8 variants are required' using errcode = '23514';
     end if;
 
     select count(*) into invalid_count
@@ -286,12 +299,19 @@ begin
     if (
         select count(distinct variant.ordinal)
         from jsonb_to_recordset(p_variants) as variant(ordinal smallint)
-    ) <> 8 then
-        raise exception 'Variant ordinals must be unique 1 through 8' using errcode = '23514';
+    ) <> jsonb_array_length(p_variants) then
+        raise exception 'Variant ordinals must be unique values 1 through 8' using errcode = '23514';
     end if;
 
-    insert into public.sticker_sets(id, owner_id, job_id, style, status)
-    values (p_set_id, p_owner_id, p_job_id, 'chibi_3d', 'preview');
+    insert into public.sticker_sets(
+      id, owner_id, job_id, style, subject_type, locale, catalog_version,
+      target_count, published_count, rejected_count, status
+    )
+    select p_set_id, p_owner_id, p_job_id, current_job.style_id, source.subject_type,
+      current_job.locale, current_job.catalog_version, 8, jsonb_array_length(p_variants),
+      8 - jsonb_array_length(p_variants), 'preview'
+    from public.source_images as source
+    where source.id = current_job.source_image_id;
 
     insert into public.sticker_variants(
         id, owner_id, set_id, ordinal, expression_key, storage_path,

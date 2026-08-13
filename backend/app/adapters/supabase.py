@@ -60,7 +60,16 @@ class SupabaseRepository:
 
     def ready(self) -> bool:
         try:
-            self.client.table("generation_jobs").select("id").limit(1).execute()
+            required_contract = (
+                ("source_images", "id,subject_type,expires_at"),
+                ("generation_jobs", "id,style_id,locale,catalog_version"),
+                (
+                    "sticker_sets",
+                    "id,target_count,published_count,rejected_count,subject_type,locale,catalog_version",
+                ),
+            )
+            for table, columns in required_contract:
+                self.client.table(table).select(columns).limit(1).execute()
             return True
         except Exception:
             return False
@@ -82,9 +91,7 @@ class SupabaseRepository:
         source_id = str(uuid.uuid4())
         storage_path = f"{owner_id}/{source_id}.upload"
         checksum = hashlib.sha256(content).hexdigest()
-        bucket = self.client.storage.from_(
-            self.settings.supabase_storage_bucket_source
-        )
+        bucket = self.client.storage.from_(self.settings.supabase_storage_bucket_source)
         try:
             bucket.upload(
                 storage_path,
@@ -241,7 +248,7 @@ class SupabaseRepository:
     def get_source(self, *, owner_id: str, source_id: str) -> dict[str, Any]:
         source = self._one(
             self.client.table("source_images")
-            .select("id,mime_type,byte_size,status,created_at")
+            .select("id,mime_type,byte_size,status,subject_type,expires_at,created_at")
             .eq("id", source_id)
             .eq("owner_id", owner_id)
             .neq("status", "deleted")
@@ -285,10 +292,16 @@ class SupabaseRepository:
         source_id: str,
         scenario: str,
         idempotency_key: str,
+        style_id: str = "chibi_3d",
+        locale: str = "vi",
+        catalog_version: str = "v1",
         regenerated_from_job_id: str | None = None,
     ) -> tuple[dict[str, Any], bool]:
         request_hash = hashlib.sha256(
-            f"{source_id}:{scenario}:{regenerated_from_job_id or ''}".encode()
+            (
+                f"{source_id}:{scenario}:{style_id}:{locale}:{catalog_version}:"
+                f"{regenerated_from_job_id or ''}"
+            ).encode()
         ).hexdigest()
         existing = (
             self.client.table("generation_jobs")
@@ -314,6 +327,7 @@ class SupabaseRepository:
             .eq("id", source_id)
             .eq("owner_id", owner_id)
             .eq("status", "ready")
+            .gt("expires_at", iso_now())
             .limit(1)
             .execute()
             .data
@@ -335,6 +349,18 @@ class SupabaseRepository:
                 "The source must belong to the caller, include consent, and be ready.",
             )
         if regenerated_from_job_id:
+            regenerated = (
+                self.client.table("generation_jobs")
+                .select("id", count="exact")
+                .eq("owner_id", owner_id)
+                .eq("source_image_id", source_id)
+                .not_.is_("regenerated_from_job_id", "null")
+                .execute()
+            )
+            if (regenerated.count or 0) >= self.settings.max_regenerations_per_source:
+                raise bad_request(
+                    "REGENERATION_QUOTA_EXCEEDED", "This source has reached its regeneration limit."
+                )
             parent = (
                 self.client.table("generation_jobs")
                 .select("source_image_id,status")
@@ -365,6 +391,9 @@ class SupabaseRepository:
             "stage": "queued",
             "progress": 5,
             "mock_scenario": scenario,
+            "style_id": style_id,
+            "locale": locale,
+            "catalog_version": catalog_version,
             "idempotency_key": idempotency_key,
             "request_hash": request_hash,
             "created_at": now,
@@ -423,7 +452,7 @@ class SupabaseRepository:
             created_at=job["created_at"], scenario=job["mock_scenario"]
         )
         if snapshot.status.value == "succeeded":
-            self._complete_job(owner_id=owner_id, job_id=job_id)
+            self._complete_job(owner_id=owner_id, job_id=job_id, scenario=job["mock_scenario"])
         else:
             now = iso_now()
             payload: dict[str, Any] = {
@@ -445,16 +474,14 @@ class SupabaseRepository:
             )
         return self._load_job(owner_id=owner_id, job_id=job_id)
 
-    def _complete_job(self, *, owner_id: str, job_id: str) -> str:
+    def _complete_job(self, *, owner_id: str, job_id: str, scenario: str = "success") -> str:
         set_id = str(uuid.uuid4())
         now = iso_now()
         variants: list[dict[str, Any]] = []
         uploaded_paths: list[str] = []
-        bucket = self.client.storage.from_(
-            self.settings.supabase_storage_bucket_output
-        )
+        bucket = self.client.storage.from_(self.settings.supabase_storage_bucket_output)
         try:
-            for ordinal in range(1, self.pipeline.output_count + 1):
+            for ordinal in self.pipeline.output_ordinals(scenario=scenario):
                 sticker_id = str(uuid.uuid4())
                 path = f"{owner_id}/{set_id}/{ordinal}-{sticker_id}.svg"
                 # Track before upload: Storage can commit an object and then
@@ -604,9 +631,7 @@ class SupabaseRepository:
                 or []
             )
             committed_paths = {str(row.get("storage_path")) for row in variants}
-            all_passed = all(
-                row.get("moderation_status") == "passed" for row in variants
-            )
+            all_passed = all(row.get("moderation_status") == "passed" for row in variants)
             if len(variants) != self.pipeline.output_count or not all_passed:
                 return CompletionReconciliation()
 
@@ -626,11 +651,7 @@ class SupabaseRepository:
             return CompletionReconciliation()
 
     def list_jobs(self, *, owner_id: str, active_only: bool) -> list[dict[str, Any]]:
-        query = (
-            self.client.table("generation_jobs")
-            .select("id")
-            .eq("owner_id", owner_id)
-        )
+        query = self.client.table("generation_jobs").select("id").eq("owner_id", owner_id)
         if active_only:
             query = query.not_.in_("status", list(TERMINAL_JOB_STATUSES))
         rows = query.order("created_at", desc=True).limit(100).execute().data or []
@@ -639,7 +660,9 @@ class SupabaseRepository:
     def get_set(self, *, owner_id: str, set_id: str) -> dict[str, Any]:
         sticker_set = self._one(
             self.client.table("sticker_sets")
-            .select("id,job_id,style,status,created_at")
+            .select(
+                "id,job_id,style,subject_type,locale,catalog_version,target_count,published_count,rejected_count,status,created_at"
+            )
             .eq("id", set_id)
             .eq("owner_id", owner_id)
             .eq("status", "preview")
@@ -659,10 +682,8 @@ class SupabaseRepository:
             .data
             or []
         )
-        if len(variants) != self.pipeline.output_count:
-            raise unavailable(
-                "STICKER_SET_INCOMPLETE", "The sticker set is not ready for preview."
-            )
+        if not 6 <= len(variants) <= self.pipeline.output_count:
+            raise unavailable("STICKER_SET_INCOMPLETE", "The sticker set is not ready for preview.")
         return {
             **sticker_set,
             "mocked": self.pipeline.is_mock,
@@ -682,29 +703,29 @@ class SupabaseRepository:
             raise bad_request(
                 "DUPLICATE_STICKER_SELECTION", "Each selected sticker may appear only once."
             )
-        selection_hash = hashlib.sha256(
-            f"{set_id}:{','.join(unique_ids)}".encode()
-        ).hexdigest()
+        selection_hash = hashlib.sha256(f"{set_id}:{','.join(unique_ids)}".encode()).hexdigest()
         try:
-            result = self.client.rpc(
-                "save_sticker_selection",
-                {
-                    "p_owner_id": owner_id,
-                    "p_set_id": set_id,
-                    "p_sticker_ids": unique_ids,
-                    "p_pack_id": str(uuid.uuid4()),
-                    "p_idempotency_key": idempotency_key,
-                    "p_selection_hash": selection_hash,
-                },
-            ).execute().data
+            result = (
+                self.client.rpc(
+                    "save_sticker_selection",
+                    {
+                        "p_owner_id": owner_id,
+                        "p_set_id": set_id,
+                        "p_sticker_ids": unique_ids,
+                        "p_pack_id": str(uuid.uuid4()),
+                        "p_idempotency_key": idempotency_key,
+                        "p_selection_hash": selection_hash,
+                    },
+                )
+                .execute()
+                .data
+            )
         except Exception as exc:
             self._raise_save_rpc_error(exc)
         row = result[0] if isinstance(result, list) else result
         if not row:
             raise unavailable("SAVE_FAILED", "The sticker selection could not be saved.")
-        return self.get_pack(owner_id=owner_id, pack_id=str(row["pack_id"])), bool(
-            row["created"]
-        )
+        return self.get_pack(owner_id=owner_id, pack_id=str(row["pack_id"])), bool(row["created"])
 
     @staticmethod
     def _raise_save_rpc_error(exc: Exception) -> NoReturn:
@@ -790,9 +811,7 @@ class SupabaseRepository:
             "owner_id", owner_id
         ).execute()
 
-    def get_sticker_asset(
-        self, *, owner_id: str, sticker_id: str
-    ) -> tuple[bytes, str, str]:
+    def get_sticker_asset(self, *, owner_id: str, sticker_id: str) -> tuple[bytes, str, str]:
         sticker = self._one(
             self.client.table("sticker_variants")
             .select("storage_path,mime_type,ordinal")

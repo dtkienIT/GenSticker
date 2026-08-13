@@ -12,9 +12,7 @@ from app.main import create_app
 from tests.conftest import upload_source
 
 
-def test_health_and_authentication(
-    client: TestClient, png_bytes: bytes
-) -> None:
+def test_health_and_authentication(client: TestClient, png_bytes: bytes) -> None:
     assert client.get("/health/live").json() == {"status": "ok"}
     assert client.get("/health/ready").json() == {"status": "ok"}
 
@@ -117,11 +115,71 @@ def test_regenerate_creates_new_full_set(
     assert child["regenerated_from_job_id"] == original["id"]
     assert child["source_image_id"] == original["source_image_id"]
     assert child["sticker_set_id"] != original["sticker_set_id"]
-    assert len(
-        client.get(
-            f"/api/v1/sticker-sets/{child['sticker_set_id']}", headers=device_headers
-        ).json()["stickers"]
-    ) == 8
+    assert (
+        len(
+            client.get(
+                f"/api/v1/sticker-sets/{child['sticker_set_id']}", headers=device_headers
+            ).json()["stickers"]
+        )
+        == 8
+    )
+
+
+@pytest.mark.parametrize(("scenario", "count"), [("partial_six", 6), ("partial_seven", 7)])
+def test_publishable_partial_sets_include_style_and_counts(
+    client: TestClient,
+    device_headers: dict[str, str],
+    png_bytes: bytes,
+    scenario: str,
+    count: int,
+) -> None:
+    source = upload_source(client, device_headers, png_bytes).json()
+    job = client.post(
+        "/api/v1/generation-jobs",
+        headers={**device_headers, "Idempotency-Key": f"partial-{scenario}"},
+        json={
+            "source_image_id": source["id"],
+            "style_id": "plush",
+            "locale": "en",
+            "mock_scenario": scenario,
+        },
+    ).json()
+    sticker_set = client.get(
+        f"/api/v1/sticker-sets/{job['sticker_set_id']}", headers=device_headers
+    ).json()
+    assert sticker_set["style"] == "plush"
+    assert sticker_set["locale"] == "en"
+    assert sticker_set["target_count"] == 8
+    assert sticker_set["published_count"] == count
+    assert sticker_set["rejected_count"] == 8 - count
+    assert len(sticker_set["stickers"]) == count
+
+
+def test_regeneration_is_limited_to_two_per_source(
+    client: TestClient,
+    device_headers: dict[str, str],
+    png_bytes: bytes,
+) -> None:
+    source = upload_source(client, device_headers, png_bytes).json()
+    parent = client.post(
+        "/api/v1/generation-jobs",
+        headers={**device_headers, "Idempotency-Key": "quota-parent-01"},
+        json={"source_image_id": source["id"]},
+    ).json()
+    for index in range(2):
+        response = client.post(
+            f"/api/v1/generation-jobs/{parent['id']}/regenerate",
+            headers={**device_headers, "Idempotency-Key": f"quota-child-{index}"},
+            json={},
+        )
+        assert response.status_code == 202
+    blocked = client.post(
+        f"/api/v1/generation-jobs/{parent['id']}/regenerate",
+        headers={**device_headers, "Idempotency-Key": "quota-child-2"},
+        json={},
+    )
+    assert blocked.status_code == 400
+    assert blocked.json()["code"] == "REGENERATION_QUOTA_EXCEEDED"
 
 
 @pytest.mark.parametrize(
@@ -158,9 +216,7 @@ def test_consent_signature_and_size_validation(
     device_headers: dict[str, str],
     png_bytes: bytes,
 ) -> None:
-    denied = upload_source(
-        client, device_headers, png_bytes, consent_accepted="false"
-    )
+    denied = upload_source(client, device_headers, png_bytes, consent_accepted="false")
     assert denied.status_code == 400
     assert denied.json()["code"] == "CONSENT_REQUIRED"
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from app.domain import JobSnapshot, JobStatus, MockScenario
+from app.pipeline import InputAssessment, InputAssessmentRequest
 
 
 class MockStickerPipeline:
@@ -81,3 +82,39 @@ class MockStickerPipeline:
     font-size="18" fill="#4b5563">demo placeholder</text>
 </svg>"""
         return svg.encode("utf-8")
+
+    def output_ordinals(self, *, scenario: str) -> tuple[int, ...]:
+        selected = MockScenario(scenario)
+        if selected is MockScenario.PARTIAL_SIX:
+            return tuple(range(1, 7))
+        if selected is MockScenario.PARTIAL_SEVEN:
+            return tuple(range(1, 8))
+        return tuple(range(1, self.output_count + 1))
+
+    async def assess_input(self, request: InputAssessmentRequest) -> InputAssessment:
+        return InputAssessment(
+            passed=request.mime_type
+            in {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"},
+            subject_type="person",
+            reason_code=None,
+        )
+
+    async def create_canonical(self, request: object) -> dict[str, object]:
+        return {"mode": "mock", "request": request, "quality_passed": True}
+
+    async def generate_sheet(self, request: object) -> dict[str, object]:
+        return {
+            "mode": "mock",
+            "request": request,
+            "layout": "4x2",
+            "candidates": tuple(range(1, self.output_count + 1)),
+        }
+
+    async def assess_outputs(self, request: object) -> dict[str, object]:
+        candidates = request.get("candidates", ()) if isinstance(request, dict) else ()
+        published = tuple(int(value) for value in candidates if 1 <= int(value) <= 8)
+        return {
+            "published_ordinals": published,
+            "rejected_count": self.output_count - len(published),
+            "moderation_version": "mock-v1",
+        }

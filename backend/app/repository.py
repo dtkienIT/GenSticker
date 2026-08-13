@@ -32,6 +32,9 @@ class Repository(Protocol):
         source_id: str,
         scenario: str,
         idempotency_key: str,
+        style_id: str = "chibi_3d",
+        locale: str = "vi",
+        catalog_version: str = "v1",
         regenerated_from_job_id: str | None = None,
     ) -> tuple[dict[str, Any], bool]: ...
 
@@ -56,6 +59,4 @@ class Repository(Protocol):
 
     def delete_pack(self, *, owner_id: str, pack_id: str) -> None: ...
 
-    def get_sticker_asset(
-        self, *, owner_id: str, sticker_id: str
-    ) -> tuple[bytes, str, str]: ...
+    def get_sticker_asset(self, *, owner_id: str, sticker_id: str) -> tuple[bytes, str, str]: ...

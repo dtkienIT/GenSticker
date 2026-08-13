@@ -73,7 +73,7 @@ và `request_id`; response/log không chứa source filename, storage path hoặ
 3. Mobile đăng nhập Supabase (anonymous account cũng được cho MVP) và gửi
    `Authorization: Bearer <access-token>`.
 
-Migration tạo bảng, exact-eight deferred constraint, RPC transaction cho complete
+Migration tạo bảng, deferred constraint 6–8 output, RPC transaction cho complete
 job/save subset, bật RLS nhưng không tạo policy cho `anon`/`authenticated`, và tạo
 hai bucket private không có client policy. Mobile không đọc PostgREST hoặc Storage
 trực tiếp; mọi resource và asset phải đi qua FastAPI. Chỉ service role ở backend
@@ -99,7 +99,7 @@ pytest
 ruff check app tests
 ```
 
-Test bao phủ happy path đúng 8 output, selection/save/delete, asset ownership,
+Test bao phủ happy path 6/7/8 output, selection/save/delete, asset ownership,
 IDOR, idempotency, consent/upload validation, failure scenarios và resume job sau
 restart, production mock guard, ánh xạ lỗi RPC và response 500 không lộ lỗi thô.
 Test Supabase integration thật cần project test riêng và không nằm trong suite

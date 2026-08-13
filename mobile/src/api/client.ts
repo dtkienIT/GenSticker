@@ -31,11 +31,22 @@ export async function validateSource(
   return requestJson('/source-images', validatedSourceSchema, { method: 'POST', body: form });
 }
 
-export function createJob(sourceImageId: string, idempotencyKey: string) {
+export type StickerStyle = 'chibi_2d' | 'chibi_3d' | 'plush' | 'pixel';
+
+export function createJob(
+  sourceImageId: string,
+  idempotencyKey: string,
+  options: { styleId?: StickerStyle; locale?: 'vi' | 'en' } = {},
+) {
   return requestJson('/generation-jobs', generationJobSchema, {
     method: 'POST',
     headers: { 'Idempotency-Key': idempotencyKey },
-    body: JSON.stringify({ source_image_id: sourceImageId }),
+    body: JSON.stringify({
+      source_image_id: sourceImageId,
+      style_id: options.styleId ?? 'chibi_3d',
+      locale: options.locale ?? 'vi',
+      catalog_version: 'v1',
+    }),
   });
 }
 

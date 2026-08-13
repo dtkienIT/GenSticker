@@ -6,6 +6,7 @@ import sqlite3
 import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +24,8 @@ CREATE TABLE IF NOT EXISTS source_images (
     byte_size INTEGER NOT NULL CHECK (byte_size > 0),
     checksum_sha256 TEXT NOT NULL,
     status TEXT NOT NULL CHECK (status IN ('ready', 'rejected', 'deleted')),
+    subject_type TEXT NOT NULL DEFAULT 'person' CHECK (subject_type IN ('person', 'pet', 'object')),
+    expires_at TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
 
@@ -60,8 +63,13 @@ CREATE TABLE IF NOT EXISTS generation_jobs (
     stage TEXT NOT NULL,
     progress INTEGER NOT NULL CHECK (progress BETWEEN 0 AND 100),
     mock_scenario TEXT NOT NULL CHECK (
-        mock_scenario IN ('success', 'failure', 'timeout', 'blocked')
+        mock_scenario IN (
+          'success', 'failure', 'timeout', 'blocked', 'partial_six', 'partial_seven'
+        )
     ),
+    style_id TEXT NOT NULL CHECK (style_id IN ('chibi_2d', 'chibi_3d', 'plush', 'pixel')),
+    locale TEXT NOT NULL CHECK (locale IN ('vi', 'en')),
+    catalog_version TEXT NOT NULL,
     idempotency_key TEXT NOT NULL,
     request_hash TEXT NOT NULL,
     safe_error_code TEXT,
@@ -80,7 +88,13 @@ CREATE TABLE IF NOT EXISTS sticker_sets (
     id TEXT PRIMARY KEY,
     owner_id TEXT NOT NULL,
     job_id TEXT NOT NULL UNIQUE REFERENCES generation_jobs(id) ON DELETE CASCADE,
-    style TEXT NOT NULL CHECK (style = 'chibi_3d'),
+    style TEXT NOT NULL CHECK (style IN ('chibi_2d', 'chibi_3d', 'plush', 'pixel')),
+    subject_type TEXT NOT NULL DEFAULT 'person' CHECK (subject_type IN ('person', 'pet', 'object')),
+    locale TEXT NOT NULL DEFAULT 'vi' CHECK (locale IN ('vi', 'en')),
+    catalog_version TEXT NOT NULL DEFAULT 'v1',
+    target_count INTEGER NOT NULL DEFAULT 8 CHECK (target_count = 8),
+    published_count INTEGER NOT NULL CHECK (published_count BETWEEN 6 AND 8),
+    rejected_count INTEGER NOT NULL CHECK (rejected_count BETWEEN 0 AND 2),
     status TEXT NOT NULL CHECK (status IN ('preview', 'deleted')),
     created_at TEXT NOT NULL
 );
@@ -184,14 +198,17 @@ class LocalRepository:
         temp_path.write_bytes(content)
         os.replace(temp_path, asset_path)
         now = iso_now()
+        expires_at = (
+            datetime.now(UTC) + timedelta(seconds=self.settings.temp_asset_ttl_seconds)
+        ).isoformat()
         try:
             with self._connection() as connection:
                 connection.execute(
                     """
                     INSERT INTO source_images
                         (id, owner_id, storage_path, mime_type, byte_size,
-                         checksum_sha256, status, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, 'ready', ?)
+                         checksum_sha256, status, subject_type, expires_at, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, 'ready', 'person', ?, ?)
                     """,
                     (
                         source_id,
@@ -200,6 +217,7 @@ class LocalRepository:
                         mime_type,
                         len(content),
                         hashlib.sha256(content).hexdigest(),
+                        expires_at,
                         now,
                     ),
                 )
@@ -234,7 +252,8 @@ class LocalRepository:
         with self._connection() as connection:
             source = connection.execute(
                 """
-                SELECT s.id, s.mime_type, s.byte_size, s.status, s.created_at,
+                SELECT s.id, s.mime_type, s.byte_size, s.status, s.subject_type,
+                       s.expires_at, s.created_at,
                        c.consent_version, c.accepted_at
                 FROM source_images AS s
                 JOIN consent_records AS c ON c.source_image_id = s.id
@@ -266,10 +285,16 @@ class LocalRepository:
         source_id: str,
         scenario: str,
         idempotency_key: str,
+        style_id: str = "chibi_3d",
+        locale: str = "vi",
+        catalog_version: str = "v1",
         regenerated_from_job_id: str | None = None,
     ) -> tuple[dict[str, Any], bool]:
         request_hash = hashlib.sha256(
-            f"{source_id}:{scenario}:{regenerated_from_job_id or ''}".encode()
+            (
+                f"{source_id}:{scenario}:{style_id}:{locale}:{catalog_version}:"
+                f"{regenerated_from_job_id or ''}"
+            ).encode()
         ).hexdigest()
         now = iso_now()
         job_id = str(uuid.uuid4())
@@ -298,8 +323,9 @@ class LocalRepository:
                     FROM source_images AS s
                     JOIN consent_records AS c ON c.source_image_id = s.id
                     WHERE s.id = ? AND s.owner_id = ? AND s.status = 'ready'
+                      AND s.expires_at > ?
                     """,
-                    (source_id, owner_id),
+                    (source_id, owner_id, iso_now()),
                 ).fetchone()
                 if source is None:
                     raise bad_request(
@@ -307,6 +333,17 @@ class LocalRepository:
                         "The source must belong to the caller, include consent, and be ready.",
                     )
                 if regenerated_from_job_id:
+                    regeneration_count = connection.execute(
+                        """SELECT COUNT(*) FROM generation_jobs
+                           WHERE owner_id = ? AND source_image_id = ?
+                             AND regenerated_from_job_id IS NOT NULL""",
+                        (owner_id, source_id),
+                    ).fetchone()[0]
+                    if regeneration_count >= self.settings.max_regenerations_per_source:
+                        raise bad_request(
+                            "REGENERATION_QUOTA_EXCEEDED",
+                            "This source has reached its regeneration limit.",
+                        )
                     parent = connection.execute(
                         """
                         SELECT source_image_id, status
@@ -328,10 +365,11 @@ class LocalRepository:
                     """
                     INSERT INTO generation_jobs
                         (id, owner_id, source_image_id, regenerated_from_job_id,
-                         status, stage, progress, mock_scenario, idempotency_key,
+                         status, stage, progress, mock_scenario, style_id, locale,
+                         catalog_version, idempotency_key,
                          request_hash, safe_error_code, created_at, updated_at,
                          completed_at)
-                    VALUES (?, ?, ?, ?, 'queued', 'queued', 5, ?, ?, ?, NULL, ?, ?, NULL)
+                    VALUES (?, ?, ?, ?, 'queued', 'queued', 5, ?, ?, ?, ?, ?, ?, NULL, ?, ?, NULL)
                     """,
                     (
                         job_id,
@@ -339,6 +377,9 @@ class LocalRepository:
                         source_id,
                         regenerated_from_job_id,
                         scenario,
+                        style_id,
+                        locale,
+                        catalog_version,
                         idempotency_key,
                         request_hash,
                         now,
@@ -374,9 +415,7 @@ class LocalRepository:
             if snapshot.status.value == "succeeded":
                 self._complete_job(owner_id=owner_id, job_id=job_id)
             else:
-                completed_at = (
-                    iso_now() if snapshot.status.value in TERMINAL_JOB_STATUSES else None
-                )
+                completed_at = iso_now() if snapshot.status.value in TERMINAL_JOB_STATUSES else None
                 with self._connection() as connection:
                     connection.execute(
                         """
@@ -416,11 +455,10 @@ class LocalRepository:
             now = iso_now()
             variants: list[tuple[str, int, str]] = []
             try:
-                for ordinal in range(1, self.pipeline.output_count + 1):
+                output_ordinals = self.pipeline.output_ordinals(scenario=job["mock_scenario"])
+                for ordinal in output_ordinals:
                     sticker_id = str(uuid.uuid4())
-                    relative_path = (
-                        f"{owner_id}/outputs/{set_id}/{ordinal}-{sticker_id}.svg"
-                    )
+                    relative_path = f"{owner_id}/outputs/{set_id}/{ordinal}-{sticker_id}.svg"
                     asset_path = self._absolute_asset_path(relative_path)
                     asset_path.parent.mkdir(parents=True, exist_ok=True)
                     temp_path = asset_path.with_suffix(".tmp")
@@ -433,10 +471,22 @@ class LocalRepository:
 
                 connection.execute(
                     """
-                    INSERT INTO sticker_sets (id, owner_id, job_id, style, status, created_at)
-                    VALUES (?, ?, ?, 'chibi_3d', 'preview', ?)
+                    INSERT INTO sticker_sets (id, owner_id, job_id, style, subject_type, locale,
+                      catalog_version, target_count, published_count, rejected_count,
+                      status, created_at)
+                    VALUES (?, ?, ?, ?, 'person', ?, ?, 8, ?, ?, 'preview', ?)
                     """,
-                    (set_id, owner_id, job_id, now),
+                    (
+                        set_id,
+                        owner_id,
+                        job_id,
+                        job["style_id"],
+                        job["locale"],
+                        job["catalog_version"],
+                        len(output_ordinals),
+                        8 - len(output_ordinals),
+                        now,
+                    ),
                 )
                 for sticker_id, ordinal, relative_path in variants:
                     connection.execute(
@@ -482,16 +532,15 @@ class LocalRepository:
             query += " AND j.status NOT IN ('succeeded', 'failed', 'timed_out')"
         query += " ORDER BY j.created_at DESC LIMIT 100"
         with self._connection() as connection:
-            job_ids = [
-                row["id"] for row in connection.execute(query, parameters).fetchall()
-            ]
+            job_ids = [row["id"] for row in connection.execute(query, parameters).fetchall()]
         return [self.get_job(owner_id=owner_id, job_id=job_id) for job_id in job_ids]
 
     def get_set(self, *, owner_id: str, set_id: str) -> dict[str, Any]:
         with self._connection() as connection:
             sticker_set = connection.execute(
                 """
-                SELECT id, job_id, style, status, created_at
+                SELECT id, job_id, style, subject_type, locale, catalog_version,
+                       target_count, published_count, rejected_count, status, created_at
                 FROM sticker_sets
                 WHERE id = ? AND owner_id = ? AND status = 'preview'
                 """,
@@ -509,7 +558,7 @@ class LocalRepository:
                 """,
                 (set_id, owner_id),
             ).fetchall()
-        if len(variants) != self.pipeline.output_count:
+        if not 6 <= len(variants) <= self.pipeline.output_count:
             raise unavailable(
                 "STICKER_SET_INCOMPLETE",
                 "The sticker set is not ready for preview.",
@@ -533,9 +582,7 @@ class LocalRepository:
                 "DUPLICATE_STICKER_SELECTION",
                 "Each selected sticker may appear only once.",
             )
-        selection_hash = hashlib.sha256(
-            f"{set_id}:{','.join(unique_ids)}".encode()
-        ).hexdigest()
+        selection_hash = hashlib.sha256(f"{set_id}:{','.join(unique_ids)}".encode()).hexdigest()
         pack_id = str(uuid.uuid4())
         now = iso_now()
         created = True
@@ -649,9 +696,7 @@ class LocalRepository:
             if cursor.rowcount == 0:
                 raise not_found("Saved pack")
 
-    def get_sticker_asset(
-        self, *, owner_id: str, sticker_id: str
-    ) -> tuple[bytes, str, str]:
+    def get_sticker_asset(self, *, owner_id: str, sticker_id: str) -> tuple[bytes, str, str]:
         with self._connection() as connection:
             sticker = connection.execute(
                 """

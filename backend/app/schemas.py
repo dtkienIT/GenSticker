@@ -5,7 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.domain import MockScenario
+from app.domain import MockScenario, StickerStyle, SubjectType
+from app.pipeline import MIN_PUBLISHABLE_OUTPUTS, TARGET_OUTPUTS
 
 
 class ValidationResultResponse(BaseModel):
@@ -26,13 +27,18 @@ class SourceResponse(BaseModel):
     mime_type: str
     byte_size: int
     created_at: datetime
+    expires_at: datetime
     consent: ConsentResponse
     validation_mode: Literal["mock"] = "mock"
     validation_results: list[ValidationResultResponse]
+    subject_type: SubjectType = SubjectType.PERSON
 
 
 class JobCreateRequest(BaseModel):
     source_image_id: str
+    style_id: StickerStyle = StickerStyle.CHIBI_3D
+    locale: Literal["vi", "en"] = "vi"
+    catalog_version: Literal["v1"] = "v1"
     mock_scenario: MockScenario = MockScenario.SUCCESS
 
 
@@ -44,8 +50,20 @@ class JobResponse(BaseModel):
     id: str
     source_image_id: str
     regenerated_from_job_id: str | None = None
+    style_id: StickerStyle = StickerStyle.CHIBI_3D
+    locale: Literal["vi", "en"] = "vi"
+    catalog_version: Literal["v1"] = "v1"
     status: Literal[
-        "queued", "generating", "moderating", "succeeded", "failed", "timed_out"
+        "queued",
+        "validating",
+        "canonicalizing",
+        "generating",
+        "splitting",
+        "quality_checking",
+        "moderating",
+        "succeeded",
+        "failed",
+        "timed_out",
     ]
     stage: str
     progress: int = Field(ge=0, le=100)
@@ -74,11 +92,28 @@ class StickerResponse(BaseModel):
 class StickerSetResponse(BaseModel):
     id: str
     job_id: str
-    style: Literal["chibi_3d"]
+    style: StickerStyle
+    subject_type: SubjectType = SubjectType.PERSON
+    locale: Literal["vi", "en"] = "vi"
+    catalog_version: Literal["v1"] = "v1"
+    target_count: Literal[8] = TARGET_OUTPUTS
+    published_count: int = Field(
+        default=TARGET_OUTPUTS, ge=MIN_PUBLISHABLE_OUTPUTS, le=TARGET_OUTPUTS
+    )
+    rejected_count: int = Field(default=0, ge=0, le=2)
     status: Literal["preview"]
     mocked: bool
     created_at: datetime
     stickers: list[StickerResponse]
+
+    @field_validator("stickers")
+    @classmethod
+    def require_publishable_count(cls, value: list[StickerResponse]) -> list[StickerResponse]:
+        if not MIN_PUBLISHABLE_OUTPUTS <= len(value) <= TARGET_OUTPUTS:
+            raise ValueError("stickers must contain 6-8 moderated outputs")
+        if len({item.ordinal for item in value}) != len(value):
+            raise ValueError("sticker ordinals must be unique")
+        return value
 
 
 class SaveSetRequest(BaseModel):

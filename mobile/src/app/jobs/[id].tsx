@@ -30,7 +30,10 @@ export default function JobScreen() {
   });
   const retry = useMutation({
     mutationFn: () =>
-      createJob(job.data!.sourceImageId, retryIntent.keyFor(`retry-job:${job.data!.id}`)),
+      createJob(job.data!.sourceImageId, retryIntent.keyFor(`retry-job:${job.data!.id}`), {
+        styleId: job.data!.styleId,
+        locale: job.data!.locale,
+      }),
     retry: retrySafeMutation,
     onSuccess: async (next) => {
       await setActiveJobId(next.id);
@@ -86,8 +89,12 @@ export default function JobScreen() {
   }
 
   const stageKey: Record<string, TranslationKey> = {
+    validating: 'job.stage.validating',
+    canonicalizing: 'job.stage.canonicalizing',
     queued: 'job.stage.queued',
     generating: 'job.stage.generating',
+    splitting: 'job.stage.splitting',
+    quality_checking: 'job.stage.qualityChecking',
     moderating: 'job.stage.moderating',
     moderating_outputs: 'job.stage.moderating',
     ready: 'job.stage.ready',

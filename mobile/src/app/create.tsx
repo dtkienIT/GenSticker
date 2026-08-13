@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { createJob, validateSource } from '@/api/client';
+import { createJob, type StickerStyle, validateSource } from '@/api/client';
 import { retrySafeMutation, safeErrorMessage } from '@/api/errors';
 import { Button, Card, Pill, Screen } from '@/components/ui';
 import { CONSENT_VERSION, IS_DEMO } from '@/config/env';
@@ -23,6 +23,7 @@ export default function CreateScreen() {
   const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset>();
   const [consent, setConsent] = useState(false);
   const [permissionError, setPermissionError] = useState<string>();
+  const [styleId, setStyleId] = useState<StickerStyle>('chibi_3d');
   const generationIntent = useIdempotencyKey();
   const mountedRef = useRef(false);
   const sourceFilesRef = useRef<SourceCacheLifecycle | null>(null);
@@ -66,7 +67,10 @@ export default function CreateScreen() {
   const generation = useMutation({
     mutationFn: () => {
       const sourceImageId = validation.data!.id;
-      return createJob(sourceImageId, generationIntent.keyFor(`create:${sourceImageId}`));
+      return createJob(sourceImageId, generationIntent.keyFor(`create:${sourceImageId}:${styleId}`), {
+        styleId,
+        locale: 'vi',
+      });
     },
     retry: retrySafeMutation,
     onSuccess: async (job) => {
@@ -232,6 +236,25 @@ export default function CreateScreen() {
 
       {ready ? (
         <>
+          <View style={styles.styleSection}>
+            <Text style={styles.sectionTitle}>{t('create.styleTitle')}</Text>
+            <View style={styles.styleGrid}>
+              {([
+                ['chibi_2d', 'Chibi 2D'], ['chibi_3d', 'Chibi 3D'],
+                ['plush', 'Plush'], ['pixel', 'Pixel'],
+              ] as const).map(([value, label]) => (
+                <Pressable
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: styleId === value }}
+                  key={value}
+                  onPress={() => { setStyleId(value); generation.reset(); generationIntent.invalidate(); }}
+                  style={[styles.styleOption, styleId === value && styles.styleOptionSelected]}
+                >
+                  <Text style={[styles.styleLabel, styleId === value && styles.styleLabelSelected]}>{label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
           {generation.isError ? <Text style={styles.generationError}>{safeErrorMessage(generation.error)}</Text> : null}
           <Button
             icon="sparkles"
@@ -276,5 +299,12 @@ const styles = StyleSheet.create({
   readyIcon: { width: 44, height: 44, borderRadius: 15, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   readyTitle: { color: colors.success, fontWeight: '900', fontSize: 17 },
   readyBody: { color: colors.ink, lineHeight: 20 },
+  styleSection: { gap: spacing.md },
+  styleGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  styleOption: { width: '48%', minHeight: 52, borderRadius: radii.md, borderWidth: 1.5,
+    borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+  styleOptionSelected: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  styleLabel: { color: colors.ink, fontWeight: '700' },
+  styleLabelSelected: { color: colors.primaryDark, fontWeight: '900' },
   generationError: { color: colors.danger, textAlign: 'center' },
 });

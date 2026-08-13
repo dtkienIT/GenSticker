@@ -74,6 +74,8 @@ def _source_response(source: dict[str, Any]) -> dict[str, Any]:
         "mime_type": source["mime_type"],
         "byte_size": source["byte_size"],
         "created_at": source["created_at"],
+        "expires_at": source["expires_at"],
+        "subject_type": source.get("subject_type", "person"),
         "consent": {
             "version": source["consent_version"],
             "accepted_at": source["accepted_at"],
@@ -88,6 +90,9 @@ def _job_response(job: dict[str, Any]) -> dict[str, Any]:
         "id": job["id"],
         "source_image_id": job["source_image_id"],
         "regenerated_from_job_id": job.get("regenerated_from_job_id"),
+        "style_id": job.get("style_id", "chibi_3d"),
+        "locale": job.get("locale", "vi"),
+        "catalog_version": job.get("catalog_version", "v1"),
         "status": job["status"],
         "stage": job["stage"],
         "progress": job["progress"],
@@ -188,9 +193,7 @@ def get_source(
     principal: Annotated[Principal, Depends(get_principal)],
     repository: Annotated[Repository, Depends(get_repository)],
 ) -> dict[str, Any]:
-    return _source_response(
-        repository.get_source(owner_id=principal.owner_id, source_id=source_id)
-    )
+    return _source_response(repository.get_source(owner_id=principal.owner_id, source_id=source_id))
 
 
 @router.post(
@@ -211,6 +214,9 @@ def create_job(
         owner_id=principal.owner_id,
         source_id=payload.source_image_id,
         scenario=payload.mock_scenario.value,
+        style_id=payload.style_id.value,
+        locale=payload.locale,
+        catalog_version=payload.catalog_version,
         idempotency_key=_idempotency_key(idempotency_key),
     )
     if not created:
@@ -259,6 +265,9 @@ def regenerate_job(
         scenario=payload.mock_scenario.value,
         idempotency_key=_idempotency_key(idempotency_key),
         regenerated_from_job_id=job_id,
+        style_id=parent.get("style_id", "chibi_3d"),
+        locale=parent.get("locale", "vi"),
+        catalog_version=parent.get("catalog_version", "v1"),
     )
     if not created:
         response.status_code = status.HTTP_200_OK

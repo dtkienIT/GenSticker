@@ -6,12 +6,13 @@ nhãn rõ ràng.
 
 ## Cấu trúc
 
-- `mobile/`: Expo Router, camera/thư viện, consent, job progress, preview đúng 8
+- `mobile/`: Expo Router, camera/thư viện, consent, job progress, preview 6–8
   sticker, chọn/lưu, native share, gỡ saved pack khỏi thư viện và hỗ trợ đa ngôn ngữ
   (i18n: Tiếng Việt 🇻🇳 & Tiếng Anh 🇬🇧 với nút chuyển đổi tức thì).
 - `backend/`: FastAPI, SQLite local fallback, Supabase adapter, mock pipeline và
   test. Môi trường Python nằm tại `backend/.venv` và không được commit.
-- `supabase/migrations/`: schema PostgreSQL, transaction, RLS và private buckets.
+- `supabase/migrations/`: schema PostgreSQL, migration nâng cấp contract 6–8,
+  transaction, RLS và private buckets.
 - `docs/MVP_IMPLEMENTATION_HANDOFF.md`: tài liệu bàn giao đầy đủ cho người tiếp
   quản, đặc biệt là boundary AI và các quyết định SRS còn `TBD`.
 

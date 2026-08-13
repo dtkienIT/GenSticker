@@ -133,8 +133,59 @@ def test_supabase_migration_is_api_only() -> None:
     assert "values ('generated-stickers', 'generated-stickers', false)" in sql
     assert "create or replace function public.create_mock_source" in sql
     assert "pg_advisory_xact_lock" in sql
-    assert "exactly 8 passed variants" in sql
+    assert "requires 6-8 passed variants" in sql
     assert "cannot contain blocked variants" in sql
     assert "sticker_sets_protect_succeeded" in sql
     assert "cannot change job, owner or status" in sql
     assert "requires an isolated project with no storage.objects policies" in sql
+
+
+def test_supabase_readiness_checks_product_contract_columns() -> None:
+    from app.adapters.supabase import SupabaseRepository
+
+    selected: list[tuple[str, str]] = []
+
+    class Query:
+        def __init__(self, table: str) -> None:
+            self.table = table
+
+        def select(self, columns: str) -> Query:
+            selected.append((self.table, columns))
+            return self
+
+        def limit(self, _count: int) -> Query:
+            return self
+
+        def execute(self) -> SimpleNamespace:
+            return SimpleNamespace(data=[])
+
+    class Client:
+        def table(self, name: str) -> Query:
+            return Query(name)
+
+    repository = object.__new__(SupabaseRepository)
+    repository.client = Client()
+
+    assert repository.ready() is True
+    assert selected == [
+        ("source_images", "id,subject_type,expires_at"),
+        ("generation_jobs", "id,style_id,locale,catalog_version"),
+        (
+            "sticker_sets",
+            "id,target_count,published_count,rejected_count,subject_type,locale,catalog_version",
+        ),
+    ]
+
+
+def test_upgrade_migration_supports_existing_kien_v6_database() -> None:
+    migration_path = Path(__file__).parents[2] / "supabase/migrations/002_product_contract.sql"
+    sql = migration_path.read_text(encoding="utf-8").lower()
+
+    assert "add column if not exists subject_type" in sql
+    assert "add column if not exists style_id" in sql
+    assert "add column if not exists published_count" in sql
+    assert "existing sticker sets do not satisfy the 6-8 output contract" in sql
+    assert "create or replace function public.complete_mock_generation" in sql
+    assert "create constraint trigger generation_jobs_publishable" in sql
+    assert "from public, anon, authenticated" in sql
+    assert "to service_role" in sql
