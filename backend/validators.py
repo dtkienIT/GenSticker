@@ -1,9 +1,14 @@
 import json
 import asyncio
+import logging
 from typing import Dict, Any
 from google import genai
 from models import ValidationResult
 from prompts import VALIDATION_PROMPT
+from cloudflare_provider import call_cloudflare_validation
+from openai_provider import call_openai_validation
+
+logger = logging.getLogger(__name__)
 
 def _call_gemini_validation(image_base64: str, mime_type: str, api_key: str) -> Dict[str, Any]:
     client = genai.Client(api_key=api_key)
@@ -35,12 +40,29 @@ def _call_gemini_validation(image_base64: str, mime_type: str, api_key: str) -> 
     )
     return json.loads(interaction.output_text)
 
-async def validate_image(image_base64: str, mime_type: str, api_key: str) -> ValidationResult:
+async def validate_image(
+    image_base64: str, 
+    mime_type: str, 
+    provider: str = "gemini",
+    api_key: str = "",
+    cf_account_id: str = "",
+    cf_api_token: str = "",
+    openai_api_key: str = "",
+    openai_vision_model: str = "gpt-4o-mini"
+) -> ValidationResult:
     try:
-        # Run synchronous API call in a thread
-        result_json = await asyncio.to_thread(
-            _call_gemini_validation, image_base64, mime_type, api_key
-        )
+        if provider == "cloudflare":
+            result_json = await asyncio.to_thread(
+                call_cloudflare_validation, image_base64, mime_type, cf_account_id, cf_api_token
+            )
+        elif provider == "openai":
+            result_json = await asyncio.to_thread(
+                call_openai_validation, image_base64, mime_type, openai_api_key, openai_vision_model
+            )
+        else:
+            result_json = await asyncio.to_thread(
+                _call_gemini_validation, image_base64, mime_type, api_key
+            )
         
         # Check safety first
         if not result_json.get("is_safe", True):
@@ -108,6 +130,7 @@ async def validate_image(image_base64: str, mime_type: str, api_key: str) -> Val
         return ValidationResult(valid=True, details=result_json)
         
     except Exception as e:
+        logger.error(f"Error in validation ({provider}): {e}")
         return ValidationResult(
             valid=False,
             error_code="API_ERROR",
