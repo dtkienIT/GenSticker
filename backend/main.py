@@ -42,19 +42,59 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import requests
+
+def get_api_key():
+    load_dotenv(override=True)
+    return os.getenv("GEMINI_API_KEY")
+
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
 
 @app.post("/api/validate", response_model=ValidationResult)
 async def validate_endpoint(request: ValidationRequest):
-    if not API_KEY:
+    api_key = get_api_key()
+    if not api_key:
         raise HTTPException(status_code=500, detail="API key not configured")
         
-    result = await validate_image(request.image_base64, request.mime_type, API_KEY)
+    result = await validate_image(request.image_base64, request.mime_type, api_key)
     return result
 
 def _call_gemini_generation(image_base64: str, mime_type: str, expression: ExpressionConfig, api_key: str) -> str:
+    base_url = os.getenv("API_BASE_URL")
+    
+    if base_url or api_key.startswith("sk-"):
+        url = f"{base_url.rstrip('/')}/chat/completions" if base_url else "https://omni.tdigroup.vn/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        prompt = get_sticker_prompt(expression) + "\nTransform the input image into a cute chibi sticker. Return JSON: {\"image_base64\": \"<base64_data_or_svg>\"}"
+        payload = {
+            "model": "ag/gemini-3.6-flash-high",
+            "stream": False,
+            "messages": [
+
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_base64}"}}
+                    ]
+                }
+            ]
+        }
+        res = requests.post(url, headers=headers, json=payload, timeout=60)
+        res.raise_for_status()
+        content = res.json()["choices"][0]["message"]["content"]
+        if "```" in content:
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+        data = json.loads(content.strip())
+        return data.get("image_base64", "")
+
     client = genai.Client(api_key=api_key)
     prompt = get_sticker_prompt(expression)
     
@@ -67,6 +107,7 @@ def _call_gemini_generation(image_base64: str, mime_type: str, expression: Expre
         response_format={"type": "image", "mime_type": "image/jpeg", "aspect_ratio": "1:1", "image_size": "512"}
     )
     return interaction.output_image.data
+
 
 async def generate_single_sticker(image_base64: str, mime_type: str, expression: ExpressionConfig, api_key: str) -> GenerateResult:
     try:
@@ -99,15 +140,17 @@ async def generate_single_sticker(image_base64: str, mime_type: str, expression:
 
 @app.post("/api/generate-pack")
 async def generate_pack_endpoint(request: PackGenerateRequest):
-    if not API_KEY:
+    api_key = get_api_key()
+    if not api_key:
         raise HTTPException(status_code=500, detail="API key not configured")
         
     async def sse_generator() -> AsyncGenerator[str, None]:
         # Start all generation tasks in parallel
         tasks = [
-            generate_single_sticker(request.image_base64, request.mime_type, expr, API_KEY)
+            generate_single_sticker(request.image_base64, request.mime_type, expr, api_key)
             for expr in EXPRESSIONS
         ]
+
         
         # We can either await them as they complete using asyncio.as_completed
         # This allows sending SSE events as soon as any sticker finishes.

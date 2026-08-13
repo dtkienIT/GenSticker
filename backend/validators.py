@@ -1,13 +1,45 @@
+import os
 import json
 import asyncio
+import requests
 from typing import Dict, Any
 from google import genai
 from models import ValidationResult
 from prompts import VALIDATION_PROMPT
 
 def _call_gemini_validation(image_base64: str, mime_type: str, api_key: str) -> Dict[str, Any]:
-    client = genai.Client(api_key=api_key)
+    base_url = os.getenv("API_BASE_URL")
     
+    if base_url or api_key.startswith("sk-"):
+        url = f"{base_url.rstrip('/')}/chat/completions" if base_url else "https://omni.tdigroup.vn/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": "ag/gemini-3.6-flash-high",
+            "stream": False,
+            "messages": [
+
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": VALIDATION_PROMPT + "\nReturn ONLY valid JSON format."},
+                        {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_base64}"}}
+                    ]
+                }
+            ]
+        }
+        res = requests.post(url, headers=headers, json=payload, timeout=30)
+        res.raise_for_status()
+        content = res.json()["choices"][0]["message"]["content"]
+        if "```" in content:
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+        return json.loads(content.strip())
+
+    client = genai.Client(api_key=api_key)
     schema = {
         "type": "object",
         "properties": {
@@ -34,6 +66,7 @@ def _call_gemini_validation(image_base64: str, mime_type: str, api_key: str) -> 
         }
     )
     return json.loads(interaction.output_text)
+
 
 async def validate_image(image_base64: str, mime_type: str, api_key: str) -> ValidationResult:
     try:

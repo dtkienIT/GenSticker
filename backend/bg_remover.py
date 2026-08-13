@@ -16,14 +16,23 @@ logger = logging.getLogger(__name__)
 
 def remove_bg_base64(image_base64: str) -> str:
     """
-    Takes a base64 encoded image string (JPEG/PNG from Gemini),
-    removes the outer background while preserving ALL interior features
-    (teeth, eyes, steam, highlights), and returns a transparent RGBA PNG base64 string.
+    Takes a base64 encoded image string (JPEG/PNG/SVG from Gemini or 9router),
+    removes the outer background while preserving ALL interior features,
+    and returns a transparent base64 string.
     """
     try:
+        # Check if input is SVG text or SVG base64
+        if "<svg" in image_base64.lower() or "data:image/svg" in image_base64.lower():
+            return image_base64
+
         # Decode base64 to PIL Image
         img_bytes = base64.b64decode(image_base64)
+
+        if b"<svg" in img_bytes.lower() or b"<?xml" in img_bytes.lower():
+            return image_base64
+
         input_img = Image.open(io.BytesIO(img_bytes)).convert("RGBA")
+
         
         output_img = None
         
