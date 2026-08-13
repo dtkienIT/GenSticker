@@ -39,12 +39,21 @@ class Settings(BaseSettings):
   OPENAI_IMAGE_MODEL: str = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-1.5")
   OPENAI_IMAGE_RESULT_DOMAINS: str = os.getenv("OPENAI_IMAGE_RESULT_DOMAINS", "")
   OPENAI_IMAGE_TIMEOUT_SECONDS: float = float(os.getenv("OPENAI_IMAGE_TIMEOUT_SECONDS", "300"))
+  INLINE_IMAGE_TIMEOUT_SECONDS: float = float(
+    os.getenv("INLINE_IMAGE_TIMEOUT_SECONDS", "90")
+  )
+  GENERATION_DEADLINE_SECONDS: float = float(
+    os.getenv("GENERATION_DEADLINE_SECONDS", "270")
+  )
   OPENAI_IMAGE_MAX_ATTEMPTS: int = int(os.getenv("OPENAI_IMAGE_MAX_ATTEMPTS", "2"))
   OPENAI_IMAGE_RETRY_BASE_DELAY_SECONDS: float = float(
     os.getenv("OPENAI_IMAGE_RETRY_BASE_DELAY_SECONDS", "2")
   )
   OPENAI_IMAGE_SHEET_CONCURRENCY: int = int(
     os.getenv("OPENAI_IMAGE_SHEET_CONCURRENCY", "1")
+  )
+  INLINE_IMAGE_SHEET_CONCURRENCY: int = int(
+    os.getenv("INLINE_IMAGE_SHEET_CONCURRENCY", "2")
   )
 
   # Telegram Bot Credentials

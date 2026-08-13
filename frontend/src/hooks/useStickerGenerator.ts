@@ -4,6 +4,11 @@ import type { GenerationState, StickerStyleId, ProcessStep, StickerItem } from '
 import { INITIAL_PIPELINE_STEPS } from '../mock/mockStickers';
 import { StickerGenerationError, StickerService } from '../services/stickerService';
 
+const createProcessingSteps = (): ProcessStep[] => INITIAL_PIPELINE_STEPS.map((step, index) => ({
+  ...step,
+  status: index === 0 ? 'processing' : 'idle',
+}));
+
 export function useStickerGenerator() {
   const [state, setState] = useState<GenerationState>({
     jobId: null,
@@ -25,6 +30,19 @@ export function useStickerGenerator() {
     setState((prev) => ({ ...prev, selectedStyle: styleId }));
   }, []);
 
+  const applyProgress = useCallback((stepIdx: number, step: ProcessStep, overallProgress: number) => {
+    setState((prev) => {
+      const newSteps = [...prev.steps];
+      newSteps[stepIdx] = { ...step };
+      return {
+        ...prev,
+        currentStepIndex: stepIdx,
+        overallProgress,
+        steps: newSteps,
+      };
+    });
+  }, []);
+
   const triggerConfetti = () => {
     confetti({
       particleCount: 120,
@@ -42,7 +60,7 @@ export function useStickerGenerator() {
       originalFileName: imageFile.name,
       currentStepIndex: 0,
       overallProgress: 0,
-      steps: JSON.parse(JSON.stringify(INITIAL_PIPELINE_STEPS)),
+      steps: createProcessingSteps(),
       errorMessage: null,
       previewImageUrl: null,
       previewImageUrls: [],
@@ -53,18 +71,7 @@ export function useStickerGenerator() {
       const result = await StickerService.generateStickers({
         imageFile,
         styleId: state.selectedStyle,
-        onStepProgress: (stepIdx: number, step: ProcessStep, overallProgress: number) => {
-          setState((prev) => {
-            const newSteps = [...prev.steps];
-            newSteps[stepIdx] = { ...step };
-            return {
-              ...prev,
-              currentStepIndex: stepIdx,
-              overallProgress: overallProgress,
-              steps: newSteps,
-            };
-          });
-        },
+        onStepProgress: applyProgress,
       });
 
       setState((prev) => ({
@@ -92,7 +99,7 @@ export function useStickerGenerator() {
         jobId: err instanceof StickerGenerationError ? err.jobId : null,
       }));
     }
-  }, [state.selectedStyle]);
+  }, [applyProgress, state.selectedStyle]);
 
   const loadStickerPack = useCallback((stickers: StickerItem[]) => {
     setState((prev) => ({
@@ -107,7 +114,11 @@ export function useStickerGenerator() {
     if (!state.jobId) return;
     setState((prev) => ({ ...prev, status: 'processing', errorMessage: null }));
     try {
-      const result = await StickerService.retryJob(state.jobId, state.selectedStyle);
+      const result = await StickerService.retryJob(
+        state.jobId,
+        state.selectedStyle,
+        applyProgress,
+      );
       setState((prev) => ({
         ...prev,
         status: 'completed',
@@ -130,7 +141,7 @@ export function useStickerGenerator() {
         jobId: err instanceof StickerGenerationError ? err.jobId : prev.jobId,
       }));
     }
-  }, [state.jobId, state.selectedStyle]);
+  }, [applyProgress, state.jobId, state.selectedStyle]);
 
   useEffect(() => {
     let active = true;

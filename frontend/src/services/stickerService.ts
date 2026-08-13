@@ -1,5 +1,5 @@
 import type { StickerItem, StickerStyleId, ProcessStep } from '../types/sticker';
-import { STICKER_STYLES } from '../mock/mockStickers';
+import { INITIAL_PIPELINE_STEPS, STICKER_STYLES } from '../mock/mockStickers';
 import { AuthService } from './authService';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
@@ -159,7 +159,7 @@ export class StickerService {
     form.append('file', imageFile);
     form.append('style_id', styleId);
 
-    const startResponse = await fetch(`${API_BASE}/stickers/generate`, {
+    const startResponse = await fetch(`${API_BASE}/stickers/generate-stream`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}` },
       body: form,
@@ -169,9 +169,7 @@ export class StickerService {
       throw new Error(await StickerService.readApiError(startResponse));
     }
 
-    const started = await startResponse.json() as BackendJobResponse;
-    sessionStorage.setItem(StickerService.ACTIVE_JOB_KEY, started.job_id);
-    return StickerService.pollJob(started, styleId, onStepProgress);
+    return StickerService.consumeJobStream(startResponse, styleId, onStepProgress);
   }
 
   static async retryJob(
@@ -182,7 +180,7 @@ export class StickerService {
     const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
     const accessToken = AuthService.getAccessToken();
     if (!accessToken) throw new Error('Authentication required.');
-    const response = await fetch(`${apiBase}/stickers/jobs/${jobId}/retry`, {
+    const response = await fetch(`${apiBase}/stickers/jobs/${jobId}/retry-stream`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -190,9 +188,7 @@ export class StickerService {
       if (response.status === 401) AuthService.invalidateSession();
       throw new Error(await StickerService.readApiError(response));
     }
-    const job = await response.json() as BackendJobResponse;
-    sessionStorage.setItem(StickerService.ACTIVE_JOB_KEY, job.job_id);
-    return StickerService.pollJob(job, styleId, onStepProgress);
+    return StickerService.consumeJobStream(response, styleId, onStepProgress);
   }
 
   static async resumeActiveJob(
@@ -242,6 +238,67 @@ export class StickerService {
       job = await response.json() as BackendJobResponse;
       StickerService.emitBackendProgress(job, onStepProgress);
     }
+    return StickerService.finishJob(job, styleId);
+  }
+
+  private static async consumeJobStream(
+    response: Response,
+    styleId: StickerStyleId,
+    onStepProgress?: (stepIndex: number, step: ProcessStep, overallProgress: number) => void,
+  ): Promise<{ stickers: StickerItem[]; previewImageUrls: string[] }> {
+    if (!response.body) {
+      const job = await response.json() as BackendJobResponse;
+      sessionStorage.setItem(StickerService.ACTIVE_JOB_KEY, job.job_id);
+      return StickerService.pollJob(job, styleId, onStepProgress);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let latestJob: BackendJobResponse | null = null;
+
+    const consumeLine = (line: string) => {
+      if (!line.trim()) return;
+      const job = JSON.parse(line) as BackendJobResponse;
+      if (!job.job_id || !Array.isArray(job.steps)) {
+        throw new Error('Backend returned an invalid progress event.');
+      }
+      latestJob = job;
+      sessionStorage.setItem(StickerService.ACTIVE_JOB_KEY, job.job_id);
+      StickerService.emitBackendProgress(job, onStepProgress);
+    };
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
+        const lines = buffer.split(/\r?\n/);
+        buffer = lines.pop() || '';
+        lines.forEach(consumeLine);
+        if (done) break;
+      }
+      consumeLine(buffer);
+    } finally {
+      reader.releaseLock();
+    }
+
+    const finalJob = latestJob as BackendJobResponse | null;
+    if (!finalJob) {
+      throw new Error('Backend closed the progress stream without a result.');
+    }
+    if (finalJob.status === 'processing') {
+      throw new StickerGenerationError(
+        'Kết nối tiến độ bị gián đoạn trước khi tác vụ hoàn tất. Vui lòng thử lại.',
+        finalJob,
+      );
+    }
+    return StickerService.finishJob(finalJob, styleId);
+  }
+
+  private static finishJob(
+    job: BackendJobResponse,
+    styleId: StickerStyleId,
+  ): { stickers: StickerItem[]; previewImageUrls: string[] } {
     if (job.status === 'error') {
       throw new StickerGenerationError(
         job.error_message || 'Sticker generation failed.',
@@ -268,13 +325,14 @@ export class StickerService {
       .sort((left, right) => Number(left === activeIndex) - Number(right === activeIndex));
     orderedIndices.forEach((index) => {
       const backendStep = job.steps[index];
+      const displayStep = INITIAL_PIPELINE_STEPS[index];
       const step: ProcessStep = {
         id: String(backendStep.id),
-        title: backendStep.step_name,
-        description: backendStep.description,
+        title: displayStep?.title || backendStep.step_name,
+        description: displayStep?.description || backendStep.description,
         status: backendStep.status === 'pending' ? 'idle' : backendStep.status,
         progress: backendStep.progress,
-        estimatedTimeSec: 1,
+        estimatedTimeSec: displayStep?.estimatedTimeSec || 1,
       };
       onStepProgress?.(index, step, job.progress_percentage);
     });

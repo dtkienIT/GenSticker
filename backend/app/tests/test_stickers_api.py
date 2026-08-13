@@ -207,6 +207,34 @@ async def test_generate_waits_for_inline_job(
 
 
 @pytest.mark.asyncio
+async def test_generate_stream_returns_ndjson_terminal_job(
+    client: httpx.AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app.dependency_overrides[require_user_id] = lambda: "user-a"
+    job = _job("job_stream")
+    job.status = "completed"
+    job.progress_percentage = 100
+    job.steps[0].status = "completed"
+    job.steps[0].progress = 100
+
+    monkeypatch.setattr(settings, "OPENAI_API_KEY", "test-key")
+    monkeypatch.setattr(StickerPipelineService, "create_job", lambda **_: job)
+
+    response = await client.post(
+        "/api/v1/stickers/generate-stream",
+        files={"file": ("portrait.png", _png_bytes(), "image/png")},
+        data={"style_id": "anime-kawaii"},
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/x-ndjson")
+    events = [line for line in response.text.splitlines() if line]
+    assert len(events) == 1
+    assert httpx.Response(200, content=events[0]).json()["job_id"] == "job_stream"
+
+
+@pytest.mark.asyncio
 async def test_user_cannot_poll_another_users_job(client: httpx.AsyncClient) -> None:
     app.dependency_overrides[require_user_id] = lambda: "user-b"
     job_store["job_private"] = _job("job_private")

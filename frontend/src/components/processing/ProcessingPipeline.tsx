@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { useEffect, useState, type FC } from 'react';
 import type { GenerationState } from '../../types/sticker';
 import { ProgressBar } from '../common/ProgressBar';
 import { CheckCircle2, Loader2, Sparkles, Clock } from 'lucide-react';
@@ -9,6 +9,17 @@ interface ProcessingPipelineProps {
 
 export const ProcessingPipeline: FC<ProcessingPipelineProps> = ({ state }) => {
   const currentStep = state.steps[state.currentStepIndex] || state.steps[0];
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const elapsedLabel = `${Math.floor(elapsedSeconds / 60)}:${String(elapsedSeconds % 60).padStart(2, '0')}`;
 
   return (
     <div style={{ maxWidth: '840px', margin: '0 auto' }}>
@@ -77,7 +88,7 @@ export const ProcessingPipeline: FC<ProcessingPipelineProps> = ({ state }) => {
               <span style={{ fontSize: '1rem', fontWeight: 700 }}>Tổng Tiến Trình (Overall)</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                 <Clock size={14} />
-                <span>Khoảng ~12 giây</span>
+                <span>Đã chạy {elapsedLabel}</span>
               </div>
             </div>
             <ProgressBar progress={state.overallProgress} height={14} showLabel={false} />

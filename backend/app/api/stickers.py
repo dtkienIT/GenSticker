@@ -1,9 +1,12 @@
 import asyncio
+import json
+from collections.abc import AsyncIterator
 from io import BytesIO
 from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
+from fastapi.responses import StreamingResponse
 from PIL import Image, UnidentifiedImageError
 
 from app.config import settings
@@ -31,22 +34,7 @@ STYLES_LIST: list[StickerStyleOption] = [
 ]
 
 
-@router.get("/styles", response_model=list[StickerStyleOption])
-def get_sticker_styles():
-  """Return the style contract used by the existing frontend."""
-  return STYLES_LIST
-
-
-@router.post("/generate", response_model=StickerJobResponse)
-async def generate_stickers(
-  user_id: Annotated[str, Depends(require_user_id)],
-  file: UploadFile = File(...),
-  style_id: str = Form("3d-chibi"),
-):
-  """Validate and store an authenticated portrait, then start the AI pipeline."""
-  if not settings.OPENAI_API_KEY.strip():
-    raise HTTPException(status_code=503, detail="Backend OpenAI API key is not configured.")
-
+async def _read_validated_upload(file: UploadFile) -> tuple[bytes, str, str]:
   content_type = file.content_type or ""
   if content_type not in ALLOWED_CONTENT_TYPES:
     raise HTTPException(status_code=415, detail="Only PNG, JPG, and WEBP are supported.")
@@ -70,25 +58,39 @@ async def generate_stickers(
     raise HTTPException(status_code=415, detail="Uploaded file is not a valid image.") from error
 
   safe_filename = Path((file.filename or "portrait.png").replace("\\", "/")).name or "portrait.png"
-  public_url = await asyncio.to_thread(
+  return file_bytes, safe_filename, content_type
+
+
+async def _store_source_image(
+  file_bytes: bytes,
+  safe_filename: str,
+  content_type: str,
+) -> None:
+  await asyncio.to_thread(
     SupabaseService.upload_image_to_storage,
     file_bytes,
     safe_filename,
     content_type,
   )
-  print(f"Uploaded source image to Supabase: {public_url}")
+  print("[OK] Uploaded source image to Supabase Storage")
 
+
+def _create_job_or_raise(
+  *,
+  user_id: str,
+  style_id: str,
+  file_bytes: bytes,
+  safe_filename: str,
+  content_type: str,
+) -> StickerJobResponse:
   try:
-    job = StickerPipelineService.create_job(
+    return StickerPipelineService.create_job(
       owner_id=user_id,
       style_id=style_id,
       file_bytes=file_bytes,
       filename=safe_filename,
       content_type=content_type,
     )
-    if settings.RUN_GENERATION_INLINE:
-      return await StickerPipelineService.wait_for_job(job.job_id) or job
-    return job
   except ValueError as error:
     error_code = str(error)
     if error_code == "openai_api_key_required":
@@ -98,6 +100,109 @@ async def generate_stickers(
     if error_code == "generation_capacity_reached":
       raise HTTPException(status_code=503, detail="Sticker generation is busy. Please try again later.") from error
     raise HTTPException(status_code=400, detail="Unsupported sticker style.") from error
+
+
+def _retry_job_or_raise(job_id: str, user_id: str) -> StickerJobResponse:
+  try:
+    return StickerPipelineService.retry_job(job_id, owner_id=user_id)
+  except ValueError as error:
+    error_code = str(error)
+    if error_code == "job_not_found":
+      raise HTTPException(status_code=404, detail="Sticker generation job was not found.") from error
+    if error_code in {"job_not_retryable", "job_artifacts_missing", "job_retry_limit_reached"}:
+      raise HTTPException(status_code=409, detail="This sticker job cannot be retried.") from error
+    if error_code == "generation_capacity_reached":
+      raise HTTPException(status_code=503, detail="Sticker generation is busy. Please try again later.") from error
+    raise
+
+
+async def _stream_job_updates(
+  initial_job: StickerJobResponse,
+  owner_id: str,
+) -> AsyncIterator[str]:
+  current = initial_job
+  while True:
+    yield json.dumps(
+      current.model_dump(mode="json"),
+      ensure_ascii=False,
+      separators=(",", ":"),
+    ) + "\n"
+    if current.status != "processing":
+      return
+    await asyncio.sleep(0.5)
+    refreshed = StickerPipelineService.get_job(current.job_id, owner_id=owner_id)
+    if refreshed is None:
+      current = current.model_copy(
+        update={
+          "status": "error",
+          "error_message": "Phiên tạo sticker đã bị gián đoạn. Vui lòng thử lại.",
+        }
+      )
+    else:
+      current = refreshed
+
+
+def _stream_response(job: StickerJobResponse, owner_id: str) -> StreamingResponse:
+  return StreamingResponse(
+    _stream_job_updates(job, owner_id),
+    media_type="application/x-ndjson",
+    headers={
+      "Cache-Control": "no-store, no-transform",
+      "X-Accel-Buffering": "no",
+    },
+  )
+
+
+@router.get("/styles", response_model=list[StickerStyleOption])
+def get_sticker_styles():
+  """Return the style contract used by the existing frontend."""
+  return STYLES_LIST
+
+
+@router.post("/generate", response_model=StickerJobResponse)
+async def generate_stickers(
+  user_id: Annotated[str, Depends(require_user_id)],
+  file: UploadFile = File(...),
+  style_id: str = Form("3d-chibi"),
+):
+  """Validate and store an authenticated portrait, then start the AI pipeline."""
+  if not settings.OPENAI_API_KEY.strip():
+    raise HTTPException(status_code=503, detail="Backend OpenAI API key is not configured.")
+
+  file_bytes, safe_filename, content_type = await _read_validated_upload(file)
+  await _store_source_image(file_bytes, safe_filename, content_type)
+  job = _create_job_or_raise(
+    user_id=user_id,
+    style_id=style_id,
+    file_bytes=file_bytes,
+    safe_filename=safe_filename,
+    content_type=content_type,
+  )
+  if settings.RUN_GENERATION_INLINE:
+    return await StickerPipelineService.wait_for_job(job.job_id) or job
+  return job
+
+
+@router.post("/generate-stream", response_class=StreamingResponse)
+async def generate_stickers_stream(
+  user_id: Annotated[str, Depends(require_user_id)],
+  file: UploadFile = File(...),
+  style_id: str = Form("3d-chibi"),
+):
+  """Run one serverless-safe job while continuously streaming its real state."""
+  if not settings.OPENAI_API_KEY.strip():
+    raise HTTPException(status_code=503, detail="Backend OpenAI API key is not configured.")
+
+  file_bytes, safe_filename, content_type = await _read_validated_upload(file)
+  await _store_source_image(file_bytes, safe_filename, content_type)
+  job = _create_job_or_raise(
+    user_id=user_id,
+    style_id=style_id,
+    file_bytes=file_bytes,
+    safe_filename=safe_filename,
+    content_type=content_type,
+  )
+  return _stream_response(job, user_id)
 
 
 @router.get("/jobs/{job_id}", response_model=StickerJobResponse)
@@ -120,20 +225,20 @@ async def retry_failed_sheet(
   user_id: Annotated[str, Depends(require_user_id)],
 ):
   """Retry a rejected sheet while reusing its private canonical artifacts."""
-  try:
-    job = StickerPipelineService.retry_job(job_id, owner_id=user_id)
-    if settings.RUN_GENERATION_INLINE:
-      return await StickerPipelineService.wait_for_job(job.job_id) or job
-    return job
-  except ValueError as error:
-    error_code = str(error)
-    if error_code == "job_not_found":
-      raise HTTPException(status_code=404, detail="Sticker generation job was not found.") from error
-    if error_code in {"job_not_retryable", "job_artifacts_missing", "job_retry_limit_reached"}:
-      raise HTTPException(status_code=409, detail="This sticker job cannot be retried.") from error
-    if error_code == "generation_capacity_reached":
-      raise HTTPException(status_code=503, detail="Sticker generation is busy. Please try again later.") from error
-    raise
+  job = _retry_job_or_raise(job_id, user_id)
+  if settings.RUN_GENERATION_INLINE:
+    return await StickerPipelineService.wait_for_job(job.job_id) or job
+  return job
+
+
+@router.post("/jobs/{job_id}/retry-stream", response_class=StreamingResponse)
+async def retry_failed_sheet_stream(
+  job_id: str,
+  user_id: Annotated[str, Depends(require_user_id)],
+):
+  """Stream the retry in the same invocation that owns its private artifacts."""
+  job = _retry_job_or_raise(job_id, user_id)
+  return _stream_response(job, user_id)
 
 
 @router.get("/history")

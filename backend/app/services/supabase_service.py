@@ -3,6 +3,10 @@ import re
 import time
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
+from urllib.parse import quote, unquote
+
+import httpx
 
 from app.config import settings
 from app.database import supabase, supabase_admin
@@ -10,13 +14,15 @@ from app.database import supabase, supabase_admin
 
 STORAGE_UPLOAD_MAX_ATTEMPTS = 3
 STORAGE_UPLOAD_RETRY_BASE_SECONDS = 0.5
+STORAGE_UPLOAD_TIMEOUT_SECONDS = 10.0
 
 
 class SupabaseService:
   @staticmethod
   def has_storage_client() -> bool:
-    """Return whether uploads can target a configured Supabase client."""
-    return bool(supabase_admin or supabase)
+    """Return whether uploads can target the configured Supabase project."""
+    api_key = settings.SUPABASE_SERVICE_ROLE_KEY or settings.SUPABASE_ANON_KEY
+    return bool(settings.SUPABASE_URL.strip() and api_key.strip())
 
   @staticmethod
   def get_user_from_access_token(access_token: str):
@@ -48,24 +54,47 @@ class SupabaseService:
     file_name: str,
     content_type: str = "image/png",
   ) -> str:
-    """Upload a file to the configured Supabase Storage bucket."""
-    client = supabase_admin or supabase
-    if not client:
-      print("[WARN] Supabase client not available, fallback to mock URL")
+    """Upload with a fresh HTTP/1.1 connection on every retry.
+
+    The Supabase SDK keeps one shared HTTP/2 session. A disconnected session can
+    therefore poison every retry in a long-running serverless invocation. Each
+    attempt here owns and closes its transport so a retry is genuinely isolated.
+    """
+    api_key = settings.SUPABASE_SERVICE_ROLE_KEY or settings.SUPABASE_ANON_KEY
+    supabase_url = settings.SUPABASE_URL.strip().rstrip("/")
+    if not supabase_url or not api_key.strip():
+      print("[WARN] Supabase Storage is not configured, using fallback URL")
       return f"https://api.dicebear.com/7.x/bottts/svg?seed={file_name}"
 
     bucket_name = settings.SUPABASE_STORAGE_BUCKET
-    unique_path = f"uploads/{uuid.uuid4()}_{file_name}"
+    safe_name = Path(file_name.replace("\\", "/")).name or "image.png"
+    safe_name = re.sub(r"[^A-Za-z0-9._-]", "_", safe_name)
+    unique_path = f"uploads/{uuid.uuid4()}_{safe_name}"
+    object_url = (
+      f"{supabase_url}/storage/v1/object/"
+      f"{quote(bucket_name, safe='')}/{quote(unique_path, safe='/')}"
+    )
+    public_url = (
+      f"{supabase_url}/storage/v1/object/public/"
+      f"{quote(bucket_name, safe='')}/{quote(unique_path, safe='/')}"
+    )
+    headers = {
+      "Authorization": f"Bearer {api_key}",
+      "apikey": api_key,
+      "Content-Type": content_type,
+      "x-upsert": "true",
+      "Connection": "close",
+    }
 
     for attempt in range(1, STORAGE_UPLOAD_MAX_ATTEMPTS + 1):
       try:
-        bucket = client.storage.from_(bucket_name)
-        bucket.upload(
-          path=unique_path,
-          file=file_bytes,
-          file_options={"content-type": content_type, "x-upsert": "true"}
-        )
-        public_url = bucket.get_public_url(unique_path)
+        with httpx.Client(
+          timeout=STORAGE_UPLOAD_TIMEOUT_SECONDS,
+          http2=False,
+          follow_redirects=False,
+        ) as client:
+          response = client.post(object_url, headers=headers, content=file_bytes)
+          response.raise_for_status()
         if attempt > 1:
           print(
             "[OK] Supabase Storage upload recovered on attempt "
@@ -73,14 +102,60 @@ class SupabaseService:
           )
         return public_url
       except Exception as error:
+        status_code = (
+          error.response.status_code
+          if isinstance(error, httpx.HTTPStatusError)
+          else None
+        )
+        failure = f"HTTP {status_code}" if status_code else type(error).__name__
         print(
           "[WARN] Supabase Storage upload attempt "
-          f"{attempt}/{STORAGE_UPLOAD_MAX_ATTEMPTS} failed: {error}"
+          f"{attempt}/{STORAGE_UPLOAD_MAX_ATTEMPTS} failed ({failure})"
         )
         if attempt < STORAGE_UPLOAD_MAX_ATTEMPTS:
           time.sleep(STORAGE_UPLOAD_RETRY_BASE_SECONDS * (2 ** (attempt - 1)))
 
     return f"https://api.dicebear.com/7.x/bottts/svg?seed={file_name}"
+
+  @staticmethod
+  def delete_storage_urls(public_urls: list[str]) -> None:
+    """Best-effort cleanup for files uploaded before a pack-level failure."""
+    api_key = settings.SUPABASE_SERVICE_ROLE_KEY or settings.SUPABASE_ANON_KEY
+    supabase_url = settings.SUPABASE_URL.strip().rstrip("/")
+    bucket_name = settings.SUPABASE_STORAGE_BUCKET
+    public_prefix = (
+      f"{supabase_url}/storage/v1/object/public/"
+      f"{quote(bucket_name, safe='')}/"
+    )
+    object_paths = [
+      unquote(url.removeprefix(public_prefix))
+      for url in public_urls
+      if url.startswith(public_prefix)
+    ]
+    if not supabase_url or not api_key.strip() or not object_paths:
+      return
+
+    delete_url = (
+      f"{supabase_url}/storage/v1/object/{quote(bucket_name, safe='')}"
+    )
+    try:
+      with httpx.Client(
+        timeout=STORAGE_UPLOAD_TIMEOUT_SECONDS,
+        http2=False,
+        follow_redirects=False,
+      ) as client:
+        response = client.delete(
+          delete_url,
+          headers={
+            "Authorization": f"Bearer {api_key}",
+            "apikey": api_key,
+            "Connection": "close",
+          },
+          json={"prefixes": object_paths},
+        )
+        response.raise_for_status()
+    except Exception as error:
+      print(f"[WARN] Supabase partial-upload cleanup failed ({type(error).__name__})")
 
   @staticmethod
   async def authenticate_user(email: str, pass_word: str):

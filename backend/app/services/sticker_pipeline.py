@@ -33,7 +33,6 @@ class JobContext:
 
 job_contexts: Dict[str, JobContext] = {}
 MAX_SHEET_RETRIES = 2
-INLINE_STORAGE_UPLOAD_CONCURRENCY = 2
 
 STYLE_PROMPTS = {
   "3d-chibi": "polished soft 3D chibi sticker, gentle studio lighting, identity-faithful proportions",
@@ -330,13 +329,22 @@ class StickerPipelineService:
     if not job:
       return
 
+    loop = asyncio.get_running_loop()
+    deadline_at = loop.time() + max(1.0, settings.GENERATION_DEADLINE_SECONDS)
     provider: OpenAIImageProvider | None = None
     try:
       provider = OpenAIImageProvider(
         api_key=settings.OPENAI_API_KEY,
         model_id=settings.OPENAI_IMAGE_MODEL,
         base_url=settings.OPENAI_BASE_URL,
-        timeout_seconds=settings.OPENAI_IMAGE_TIMEOUT_SECONDS,
+        timeout_seconds=(
+          min(
+            settings.OPENAI_IMAGE_TIMEOUT_SECONDS,
+            settings.INLINE_IMAGE_TIMEOUT_SECONDS,
+          )
+          if settings.RUN_GENERATION_INLINE
+          else settings.OPENAI_IMAGE_TIMEOUT_SECONDS
+        ),
         trusted_result_domains=tuple(
           domain.strip()
           for domain in settings.OPENAI_IMAGE_RESULT_DOMAINS.split(",")
@@ -363,9 +371,11 @@ class StickerPipelineService:
             StickerPipelineService._activate_step(job, 1, 15)
           elif stage == "canonical":
             StickerPipelineService._complete_step(job, 1)
-            StickerPipelineService._complete_step(job, 2)
-            StickerPipelineService._activate_step(job, 3, 35)
+            StickerPipelineService._activate_step(job, 2, 25)
           elif stage == "groups":
+            if job.steps[2].status != "completed":
+              StickerPipelineService._complete_step(job, 2)
+              StickerPipelineService._activate_step(job, 3, 35)
             job.steps[3].progress = round((current / total) * 100)
             job.progress_percentage = min(89, 35 + round((current / total) * 54))
           StickerPipelineService._persist_job(job_id)
@@ -394,14 +404,21 @@ class StickerPipelineService:
           canvas_size=512,
           max_provider_attempts=settings.OPENAI_IMAGE_MAX_ATTEMPTS,
           retry_base_delay_seconds=settings.OPENAI_IMAGE_RETRY_BASE_DELAY_SECONDS,
-          sheet_concurrency=settings.OPENAI_IMAGE_SHEET_CONCURRENCY,
+          sheet_concurrency=(
+            settings.INLINE_IMAGE_SHEET_CONCURRENCY
+            if settings.RUN_GENERATION_INLINE
+            else settings.OPENAI_IMAGE_SHEET_CONCURRENCY
+          ),
         )
-        paths = await generator.generate(
-          selfie_path=selfie_path,
-          output_dir=root / "result",
-          style_prompt=STYLE_PROMPTS[style_id],
-          on_progress=on_progress,
-          on_sheet=on_sheet,
+        paths = await asyncio.wait_for(
+          generator.generate(
+            selfie_path=selfie_path,
+            output_dir=root / "result",
+            style_prompt=STYLE_PROMPTS[style_id],
+            on_progress=on_progress,
+            on_sheet=on_sheet,
+          ),
+          timeout=max(0.1, deadline_at - loop.time()),
         )
         if len(paths) != len(DEFAULT_STICKER_CATALOG):
           raise RuntimeError("incomplete_sticker_pack")
@@ -413,10 +430,15 @@ class StickerPipelineService:
           style_id,
           include_data_urls=not settings.RUN_GENERATION_INLINE,
         )
+        job.quality_status = "reviewing"
+        StickerPipelineService._persist_job(job_id)
+        await asyncio.wait_for(
+          StickerPipelineService._persist_completed_pack(job_id, style_id, paths),
+          timeout=max(0.1, deadline_at - loop.time()),
+        )
         StickerPipelineService._complete_step(job, 4)
         job.progress_percentage = 100
         job.quality_status = "accepted"
-        await StickerPipelineService._persist_completed_pack(job_id, style_id, paths)
         StickerPipelineService._compact_inline_job(job)
         job.status = "completed"
         StickerPipelineService._persist_job(job_id)
@@ -441,13 +463,22 @@ class StickerPipelineService:
     if job is None or context is None or root is None:
       return
 
+    loop = asyncio.get_running_loop()
+    deadline_at = loop.time() + max(1.0, settings.GENERATION_DEADLINE_SECONDS)
     provider: OpenAIImageProvider | None = None
     try:
       provider = OpenAIImageProvider(
         api_key=settings.OPENAI_API_KEY,
         model_id=settings.OPENAI_IMAGE_MODEL,
         base_url=settings.OPENAI_BASE_URL,
-        timeout_seconds=settings.OPENAI_IMAGE_TIMEOUT_SECONDS,
+        timeout_seconds=(
+          min(
+            settings.OPENAI_IMAGE_TIMEOUT_SECONDS,
+            settings.INLINE_IMAGE_TIMEOUT_SECONDS,
+          )
+          if settings.RUN_GENERATION_INLINE
+          else settings.OPENAI_IMAGE_TIMEOUT_SECONDS
+        ),
         trusted_result_domains=tuple(
           domain.strip()
           for domain in settings.OPENAI_IMAGE_RESULT_DOMAINS.split(",")
@@ -483,13 +514,20 @@ class StickerPipelineService:
         canvas_size=512,
         max_provider_attempts=settings.OPENAI_IMAGE_MAX_ATTEMPTS,
         retry_base_delay_seconds=settings.OPENAI_IMAGE_RETRY_BASE_DELAY_SECONDS,
-        sheet_concurrency=settings.OPENAI_IMAGE_SHEET_CONCURRENCY,
+        sheet_concurrency=(
+          settings.INLINE_IMAGE_SHEET_CONCURRENCY
+          if settings.RUN_GENERATION_INLINE
+          else settings.OPENAI_IMAGE_SHEET_CONCURRENCY
+        ),
       )
-      paths = await generator.resume(
-        output_dir=root / "result",
-        style_prompt=STYLE_PROMPTS[context.style_id],
-        on_progress=on_progress,
-        on_sheet=on_sheet,
+      paths = await asyncio.wait_for(
+        generator.resume(
+          output_dir=root / "result",
+          style_prompt=STYLE_PROMPTS[context.style_id],
+          on_progress=on_progress,
+          on_sheet=on_sheet,
+        ),
+        timeout=max(0.1, deadline_at - loop.time()),
       )
       if len(paths) != len(DEFAULT_STICKER_CATALOG):
         raise RuntimeError("incomplete_sticker_pack")
@@ -501,10 +539,15 @@ class StickerPipelineService:
         context.style_id,
         include_data_urls=not settings.RUN_GENERATION_INLINE,
       )
+      job.quality_status = "reviewing"
+      StickerPipelineService._persist_job(job_id)
+      await asyncio.wait_for(
+        StickerPipelineService._persist_completed_pack(job_id, context.style_id, paths),
+        timeout=max(0.1, deadline_at - loop.time()),
+      )
       StickerPipelineService._complete_step(job, 4)
       job.progress_percentage = 100
       job.quality_status = "accepted"
-      await StickerPipelineService._persist_completed_pack(job_id, context.style_id, paths)
       StickerPipelineService._compact_inline_job(job)
       job.status = "completed"
       StickerPipelineService._persist_job(job_id)
@@ -534,13 +577,18 @@ class StickerPipelineService:
       return
 
     style_name = STYLE_NAMES.get(style_id, style_id.replace("-", " ").title())
+    uploaded_public_urls: list[str] = []
     try:
       sticker_payloads = [sticker.model_dump() for sticker in job.stickers]
       has_storage = SupabaseService.has_storage_client()
       if settings.RUN_GENERATION_INLINE and not has_storage:
         raise RuntimeError("sticker_storage_unavailable")
       if has_storage:
+        uploaded_count = 0
+        upload_total = len(job.stickers)
+
         async def upload_sticker(sticker, path: Path, payload: dict) -> None:
+          nonlocal uploaded_count
           public_url = await asyncio.to_thread(
             SupabaseService.upload_image_to_storage,
             path.read_bytes(),
@@ -548,26 +596,25 @@ class StickerPipelineService:
             "image/png",
           )
           if public_url and "api.dicebear.com" not in public_url:
+            uploaded_public_urls.append(public_url)
             payload["image_url"] = public_url
             if settings.RUN_GENERATION_INLINE:
               sticker.image_url = public_url
           elif settings.RUN_GENERATION_INLINE:
             raise RuntimeError("sticker_storage_unavailable")
 
+          uploaded_count += 1
+          if job.steps[4].status == "processing":
+            job.steps[4].progress = round((uploaded_count / upload_total) * 100)
+            job.progress_percentage = min(
+              99,
+              92 + round((uploaded_count / upload_total) * 7),
+            )
+            StickerPipelineService._persist_job(job_id)
+
         upload_items = tuple(zip(job.stickers, paths, sticker_payloads, strict=True))
-        if settings.RUN_GENERATION_INLINE:
-          upload_semaphore = asyncio.Semaphore(INLINE_STORAGE_UPLOAD_CONCURRENCY)
-
-          async def upload_bounded(sticker, path: Path, payload: dict) -> None:
-            async with upload_semaphore:
-              await upload_sticker(sticker, path, payload)
-
-          await asyncio.gather(
-            *(upload_bounded(sticker, path, payload) for sticker, path, payload in upload_items)
-          )
-        else:
-          for sticker, path, payload in upload_items:
-            await upload_sticker(sticker, path, payload)
+        for sticker, path, payload in upload_items:
+          await upload_sticker(sticker, path, payload)
 
       await asyncio.to_thread(
         SupabaseService.save_sticker_pack,
@@ -580,6 +627,11 @@ class StickerPipelineService:
       )
     except Exception as error:
       if settings.RUN_GENERATION_INLINE:
+        if uploaded_public_urls:
+          await asyncio.to_thread(
+            SupabaseService.delete_storage_urls,
+            uploaded_public_urls,
+          )
         raise RuntimeError("sticker_storage_unavailable") from error
       # Persistence must not turn an already generated pack into an AI failure.
       print(f"[WARN] Auto-saving pack to DB failed: {error}")
@@ -627,6 +679,7 @@ class StickerPipelineService:
 
   @staticmethod
   def _safe_error(error: Exception) -> str:
+    error_code = "generation_timed_out" if isinstance(error, TimeoutError) else str(error)
     messages = {
       "openai_safety_rejection": "Dịch vụ tạo ảnh từ chối ảnh theo chính sách an toàn. Vui lòng chọn ảnh khác.",
       "openai_timeout": "Dịch vụ tạo ảnh phản hồi quá lâu. Vui lòng thử lại.",
@@ -645,8 +698,9 @@ class StickerPipelineService:
       "preview_image_too_large": "Bảng ảnh trả về quá lớn để hiển thị an toàn trên web.",
       "pack_sheet_invalid_image": "Dịch vụ tạo ảnh không trả về một tệp ảnh hợp lệ để hiển thị.",
       "sticker_storage_unavailable": "Không thể lưu bộ sticker lên kho ảnh. Vui lòng thử lại.",
+      "generation_timed_out": "Tác vụ tạo sticker vượt quá thời gian xử lý an toàn. Vui lòng thử lại.",
     }
     return messages.get(
-      str(error),
+      error_code,
       "Hệ thống xử lý sticker gặp lỗi. Vui lòng thử lại.",
     )

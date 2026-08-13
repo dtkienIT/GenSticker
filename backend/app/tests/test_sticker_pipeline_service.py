@@ -189,6 +189,7 @@ async def test_pipeline_completes_and_builds_twenty_stickers(
 
     assert job.status == "completed"
     assert job.progress_percentage == 100
+    assert all(step.status == "completed" for step in job.steps)
     assert job.stickers is not None and len(job.stickers) == 20
     assert all(item.image_url.startswith("data:image/png;base64,") for item in job.stickers)
     assert len(job.preview_image_urls) == 2
@@ -284,6 +285,7 @@ async def test_inline_completed_pack_uses_urls_and_drops_base64_previews(
     job.stickers = StickerPipelineService._build_responses(path_tuple, "anime-kawaii")
     job.preview_image_url = "data:image/png;base64,cHJldmlldw=="
     job.preview_image_urls = [job.preview_image_url]
+    job.steps[4].status = "processing"
 
     monkeypatch.setattr(
         pipeline_module.SupabaseService,
@@ -305,6 +307,8 @@ async def test_inline_completed_pack_uses_urls_and_drops_base64_previews(
 
     assert job.stickers is not None
     assert all(item.image_url.startswith("https://storage.test/") for item in job.stickers)
+    assert job.steps[4].progress == 100
+    assert job.progress_percentage == 99
     assert job.preview_image_url is None
     assert job.preview_image_urls == []
 
@@ -369,6 +373,51 @@ async def test_pipeline_sanitizes_provider_error(
     assert job.error_message is not None
     assert "quota" in job.error_message.lower()
     assert "test-key" not in job.error_message
+
+
+@pytest.mark.asyncio
+async def test_pipeline_stops_before_serverless_deadline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "OPENAI_API_KEY", "test-key")
+    monkeypatch.setattr(settings, "GENERATION_DEADLINE_SECONDS", 1)
+    monkeypatch.setattr(asyncio, "create_task", _discard_task)
+    job = StickerPipelineService.create_job(
+        owner_id="user-a",
+        style_id="anime-kawaii",
+        file_bytes=b"input-image",
+        filename="portrait.png",
+        content_type="image/png",
+    )
+
+    class FakeProvider:
+        def __init__(self, **_: object) -> None:
+            pass
+
+        async def close(self) -> None:
+            return None
+
+    class SlowGenerator:
+        def __init__(self, **_: object) -> None:
+            pass
+
+        async def generate(self, **_: object):  # type: ignore[no-untyped-def]
+            await asyncio.sleep(5)
+
+    monkeypatch.setattr(pipeline_module, "OpenAIImageProvider", FakeProvider)
+    monkeypatch.setattr(pipeline_module, "GroupedStickerGenerator", SlowGenerator)
+
+    await StickerPipelineService._run_pipeline_async(
+        job_id=job.job_id,
+        style_id="anime-kawaii",
+        file_bytes=b"input-image",
+        filename="portrait.png",
+        content_type="image/png",
+    )
+
+    assert job.status == "error"
+    assert job.error_message is not None
+    assert "thời gian xử lý an toàn" in job.error_message
 
 
 @pytest.mark.asyncio
