@@ -26,8 +26,8 @@ cần có; số lượt kiểm thử khi chạy có thể lớn hơn do tham s�
 | Cấp | Mục tiêu | Môi trường |
 | --- | --- | --- |
 | Đơn vị | Bộ giải mã, ngưỡng, chính sách, trạng thái, mã băm, ánh xạ | Cục bộ/CI, không có mạng |
-| Hợp đồng | Lược đồ kho dữ liệu/nhà cung cấp/API với dữ liệu mẫu xác định | Dịch vụ giả lập trong CI + dữ liệu nhà cung cấp đã ghi và làm sạch |
-| Tích hợp | FastAPI + CSDL/Storage/PGMQ Supabase + nhà cung cấp sandbox | Tiền sản xuất Singapore biệt lập |
+| Hợp đồng | Lược đồ kho dữ liệu/Gemini/API tạo ảnh/API công khai với dữ liệu mẫu xác định | Dịch vụ giả lập trong CI + phản hồi Gemini/dịch vụ tạo ảnh đã ghi và làm sạch |
+| Tích hợp | FastAPI + PostgreSQL/Storage Supabase + tiến trình nhận phiên thuê + bộ chuyển đổi giả lập/tài khoản kiểm thử Gemini và dịch vụ tạo ảnh | Tiền sản xuất Singapore biệt lập |
 | E2E trên thiết bị | Máy ảnh/trình chọn/phiên/tải xuống/chia sẻ/khả năng tiếp cận | Ma trận thiết bị thật/trình mô phỏng |
 | Đánh giá chuẩn | Chất lượng/thiên lệch/an toàn/độ trễ/năng lực | Bộ dữ liệu hợp pháp có phiên bản/tiền sản xuất |
 | Bảo mật/Quyền riêng tư | IDOR, lạm dụng tải lên, bí mật/nhật ký, lưu giữ/xóa | CI + duyệt tiền sản xuất |
@@ -48,7 +48,9 @@ chịu trách nhiệm rủi ro, ngày hết hạn và biện pháp bù trong b�
 - Dữ liệu mẫu phải thuộc quyền sở hữu/có giấy phép/sự đồng ý và lưu ngoài sản xuất.
 - Kho dữ liệu bao phủ năm định dạng cho phép, mọi định dạng cấm, tệp hỏng, nhiều
   khung hình, EXIF, kích thước, mờ/sáng, người/thú cưng/vật thể, không có/nhiều/
-  trộn chủ thể, người lớn/trẻ vị thành niên, người nổi tiếng, thương hiệu và nội dung cấm.
+  trộn chủ thể, mặt rõ/bị che/quá nhỏ, dấu hiệu thương hiệu rõ ràng và nội dung cấm.
+- Ca tuổi/quyền và nhân vật công chúng dùng dữ liệu xác nhận/báo cáo tổng hợp; bộ
+  đánh giá không cần kho khuôn mặt trẻ vị thành niên hoặc người nổi tiếng.
 - Bộ dữ liệu người dùng để đánh giá cuối có tối thiểu 300 ảnh nguồn, cân bằng giữa
   các nhóm màu da/giới/tuổi trưởng thành; bộ thú cưng/vật thể đa dạng hình dạng/lông/ánh sáng.
 - Dữ liệu an toàn nhạy cảm thô dùng kho mã hóa hạn chế và nhãn CI; máy phát triển
@@ -70,7 +72,7 @@ chịu trách nhiệm rủi ro, ngày hết hạn và biện pháp bù trong b�
 | DOC-01 | Băm hai tệp PRD trước/sau thay đổi tài liệu | Mã kiểm tra giống mốc chuẩn | CI | `Dự kiến tự động hóa` |
 | DOC-02 | Quét tài liệu kế tiếp để tìm dấu hiệu quyết định chưa đóng | Không có kết quả | CI | `Dự kiến tự động hóa` |
 | DOC-03 | Trích tham chiếu DEC/FR/BR/AC/công việc/kiểm thử | Không thiếu, trùng hoặc có tham chiếu sai | CI | `Dự kiến tự động hóa` |
-| DOC-04 | So sánh hằng số SRS giữa Kiến trúc/Bàn giao/Danh sách công việc/TDD | Giá trị định dạng/số lượng/phong cách/nhà cung cấp/ngưỡng/lưu giữ/nền tảng giống nhau | CI | `Dự kiến tự động hóa` |
+| DOC-04 | So sánh hằng số SRS giữa Kiến trúc/Bàn giao/Danh sách công việc/TDD | Giá trị định dạng/số lượng/phong cách/ngưỡng/lưu giữ/nền tảng giống nhau; Supabase chỉ lưu trữ; AI chỉ có Gemini và API tạo ảnh tương thích OpenAI với đúng bốn biến môi trường | CI | `Dự kiến tự động hóa` |
 | DOC-05 | Kiểm tra cấu trúc Markdown | Bảng/tiêu đề/liên kết hiển thị không lỗi cấu trúc | CI | `Dự kiến tự động hóa` |
 
 ## 3. Kiểm tra kỹ thuật ảnh đầu vào
@@ -117,25 +119,25 @@ chịu trách nhiệm rủi ro, ngày hết hạn và biện pháp bù trong b�
 | Q-05 | Trung vị độ chói 221 | `IMAGE_TOO_BRIGHT` | Đơn vị | `Dự kiến tự động hóa` |
 | Q-06 | Điểm ảnh tối >35% | `IMAGE_TOO_DARK` | Đơn vị | `Dự kiến tự động hóa` |
 | Q-07 | Điểm ảnh cháy sáng >35% | `IMAGE_TOO_BRIGHT` | Đơn vị | `Dự kiến tự động hóa` |
-| Q-08 | Một người, độ tin cậy 90%, diện tích 15% | Đạt biên chủ thể chính | Hợp đồng | `Dự kiến tự động hóa` |
-| Q-09 | Độ tin cậy/diện tích chủ thể chính dưới biên | `SUBJECT_NOT_FOUND` | Hợp đồng | `Dự kiến tự động hóa` |
-| Q-10 | Chủ thể thứ hai đạt 85% và 10% | `MULTIPLE_SUBJECTS` | Hợp đồng | `Dự kiến tự động hóa` |
-| Q-11 | Ứng viên hậu cảnh thứ hai dưới một trong hai biên | Tự nó không kích hoạt quy tắc nhiều chủ thể | Hợp đồng | `Dự kiến tự động hóa` |
+| Q-08 | Schema trả `person`, số chủ thể chính 1, không có chủ thể thứ hai, không không-chắc-chắn | Đạt chốt chủ thể chính | Hợp đồng | `Dự kiến tự động hóa` |
+| Q-09 | Schema trả `subject_type=unknown` | `SUBJECT_NOT_FOUND` | Hợp đồng | `Dự kiến tự động hóa` |
+| Q-10 | `primary_subject_count=2` | `MULTIPLE_SUBJECTS` | Hợp đồng | `Dự kiến tự động hóa` |
+| Q-11 | `secondary_subject_present=true` dù số chủ thể chính là 1 | `MULTIPLE_SUBJECTS` | Hợp đồng | `Dự kiến tự động hóa` |
 | Q-12 | Đúng một thú cưng được hỗ trợ | Loại chủ thể `pet`, số lượng 1 | Hợp đồng/đánh giá chuẩn | `Dự kiến tự động hóa` |
 | Q-13 | Đúng một vật thể thông thường | Loại chủ thể `object`, số lượng 1 | Hợp đồng/đánh giá chuẩn | `Dự kiến tự động hóa` |
 | Q-14 | Không có chủ thể/không rõ | `SUBJECT_NOT_FOUND` | Hợp đồng | `Dự kiến tự động hóa` |
 | Q-15 | Hai người | `MULTIPLE_SUBJECTS` hoặc `MULTIPLE_FACES`, không tạo tác vụ | Hợp đồng | `Dự kiến tự động hóa` |
-| Q-16 | Người và thú cưng/vật thể cùng đạt ngưỡng | `MULTIPLE_SUBJECTS` | Hợp đồng | `Dự kiến tự động hóa` |
-| Q-17 | Hai thú cưng/hai vật thể cùng đạt ngưỡng | `MULTIPLE_SUBJECTS` | Hợp đồng | `Dự kiến tự động hóa` |
+| Q-16 | Người và thú cưng/vật thể đều là chủ thể chính | `MULTIPLE_SUBJECTS` | Hợp đồng | `Dự kiến tự động hóa` |
+| Q-17 | Hai thú cưng/hai vật thể đều là chủ thể chính | `MULTIPLE_SUBJECTS` | Hợp đồng | `Dự kiến tự động hóa` |
 | Q-18 | Có người nhưng không có mặt | `FACE_REQUIRED` | Hợp đồng | `Dự kiến tự động hóa` |
-| Q-19 | Một mặt có độ tin cậy 98,99% | `FACE_NOT_CLEAR` | Hợp đồng | `Dự kiến tự động hóa` |
-| Q-20 | Một mặt 99%, diện tích 8%, chất lượng 50, tư thế ±30 | Đạt biên khuôn mặt người | Hợp đồng | `Dự kiến tự động hóa` |
-| Q-21 | Diện tích mặt <8% | `FACE_NOT_CLEAR` | Hợp đồng | `Dự kiến tự động hóa` |
-| Q-22 | Độ nét/độ sáng <50 | `FACE_NOT_CLEAR` | Hợp đồng | `Dự kiến tự động hóa` |
-| Q-23 | Trị tuyệt đối góc quay/ngẩng >30° | `FACE_NOT_CLEAR` | Hợp đồng | `Dự kiến tự động hóa` |
-| Q-24 | `FaceOccluded=true`, độ tin cậy ≥80% | `FACE_NOT_CLEAR` | Hợp đồng | `Dự kiến tự động hóa` |
+| Q-19 | Một mặt nhưng `face_clear=false` | `FACE_NOT_CLEAR` | Hợp đồng | `Dự kiến tự động hóa` |
+| Q-20 | Một mặt, rõ, không che, không quá nhỏ và kết quả chắc chắn | Đạt chốt khuôn mặt người | Hợp đồng | `Dự kiến tự động hóa` |
+| Q-21 | `face_too_small=true` | `FACE_NOT_CLEAR` | Hợp đồng | `Dự kiến tự động hóa` |
+| Q-22 | Mặt mờ hoặc thiếu sáng làm `face_clear=false` | `FACE_NOT_CLEAR` | Hợp đồng | `Dự kiến tự động hóa` |
+| Q-23 | `assessment_uncertain=true` | `ASSESSMENT_UNAVAILABLE`, không cho ảnh sẵn sàng | Hợp đồng | `Dự kiến tự động hóa` |
+| Q-24 | `face_occluded=true` | `FACE_NOT_CLEAR` | Hợp đồng | `Dự kiến tự động hóa` |
 | Q-25 | Ảnh bị từ chối trên ứng dụng di động | Người dùng ở lại màn hình Tạo, thấy nội dung Việt/Anh an toàn và thao tác chọn/cắt ảnh | Thiết bị/giao diện | `Dự kiến kiểm thử thiết bị` |
-| Q-26 | Nhà cung cấp trả nhãn mới/không biết | Miền nghiệp vụ ánh xạ an toàn thành không rõ; không vô tình cho đạt | Hợp đồng | `Dự kiến tự động hóa` |
+| Q-26 | Bộ chuyển đổi Gemini trả thiếu trường/sai enum/JSON không khớp `input-assessment-v1` | `ASSESSMENT_UNAVAILABLE`, không vô tình cho đạt | Hợp đồng | `Dự kiến tự động hóa` |
 
 ## 5. Sự đồng ý và vòng đời ảnh nguồn
 
@@ -144,28 +146,28 @@ chịu trách nhiệm rủi ro, ngày hết hạn và biện pháp bù trong b�
 | C-01 | Tải lên với `consent_accepted=false` | 400 `CONSENT_REQUIRED`, không tạo ảnh nguồn/gọi nhà cung cấp | API | `Đã tự động hóa ở mốc hiện trạng` |
 | C-02 | Đã chọn ảnh nhưng chưa đánh dấu đồng ý | Vô hiệu hóa Kiểm tra/Tạo | Giao diện | `Đã tự động hóa ở mốc hiện trạng` |
 | C-03 | Đã đồng ý rồi thay ảnh | Đặt lại sự đồng ý/kết quả kiểm tra/ý định | Giao diện/đơn vị | `Đã tự động hóa ở mốc hiện trạng` |
-| C-04 | Sự đồng ý hợp lệ | Ghi chủ sở hữu/SHA ảnh nguồn/`consent-v1.0`/`accepted_at` | Tích hợp | `Dự kiến tự động hóa` |
-| C-05 | Đổi phiên bản nội dung đồng ý | Ảnh nguồn mới ghi phiên bản mới; bằng chứng cũ bất biến | Tích hợp | `Dự kiến tự động hóa` |
+| C-04 | Sự đồng ý/xác nhận hợp lệ | Nội dung nêu Supabase, Google Gemini và tên pháp lý dịch vụ tạo ảnh; ghi chủ sở hữu/SHA/`consent-v1.1`/hai boolean/`accepted_at` | Tích hợp | `Dự kiến tự động hóa` |
+| C-05 | Boolean không phải `true` hoặc phiên bản đồng ý cũ | 400 `RIGHTS_ATTESTATION_REQUIRED`; không gọi Gemini/dịch vụ tạo ảnh; bằng chứng cũ bất biến | API/tích hợp | `Dự kiến tự động hóa` |
 | C-06 | Ảnh nguồn bị xóa | Bằng chứng đồng ý giữ 365 ngày, không chứa ảnh/đường dẫn | Quyền riêng tư/tích hợp | `Dự kiến tự động hóa` |
 | C-07 | Tác vụ cuối của ảnh nguồn kết thúc +24 giờ | Xóa ảnh nguồn gốc, vòng đời siêu dữ liệu chính xác | Lưu giữ/tích hợp | `Dự kiến tự động hóa` |
 | C-08 | Ứng dụng di động tải thành công/lỗi/thay ảnh/rời màn hình | Chỉ dọn bộ đệm ứng dụng đúng lúc; ảnh gốc trong thư viện không đổi | Đơn vị/thiết bị | `Đã tự động hóa ở mốc hiện trạng` |
 
-## 6. An toàn đầu vào/đầu ra, độ tuổi và sở hữu trí tuệ
+## 6. An toàn đầu vào/đầu ra, xác nhận độ tuổi và sở hữu trí tuệ
 
 | ID | Tình huống | Kết quả mong đợi | Cấp kiểm thử | Trạng thái |
 | --- | --- | --- | --- | --- |
-| M-01 | Đầu vào an toàn, cả hai nhà cung cấp kiểm duyệt đều cho đạt | Bước kiểm tra an toàn đạt | Hợp đồng | `Dự kiến tự động hóa` |
-| M-02 | Nhãn cấm AWS có độ tin cậy 79,99% | Riêng ngưỡng này không chặn; vẫn đánh giá nhà cung cấp thứ cấp | Hợp đồng | `Dự kiến tự động hóa` |
-| M-03 | Nhãn cấm AWS có độ tin cậy 80% | `INPUT_BLOCKED`, không tạo ảnh | Hợp đồng | `Dự kiến tự động hóa` |
-| M-04 | OpenAI Moderation trả `flagged=true` | `INPUT_BLOCKED`, không tạo ảnh | Hợp đồng | `Dự kiến tự động hóa` |
-| M-05 | Các nhà cung cấp không đồng thuận | Đóng an toàn/chặn | Hợp đồng | `Dự kiến tự động hóa` |
-| M-06 | Một trong hai nhà cung cấp kiểm duyệt quá thời gian/không sẵn sàng | Đóng an toàn, trả lỗi dịch vụ có thể thử lại, không tạo tác vụ | Hợp đồng | `Dự kiến tự động hóa` |
-| M-07 | Khuôn mặt có AgeRange.Low 17 | `MINOR_DETECTED` | Hợp đồng | `Dự kiến tự động hóa` |
-| M-08 | Khuôn mặt có AgeRange.Low 18 | Đạt quy tắc tuổi; vẫn phải qua các bước khác | Hợp đồng | `Dự kiến tự động hóa` |
-| M-09 | Khớp người nổi tiếng 89,99% | Riêng ngưỡng người nổi tiếng không chặn | Hợp đồng | `Dự kiến tự động hóa` |
-| M-10 | Khớp người nổi tiếng 90% | `PUBLIC_FIGURE_DETECTED` | Hợp đồng | `Dự kiến tự động hóa` |
-| M-11 | Nhãn tùy chỉnh thương hiệu/nhân vật 90% | `BRANDED_CHARACTER_DETECTED` | Hợp đồng | `Dự kiến tự động hóa` |
-| M-12 | Bộ âm tính gồm vật thể thông thường | Tỷ lệ dương tính giả của bộ phân loại thương hiệu nằm trong ngưỡng phát hành | Đánh giá chuẩn | `Đánh giá trước phát hành` |
+| M-01 | Đầu vào có cấu trúc hợp lệ và Gemini kiểm duyệt cho đạt | Bước kiểm tra an toàn đạt | Hợp đồng | `Dự kiến tự động hóa` |
+| M-02 | Gemini trả `blocked=false` | Riêng bước kiểm duyệt đạt; vẫn phải qua chủ thể/quyền | Hợp đồng | `Dự kiến tự động hóa` |
+| M-03 | Gemini trả `blocked=true` | `INPUT_BLOCKED`, không tạo ảnh | Hợp đồng | `Dự kiến tự động hóa` |
+| M-04 | Phản hồi kiểm duyệt Gemini sai lược đồ | `ASSESSMENT_UNAVAILABLE`, không tạo ảnh | Hợp đồng | `Dự kiến tự động hóa` |
+| M-05 | Gemini trả `assessment_uncertain=true` | Đóng an toàn, không cho ảnh nguồn sẵn sàng | Hợp đồng | `Dự kiến tự động hóa` |
+| M-06 | Gemini quá thời gian hoặc không sẵn sàng | 503 `ASSESSMENT_UNAVAILABLE`, có thể thử lại, không tạo tác vụ | Hợp đồng | `Dự kiến tự động hóa` |
+| M-07 | Ảnh người thiếu xác nhận chủ thể từ 18 tuổi/quyền sử dụng | 400 `RIGHTS_ATTESTATION_REQUIRED`, không gọi AI | API | `Dự kiến tự động hóa` |
+| M-08 | `consent-v1.1` có đủ xác nhận tuổi/quyền | Đạt chốt xác nhận; hệ thống không suy luận tuổi, vẫn phải qua các bước khác | Hợp đồng | `Dự kiến tự động hóa` |
+| M-09 | Câu lệnh/schema yêu cầu tên, danh tính, tuổi hoặc thuộc tính nhạy cảm | Kiểm tra cấu hình thất bại; không triển khai cấu hình đó | Đơn vị/bảo mật | `Dự kiến tự động hóa` |
+| M-10 | Báo cáo `unauthorized_image` có căn cứ cho nhân vật công chúng | Ảnh mất quyền truy cập khi quản trị viên gỡ bỏ; có dấu vết/SLA | Tích hợp/vận hành | `Dự kiến tự động hóa` |
+| M-11 | `obvious_branded_or_copyrighted_character=true` | `RIGHTS_POLICY_BLOCKED` | Hợp đồng | `Dự kiến tự động hóa` |
+| M-12 | Bộ âm tính gồm vật thể thông thường | Tỷ lệ dương tính giả của chốt thương hiệu nằm trong ngưỡng phát hành | Đánh giá chuẩn | `Đánh giá trước phát hành` |
 | M-13 | Ảnh tạo ra không an toàn | Chặn vị trí trước khi lưu chính thức/công bố lên Storage | Tích hợp | `Dự kiến tự động hóa` |
 | M-14 | Câu chữ chính xác/đã kết xuất không an toàn | Chặn vị trí trước khi công bố | Tích hợp | `Dự kiến tự động hóa` |
 | M-15 | Một vị trí bị chặn, tạo bù thành công | Bộ cuối vẫn có đúng 8 ảnh đạt | Tích hợp | `Dự kiến tự động hóa` |
@@ -179,18 +181,18 @@ chịu trách nhiệm rủi ro, ngày hết hạn và biện pháp bù trong b�
 | --- | --- | --- | --- | --- |
 | G-01 | Cấu hình sản xuất dùng mô phỏng | Khởi động thất bại | Đơn vị | `Đã tự động hóa ở mốc hiện trạng` |
 | G-02 | Tiền sản xuất/sản xuất dùng xác thực cục bộ | Khởi động thất bại | Đơn vị | `Dự kiến tự động hóa` |
-| G-03 | URL gốc OpenAI không chính thức/không dùng HTTPS | Khởi động thất bại | Đơn vị | `Dự kiến tự động hóa` |
+| G-03 | Môi trường sản xuất thiếu một trong bốn biến AI, giá trị rỗng hoặc `OPENAI_BASE_URL` không dùng HTTPS | Khởi động thất bại; với đủ `GEMINI_API_KEY`, `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_IMAGE_MODEL` hợp lệ thì tạo đúng hai bộ chuyển đổi, không có chọn dịch vụ động | Đơn vị/hợp đồng | `Dự kiến tự động hóa` |
 | G-04 | Ảnh nguồn sẵn sàng + thao tác Tạo | 202, tác vụ bền vững đã vào hàng đợi | API/tích hợp | `Đã tự động hóa ở mốc hiện trạng` |
 | G-05 | Ảnh nguồn chưa sẵn sàng/không đúng chủ sở hữu | 404/lỗi kiểm tra, không có thông điệp hàng đợi | API | `Đã tự động hóa ở mốc hiện trạng` |
 | G-06 | Yêu cầu thứ năm trong hạn mức | Chấp nhận nếu không có tác vụ đang hoạt động | API | `Dự kiến tự động hóa` |
 | G-07 | Yêu cầu thứ sáu trong cùng ngày UTC | 429 `QUOTA_EXCEEDED` kèm `retry_after` | API | `Dự kiến tự động hóa` |
 | G-08 | Chủ sở hữu đã có tác vụ đang hoạt động | Từ chối tác vụ hoạt động thứ hai | API | `Dự kiến tự động hóa` |
 | G-09 | Hợp đồng yêu cầu tạo ảnh | Phong cách, ngôn ngữ/danh mục/câu lệnh cố định, 8 vị trí; không câu lệnh người dùng | Hợp đồng | `Dự kiến tự động hóa` |
-| G-10 | Lệnh gọi bộ chuyển đổi OpenAI | `gpt-image-1.5`, giữ đặc trưng/chất lượng cao, 1024, PNG trong suốt | Hợp đồng | `Dự kiến tự động hóa` |
-| G-11 | Hơn hai lệnh gọi nhà cung cấp chồng nhau | Chốt đồng thời ngăn lệnh thứ ba | Đơn vị/tích hợp | `Dự kiến tự động hóa` |
-| G-12 | Lỗi tạm thời 429/5xx | Chờ 2/5/10 giây trong thời hạn | Hợp đồng | `Dự kiến tự động hóa` |
-| G-13 | Nhà cung cấp từ chối và không thể thử lại | Tác vụ thất bại an toàn, không thử lại dồn dập | Hợp đồng | `Dự kiến tự động hóa` |
-| G-14 | Nhà cung cấp trả base64 sai/không phải PNG | `INVALID_OUTPUT_CONTRACT` | Hợp đồng | `Dự kiến tự động hóa` |
+| G-10 | Lệnh gọi bộ chuyển đổi tạo ảnh | Dùng đúng URL/khóa/mô hình đã cấu hình; yêu cầu giữ đặc trưng/chất lượng cao, đích 1024 và nền trong suốt mà không rò kiểu riêng dịch vụ | Hợp đồng | `Dự kiến tự động hóa` |
+| G-11 | Hơn hai lệnh gọi dịch vụ tạo ảnh chồng nhau | Chốt đồng thời ngăn lệnh thứ ba | Đơn vị/tích hợp | `Dự kiến tự động hóa` |
+| G-12 | Dịch vụ tạo ảnh trả lỗi tạm thời 429/5xx | Chờ 2/5/10 giây trong thời hạn; từng lần gọi ghi `provider_kind`/máy chủ/mô hình/đơn vị tính phí/chi phí mà không có ảnh/câu lệnh thô | Hợp đồng | `Dự kiến tự động hóa` |
+| G-13 | Dịch vụ tạo ảnh từ chối và không thể thử lại | Tác vụ thất bại an toàn, không thử lại dồn dập hoặc tự đổi URL/mô hình; tổng chi phí chỉ gồm lần gọi thực tế bị tính phí | Hợp đồng | `Dự kiến tự động hóa` |
+| G-14 | Dịch vụ tạo ảnh trả base64 sai/không phải PNG | `INVALID_OUTPUT_CONTRACT` | Hợp đồng | `Dự kiến tự động hóa` |
 | G-15 | PNG không phải 1024×1024/RGBA/sRGB | Từ chối vị trí | Đơn vị | `Dự kiến tự động hóa` |
 | G-16 | PNG >4 MiB | Từ chối/tạo bù vị trí | Đơn vị | `Dự kiến tự động hóa` |
 | G-17 | Không trong suốt hoặc <5% điểm ảnh trong suốt | Từ chối/tạo bù vị trí | Đơn vị | `Dự kiến tự động hóa` |
@@ -208,11 +210,11 @@ chịu trách nhiệm rủi ro, ngày hết hạn và biện pháp bù trong b�
 
 | ID | Tình huống | Kết quả mong đợi | Cấp kiểm thử | Trạng thái |
 | --- | --- | --- | --- | --- |
-| J-01 | Ghi tác vụ vào CSDL | Gửi PGMQ trong cùng ranh giới giao dịch | Tích hợp | `Dự kiến tự động hóa` |
-| J-02 | Quay lui giao dịch CSDL | Không có thông điệp/tác vụ mồ côi | Tích hợp | `Dự kiến tự động hóa` |
-| J-03 | Tiến trình xử lý đọc thông điệp | Áp dụng thời gian ẩn 240 giây và tín hiệu sống 30 giây | Hợp đồng | `Dự kiến tự động hóa` |
-| J-04 | Giao thông điệp hàng đợi lặp | Chỉ một lần gọi nhà cung cấp/một bộ | Tích hợp | `Dự kiến tự động hóa` |
-| J-05 | Tiến trình xử lý dừng giữa tác vụ | Hết thời gian ẩn + đối soát tiếp tục an toàn | Tích hợp | `Dự kiến tự động hóa` |
+| J-01 | Ghi `generation_jobs` ở trạng thái `queued` | Chính hàng tác vụ là việc bền vững; không có thông điệp thứ hai hoặc cửa sổ mất đồng bộ | Tích hợp | `Dự kiến tự động hóa` |
+| J-02 | Quay lui giao dịch tạo tác vụ | Không có hàng tác vụ/chi phí nhà cung cấp mồ côi | Tích hợp | `Dự kiến tự động hóa` |
+| J-03 | Hai tiến trình xử lý nhận việc đồng thời | `FOR UPDATE SKIP LOCKED` chỉ giao mỗi tác vụ cho một tiến trình; phiên thuê 240 giây, tín hiệu sống 30 giây | Hợp đồng/tích hợp | `Dự kiến tự động hóa` |
+| J-04 | Tiến trình thử nhận lại tác vụ còn phiên thuê | Không gọi trùng nhà cung cấp hoặc tạo trùng bộ | Tích hợp | `Dự kiến tự động hóa` |
+| J-05 | Tiến trình dừng giữa tác vụ | Phiên thuê hết hạn + đối soát nhận lại và tiếp tục an toàn | Tích hợp | `Dự kiến tự động hóa` |
 | J-06 | API/tiến trình xử lý khởi động lại | Tác vụ chưa kết thúc vẫn truy vấn được và đi tới trạng thái kết thúc | Tích hợp | `Dự kiến tự động hóa` |
 | J-07 | Ứng dụng di động rời màn hình | Tác vụ tiếp tục; quay lại thấy trạng thái hiện tại | Thiết bị | `Dự kiến kiểm thử thiết bị` |
 | J-08 | Ứng dụng di động khởi động lại | Đối soát ID tác vụ hoạt động với máy chủ | Thiết bị | `Dự kiến kiểm thử thiết bị` |
@@ -239,7 +241,7 @@ chịu trách nhiệm rủi ro, ngày hết hạn và biện pháp bù trong b�
 | D-07 | Mất phản hồi lưu/thử lại | Trả cùng gói, không tạo trùng | API | `Đã tự động hóa ở mốc hiện trạng` |
 | D-08 | Lỗi CSDL khi lưu | Bản xem trước vẫn có tới hết 24 giờ | Tích hợp/giao diện | `Dự kiến tự động hóa` |
 | D-09 | Bản xem trước chưa lưu hết hạn sau 24 giờ | Không còn truy cập được; ảnh tạm đã dọn | Lưu giữ | `Dự kiến tự động hóa` |
-| D-10 | Khởi động lại ứng dụng với cùng chủ sở hữu | Khôi phục gói/danh sách/chi tiết đã lưu từ Supabase | Tích hợp/thiết bị | `Dự kiến tự động hóa` |
+| D-10 | Khởi động lại ứng dụng với cùng token làm mới của cài đặt | Làm mới token truy cập và khôi phục gói/danh sách/chi tiết đã lưu từ Supabase | Tích hợp/thiết bị | `Dự kiến tự động hóa` |
 | D-11 | Phân trang thư viện | Con trỏ ổn định, không lộ cấu trúc, mặc định 20, không trùng/thiếu | API | `Dự kiến tự động hóa` |
 | D-12 | Thao tác Tải xuống trên ảnh chỉ có ở bản xem trước | Không xuất hiện | Giao diện | `Dự kiến tự động hóa` |
 | D-13 | Tải xuống ảnh đã lưu | `image/png` có xác thực, đúng tên tệp/byte/mã kiểm tra | API/thiết bị | `Dự kiến kiểm thử thiết bị` |
@@ -284,45 +286,45 @@ chịu trách nhiệm rủi ro, ngày hết hạn và biện pháp bù trong b�
 
 | ID | Tình huống | Kết quả mong đợi | Cấp kiểm thử | Trạng thái |
 | --- | --- | --- | --- | --- |
-| S-01 | Không có/JWT sai/hết hạn | 401 `AUTH_REQUIRED` | API | `Đã tự động hóa ở mốc hiện trạng` |
-| S-02 | Sai đơn vị phát hành/đối tượng/thuật toán/chữ ký | 401 | Bảo mật | `Đã tự động hóa ở mốc hiện trạng` |
-| S-03 | JWT ẩn danh hợp lệ | Chỉ suy ra chủ sở hữu từ `sub` | API | `Đã tự động hóa ở mốc hiện trạng` |
+| S-01 | Không có/JWT truy cập cài đặt sai hoặc hết hạn | 401 `AUTH_REQUIRED`; máy khách có thể làm mới nếu token làm mới còn hạn | API | `Đã tự động hóa ở mốc hiện trạng` |
+| S-02 | JWT truy cập sai đơn vị phát hành/đối tượng/thuật toán/chữ ký | 401 | Bảo mật | `Đã tự động hóa ở mốc hiện trạng` |
+| S-03 | Đăng ký cài đặt rồi dùng JWT truy cập hợp lệ | Trả token đúng TTL; chỉ suy ra chủ sở hữu từ `sub=installations.id`; không dùng trường Supabase | API | `Dự kiến tự động hóa` |
 | S-04 | Máy khách gửi trường/tiêu đề chủ sở hữu | Bỏ qua/từ chối | Bảo mật | `Dự kiến tự động hóa` |
 | S-05 | Ảnh nguồn/tác vụ/bộ/gói/sticker/báo cáo chéo chủ sở hữu | Mọi điểm cuối đều trả 404 | Bảo mật/tích hợp | `Đã tự động hóa ở mốc hiện trạng` |
-| S-06 | Máy khách ẩn danh/đã xác thực truy cập RLS trực tiếp | Quyền di động không truy cập được bảng/kho nghiệp vụ | Tích hợp Supabase | `Dự kiến tự động hóa` |
+| S-06 | Gói di động hoặc vai trò công khai truy cập Supabase trực tiếp | Không có URL/anon key trong gói; quyền CSDL/Storage mặc định từ chối | Tích hợp Supabase | `Dự kiến tự động hóa` |
 | S-07 | Tìm khóa dịch vụ/bí mật trong gói di động/kho mã/nhật ký | Không có kết quả hoặc bí mật dùng được | Bảo mật CI | `Dự kiến tự động hóa` |
 | S-08 | Kho công khai hoặc URL đối tượng | Kiểm tra sẵn sàng/khởi động thất bại | Tích hợp | `Dự kiến tự động hóa` |
 | S-09 | Phản hồi ảnh | Riêng tư/không lưu đệm, `nosniff`, Content-Type/Disposition/ETag hợp lệ | API | `Đã tự động hóa ở mốc hiện trạng` |
 | S-10 | Duyệt đường dẫn/chèn khóa đối tượng | Không đọc/ghi tùy ý | Bảo mật | `Dự kiến tự động hóa` |
 | S-11 | CORS ký tự đại diện ở sản xuất | Khởi động thất bại | Đơn vị | `Dự kiến tự động hóa` |
-| S-12 | Máy chủ OpenAI/proxy không chính thức | Khởi động thất bại và chặn luồng mạng ra | Đơn vị/tích hợp | `Dự kiến tự động hóa` |
-| S-13 | Thu lại yêu cầu gửi nhà cung cấp | Chỉ có byte ảnh chuẩn/câu lệnh tối thiểu; không EXIF/GPS | Hợp đồng quyền riêng tư | `Dự kiến tự động hóa` |
+| S-12 | Có đích mạng ngoài Supabase, API Gemini và máy chủ HTTPS từ `OPENAI_BASE_URL`; hoặc cố đổi URL/mô hình lúc chạy | Yêu cầu/luồng mạng ra bị chặn; không có chuyển dự phòng động | Đơn vị/tích hợp | `Dự kiến tự động hóa` |
+| S-13 | Thu lại yêu cầu gửi Gemini/dịch vụ tạo ảnh | Chỉ có byte ảnh chuẩn/dữ liệu tối thiểu; không EXIF/GPS | Hợp đồng quyền riêng tư | `Dự kiến tự động hóa` |
 | S-14 | Ngoại lệ ứng dụng chứa đường dẫn/bí mật/dữ liệu nhà cung cấp | Chỉ trả Problem Details chung + ID yêu cầu | API | `Đã tự động hóa ở mốc hiện trạng` |
 | S-15 | Nhật ký có cấu trúc qua mọi luồng | Không ảnh/tham chiếu/chủ sở hữu/câu lệnh/bí mật/dữ liệu thô | Quét quyền riêng tư | `Dự kiến tự động hóa` |
 | S-16 | Dữ liệu phân tích sản phẩm qua mọi luồng | Đạt cùng phép quét trường bị cấm | Quét quyền riêng tư | `Dự kiến tự động hóa` |
 | S-17 | Giới hạn tần suất tải lên/chung/báo cáo | 429 kèm `retry_after`, không phát sinh chi phí nhà cung cấp sau giới hạn | Tích hợp | `Dự kiến tự động hóa` |
-| S-18 | Lạm dụng đăng nhập ẩn danh | CAPTCHA/giới hạn tần suất từ chối dữ liệu tự động hóa | Bảo mật | `Đánh giá trước phát hành` |
+| S-18 | Lạm dụng `POST /installations` hoặc `/installations/refresh` | Giới hạn FastAPI/proxy 10 đăng ký và 60 lần làm mới/IP/giờ trả 429, không tạo hàng loạt chủ sở hữu/phiên | Bảo mật | `Đánh giá trước phát hành` |
 | S-19 | Dọn tệp tạm khi thành công/lỗi/sự cố/khởi động | Vòng đời tệp tạm ứng dụng/tiến trình xử lý đạt chính sách 1 giờ | Tích hợp/thiết bị | `Dự kiến tự động hóa` |
-| S-20 | Tìm/cấu hình đường dùng nội dung sản xuất để huấn luyện | Không có đường; chính sách/cấu hình từ chối xuất dữ liệu | Duyệt quyền riêng tư | `Đánh giá trước phát hành` |
+| S-20 | Duyệt Gemini và dịch vụ tạo ảnh về huấn luyện/lưu giữ | Không có đường dùng nội dung sản xuất để huấn luyện; mỗi dịch vụ lưu tối đa 30 ngày, có cơ chế xóa/DPA và tên pháp lý khớp thông báo quyền riêng tư | Duyệt quyền riêng tư | `Đánh giá trước phát hành` |
 | S-21 | Yêu cầu xóa sau 24 giờ/bản sao lưu sau 30 ngày | Dữ liệu chính đã mất/kiểm toán hoàn tất; xác minh sao lưu hết hạn | Vận hành | `Đánh giá trước phát hành` |
-| S-22 | Luân chuyển bí mật | Thông tin mới hoạt động, thông tin cũ bị thu hồi, không gián đoạn quá SLO | Vận hành | `Đánh giá trước phát hành` |
+| S-22 | Token làm mới hợp lệ, xoay vòng rồi phát lại token cũ; đồng thời diễn tập đổi khóa ký | Lần đầu trả cặp token mới, phát lại thu hồi chuỗi phiên; đổi khóa theo quy trình không vượt SLO | Bảo mật/vận hành | `Đánh giá trước phát hành` |
 
 ## 12. Hiệu năng, chất lượng, khả năng tiếp cận và vận hành
 
 | ID | Tình huống | Kết quả mong đợi | Cấp kiểm thử | Trạng thái |
 | --- | --- | --- | --- | --- |
 | P-01 | Tải đọc/ghi API | p95 ≤500 ms/1 giây | Tải | `Đánh giá trước phát hành` |
-| P-02 | Kho dữ liệu kiểm tra ảnh có thẩm quyền | p95 ≤6 giây sau khi tải lên | Đánh giá chuẩn | `Đánh giá trước phát hành` |
+| P-02 | Kho dữ liệu kiểm tra ảnh có thẩm quyền | p95 ≤15 giây sau khi tải lên | Đánh giá chuẩn | `Đánh giá trước phát hành` |
 | P-03 | Kho dữ liệu tạo ảnh | p50 ≤60 giây, p95 ≤120 giây, tối đa 180 giây | Đánh giá chuẩn | `Đánh giá trước phát hành` |
 | P-04 | 20 mục đầu thư viện | p95 ≤1 giây | Tải | `Đánh giá trước phát hành` |
 | P-05 | Truyền ảnh | TTFB p95 ≤1 giây | Tải | `Đánh giá trước phát hành` |
-| P-06 | 100 tác vụ đồng thời / 20 yêu cầu mỗi phút | Không mất điều kiện bất biến; hàng đợi/tiến trình xử lý tự co giãn ổn định | Tải | `Đánh giá trước phát hành` |
-| P-07 | Độ sâu hàng đợi >50 trong 10 phút/lỗi tác vụ >5% | Phát đúng cảnh báo mà không có PII | Vận hành | `Đánh giá trước phát hành` |
-| P-08 | Kiểm tra tổng hợp độ sẵn sàng API | Đo được mục tiêu tháng ≥99,5% | Vận hành | `Đánh giá trước phát hành` |
-| P-09 | Diễn tập khôi phục sao lưu | RPO ≤24 giờ, RTO ≤4 giờ | Vận hành | `Đánh giá trước phát hành` |
+| P-06 | 2 tác vụ đang xử lý, 50 tác vụ chờ và 20 yêu cầu mỗi phút | Không mất điều kiện bất biến; yêu cầu vượt ngưỡng trả 429, hàng đợi không mất tác vụ | Tải | `Đánh giá trước phát hành` |
+| P-07 | Độ sâu hàng đợi >20 trong 10 phút/lỗi tác vụ >5% | Phát đúng cảnh báo mà không có PII | Vận hành | `Đánh giá trước phát hành` |
+| P-08 | Kiểm tra tổng hợp độ sẵn sàng API | Đo được mục tiêu tháng ≥99,0% | Vận hành | `Đánh giá trước phát hành` |
+| P-09 | Diễn tập khôi phục sao lưu | RPO ≤24 giờ, RTO ≤8 giờ | Vận hành | `Đánh giá trước phát hành` |
 | P-10 | Bộ 300 ảnh nguồn về giữ đặc trưng/tách nền/chữ | Đạt mọi ngưỡng SRS §8.6 | Đánh giá chuẩn | `Đánh giá trước phát hành` |
 | P-11 | So sánh nhóm nhân khẩu học | Nhóm thấp nhất ≥80%, chênh lệch ≤5 điểm phần trăm | Đánh giá chuẩn | `Đánh giá trước phát hành` |
-| P-12 | Bộ âm tính an toàn | Độ bao phủ nhiều chủ thể ≥99%, độ bao phủ nhóm chặn ≥95%, chấp nhận sai ≤1% | Đánh giá chuẩn | `Đánh giá trước phát hành` |
+| P-12 | Bộ âm tính chủ thể/an toàn/thương hiệu | Độ bao phủ nhiều chủ thể ≥95%, chấp nhận sai nhiều chủ thể ≤2%, chấp nhận sai nội dung an toàn/thương hiệu ≤1% | Đánh giá chuẩn | `Đánh giá trước phát hành` |
 | P-13 | Luồng VoiceOver/TalkBack | Mọi thao tác/trạng thái/lỗi/tiến độ được thông báo đúng | Thiết bị | `Dự kiến kiểm thử thiết bị` |
 | P-14 | Cỡ chữ động 200% | Không cắt nội dung/thao tác quan trọng | Thiết bị | `Dự kiến kiểm thử thiết bị` |
 | P-15 | Độ tương phản/vùng chạm | ≥4,5:1 và ≥44pt/48dp | Kiểm toán giao diện | `Dự kiến kiểm thử thiết bị` |
@@ -330,14 +332,14 @@ chịu trách nhiệm rủi ro, ngày hết hạn và biện pháp bù trong b�
 | P-17 | Luồng di động ở mức tải cao nhất | Bộ nhớ ≤350 MiB, bộ đệm ≤100 MiB | Hồ sơ thiết bị | `Đánh giá trước phát hành` |
 | P-18 | Luồng ba phút | Pin ≤3% trên thiết bị đánh giá 4000mAh | Hồ sơ thiết bị | `Đánh giá trước phát hành` |
 | P-19 | Ngoại tuyến/mạng yếu/chuyển mạng | Khung đã lưu đệm hoạt động; thao tác lỗi/thử lại an toàn; không trùng tác vụ | Thiết bị | `Dự kiến kiểm thử thiết bị` |
-| P-20 | Quay lui triển khai | Khôi phục mã băm API/tiến trình xử lý trước mà không vỡ lược đồ | Vận hành | `Đánh giá trước phát hành` |
+| P-20 | Quay lui Docker Compose | Khôi phục thẻ ảnh API/tiến trình xử lý trước mà không vỡ lược đồ hoặc mất phiên thuê/tác vụ trong PostgreSQL | Vận hành | `Đánh giá trước phát hành` |
 
 ## 13. Truy vết
 
 | SRS | Bộ kiểm thử |
 | --- | --- |
 | Quản trị/DEC-001..039 | DOC-*, kiểm thử cấu hình G-01..03, S-*, P-* |
-| FR-ENT/INP/CNS | V-*, C-*, Q-25, các ca quyền thiết bị |
+| FR-ENT/INP/CNS | V-*, C-*, Q-25, S-01..03/S-18/S-22, các ca quyền thiết bị |
 | FR-VAL | V-*, Q-*, M-01..12 |
 | FR-GEN/SAFE | M-13..18, G-*, J-* |
 | FR-PRV/SEL/REG/SAV/DEL | D-* |
@@ -365,9 +367,9 @@ npm run lint
 npm run typecheck
 ```
 
-CI phải khóa phụ thuộc, chạy kiểm thử đơn vị/hợp đồng không cần mạng nhà cung cấp
-và công bố kết quả JUnit/độ bao phủ/SBOM. Kiểm thử tích hợp nhà cung cấp dùng bí
-mật tiền sản xuất và dữ liệu mẫu hợp pháp; không chạy trên yêu cầu kéo không đáng tin cậy.
+CI phải khóa phụ thuộc, chạy kiểm thử đơn vị/hợp đồng không cần mạng dịch vụ AI
+và công bố kết quả JUnit/độ bao phủ/SBOM. Kiểm thử tích hợp Gemini/dịch vụ tạo ảnh
+dùng bí mật tiền sản xuất và dữ liệu mẫu hợp pháp; không chạy trên yêu cầu kéo không đáng tin cậy.
 
 Lần chạy mốc ngày 14/08/2026: máy chủ `26 passed`, Ruff đạt; ứng dụng di động có
 `4` tệp/`19 passed`, kiểm tra kiểu TypeScript và Expo lint đạt. Đây là mốc mô
@@ -378,8 +380,8 @@ phỏng/bản mẫu, không phải kết quả phát hành của Mục tiêu V1.
 Với mỗi ca đã chạy, ghi: ID kiểm thử, SHA bản ghi mã, phiên bản môi trường/cấu
 hình, SHA bộ dữ liệu/dữ liệu mẫu, thời điểm bắt đầu/kết thúc, kết quả, liên kết sản
 phẩm bằng chứng, người duyệt và tham chiếu lỗi/rủi ro. Ca trên thiết bị ghi thêm hệ
-điều hành/thiết bị/bản dựng ứng dụng; ca nhà cung cấp ghi phiên bản mô hình/chính
-sách/danh mục/câu lệnh mà không chứa nội dung thô.
+điều hành/thiết bị/bản dựng ứng dụng; ca Gemini/dịch vụ tạo ảnh ghi loại dịch vụ,
+máy chủ đích, mô hình và phiên bản chính sách/danh mục/câu lệnh mà không chứa nội dung thô.
 
 ### 14.3 Quy tắc phát hành
 
