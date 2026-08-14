@@ -22,7 +22,8 @@ venv/
 .ruff_cache/
 .coverage
 htmlcov/
-
+backend/.venv
+frontend/.vite/
 # Local backend runtime data
 backend/data/
 backend/storage/
@@ -41,4 +42,4 @@ mobile/.eas/
 
 # Private docs
 docs/PRD_Sticker_Generation_V1_VI.md
-
+docs/PRD_Sticker_Generation_V1.md
