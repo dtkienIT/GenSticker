@@ -1,0 +1,171 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.example.duhatstickerai"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="36" />
+10
+11    <uses-permission android:name="android.permission.INTERNET" />
+11-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:4:5-67
+11-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:4:22-64
+12    <uses-permission
+12-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:5:5-107
+13        android:name="android.permission.READ_EXTERNAL_STORAGE"
+13-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:5:22-77
+14        android:maxSdkVersion="32" />
+14-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:5:78-104
+15    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+15-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:6:5-76
+15-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:6:22-73
+16
+17    <permission
+17-->[androidx.core:core:1.18.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/3db2429b6fc5c44076d17a074f1c7700/transformed/core-1.18.0/AndroidManifest.xml:22:5-24:47
+18        android:name="com.example.duhatstickerai.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+18-->[androidx.core:core:1.18.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/3db2429b6fc5c44076d17a074f1c7700/transformed/core-1.18.0/AndroidManifest.xml:23:9-81
+19        android:protectionLevel="signature" />
+19-->[androidx.core:core:1.18.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/3db2429b6fc5c44076d17a074f1c7700/transformed/core-1.18.0/AndroidManifest.xml:24:9-44
+20
+21    <uses-permission android:name="com.example.duhatstickerai.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+21-->[androidx.core:core:1.18.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/3db2429b6fc5c44076d17a074f1c7700/transformed/core-1.18.0/AndroidManifest.xml:26:5-97
+21-->[androidx.core:core:1.18.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/3db2429b6fc5c44076d17a074f1c7700/transformed/core-1.18.0/AndroidManifest.xml:26:22-94
+22
+23    <application
+23-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:8:5-25:19
+24        android:allowBackup="true"
+24-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:9:9-35
+25        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+25-->[androidx.core:core:1.18.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/3db2429b6fc5c44076d17a074f1c7700/transformed/core-1.18.0/AndroidManifest.xml:28:18-86
+26        android:debuggable="true"
+27        android:extractNativeLibs="false"
+28        android:icon="@mipmap/ic_launcher"
+28-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:10:9-43
+29        android:label="@string/app_name"
+29-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:11:9-41
+30        android:roundIcon="@mipmap/ic_launcher_round"
+30-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:12:9-54
+31        android:supportsRtl="true"
+31-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:13:9-35
+32        android:theme="@style/Theme.DUHATStickerAI"
+32-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:16:9-52
+33        android:usesCleartextTraffic="true"
+33-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:14:9-44
+34        android:windowSoftInputMode="adjustResize" >
+34-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:15:9-51
+35        <activity
+35-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:17:9-24:20
+36            android:name="com.example.duhatstickerai.MainActivity"
+36-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:18:13-41
+37            android:exported="true" >
+37-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:19:13-36
+38            <intent-filter>
+38-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:20:13-23:29
+39                <action android:name="android.intent.action.MAIN" />
+39-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:21:17-69
+39-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:21:25-66
+40
+41                <category android:name="android.intent.category.LAUNCHER" />
+41-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:22:17-77
+41-->/home/kiendt54/kien/genstickerapp/GenSticker/android_app/app/src/main/AndroidManifest.xml:22:27-74
+42            </intent-filter>
+43        </activity>
+44
+45        <uses-library
+45-->[androidx.window:window:1.5.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/99ecdfe4fc0ed9bf92b8f70d52ffdaec/transformed/window-1.5.0/AndroidManifest.xml:23:9-25:40
+46            android:name="androidx.window.extensions"
+46-->[androidx.window:window:1.5.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/99ecdfe4fc0ed9bf92b8f70d52ffdaec/transformed/window-1.5.0/AndroidManifest.xml:24:13-54
+47            android:required="false" />
+47-->[androidx.window:window:1.5.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/99ecdfe4fc0ed9bf92b8f70d52ffdaec/transformed/window-1.5.0/AndroidManifest.xml:25:13-37
+48        <uses-library
+48-->[androidx.window:window:1.5.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/99ecdfe4fc0ed9bf92b8f70d52ffdaec/transformed/window-1.5.0/AndroidManifest.xml:26:9-28:40
+49            android:name="androidx.window.sidecar"
+49-->[androidx.window:window:1.5.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/99ecdfe4fc0ed9bf92b8f70d52ffdaec/transformed/window-1.5.0/AndroidManifest.xml:27:13-51
+50            android:required="false" />
+50-->[androidx.window:window:1.5.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/99ecdfe4fc0ed9bf92b8f70d52ffdaec/transformed/window-1.5.0/AndroidManifest.xml:28:13-37
+51
+52        <activity
+52-->[androidx.compose.ui:ui-tooling-android:1.10.6] /home/kiendt54/.gradle/caches/9.1.0/transforms/d5e44e77794bb22bc04e247c47f8fea0/transformed/ui-tooling/AndroidManifest.xml:23:9-25:39
+53            android:name="androidx.compose.ui.tooling.PreviewActivity"
+53-->[androidx.compose.ui:ui-tooling-android:1.10.6] /home/kiendt54/.gradle/caches/9.1.0/transforms/d5e44e77794bb22bc04e247c47f8fea0/transformed/ui-tooling/AndroidManifest.xml:24:13-71
+54            android:exported="true" />
+54-->[androidx.compose.ui:ui-tooling-android:1.10.6] /home/kiendt54/.gradle/caches/9.1.0/transforms/d5e44e77794bb22bc04e247c47f8fea0/transformed/ui-tooling/AndroidManifest.xml:25:13-36
+55
+56        <provider
+56-->[androidx.emoji2:emoji2:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/6bd2211b29e114de40e7e562013709ff/transformed/emoji2-1.4.0/AndroidManifest.xml:24:9-32:20
+57            android:name="androidx.startup.InitializationProvider"
+57-->[androidx.emoji2:emoji2:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/6bd2211b29e114de40e7e562013709ff/transformed/emoji2-1.4.0/AndroidManifest.xml:25:13-67
+58            android:authorities="com.example.duhatstickerai.androidx-startup"
+58-->[androidx.emoji2:emoji2:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/6bd2211b29e114de40e7e562013709ff/transformed/emoji2-1.4.0/AndroidManifest.xml:26:13-68
+59            android:exported="false" >
+59-->[androidx.emoji2:emoji2:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/6bd2211b29e114de40e7e562013709ff/transformed/emoji2-1.4.0/AndroidManifest.xml:27:13-37
+60            <meta-data
+60-->[androidx.emoji2:emoji2:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/6bd2211b29e114de40e7e562013709ff/transformed/emoji2-1.4.0/AndroidManifest.xml:29:13-31:52
+61                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+61-->[androidx.emoji2:emoji2:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/6bd2211b29e114de40e7e562013709ff/transformed/emoji2-1.4.0/AndroidManifest.xml:30:17-75
+62                android:value="androidx.startup" />
+62-->[androidx.emoji2:emoji2:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/6bd2211b29e114de40e7e562013709ff/transformed/emoji2-1.4.0/AndroidManifest.xml:31:17-49
+63            <meta-data
+63-->[androidx.lifecycle:lifecycle-process:2.10.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/2e3863b913f0299a0504c496f54ceb53/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:29:13-31:52
+64                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+64-->[androidx.lifecycle:lifecycle-process:2.10.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/2e3863b913f0299a0504c496f54ceb53/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:30:17-78
+65                android:value="androidx.startup" />
+65-->[androidx.lifecycle:lifecycle-process:2.10.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/2e3863b913f0299a0504c496f54ceb53/transformed/lifecycle-process-2.10.0/AndroidManifest.xml:31:17-49
+66            <meta-data
+66-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:29:13-31:52
+67                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+67-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:30:17-85
+68                android:value="androidx.startup" />
+68-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:31:17-49
+69        </provider>
+70
+71        <activity
+71-->[androidx.compose.ui:ui-test-manifest:1.10.6] /home/kiendt54/.gradle/caches/9.1.0/transforms/3bc8afe445c6855ea8cb6f63555eefda/transformed/ui-test-manifest-1.10.6/AndroidManifest.xml:23:9-26:79
+72            android:name="androidx.activity.ComponentActivity"
+72-->[androidx.compose.ui:ui-test-manifest:1.10.6] /home/kiendt54/.gradle/caches/9.1.0/transforms/3bc8afe445c6855ea8cb6f63555eefda/transformed/ui-test-manifest-1.10.6/AndroidManifest.xml:24:13-63
+73            android:exported="true"
+73-->[androidx.compose.ui:ui-test-manifest:1.10.6] /home/kiendt54/.gradle/caches/9.1.0/transforms/3bc8afe445c6855ea8cb6f63555eefda/transformed/ui-test-manifest-1.10.6/AndroidManifest.xml:25:13-36
+74            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+74-->[androidx.compose.ui:ui-test-manifest:1.10.6] /home/kiendt54/.gradle/caches/9.1.0/transforms/3bc8afe445c6855ea8cb6f63555eefda/transformed/ui-test-manifest-1.10.6/AndroidManifest.xml:26:13-76
+75
+76        <receiver
+76-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:34:9-52:20
+77            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+77-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:35:13-76
+78            android:directBootAware="false"
+78-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:36:13-44
+79            android:enabled="true"
+79-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:37:13-35
+80            android:exported="true"
+80-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:38:13-36
+81            android:permission="android.permission.DUMP" >
+81-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:39:13-57
+82            <intent-filter>
+82-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:40:13-42:29
+83                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+83-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:41:17-91
+83-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:41:25-88
+84            </intent-filter>
+85            <intent-filter>
+85-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:43:13-45:29
+86                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+86-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:44:17-85
+86-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:44:25-82
+87            </intent-filter>
+88            <intent-filter>
+88-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:46:13-48:29
+89                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+89-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:47:17-88
+89-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:47:25-85
+90            </intent-filter>
+91            <intent-filter>
+91-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:49:13-51:29
+92                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+92-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:50:17-95
+92-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/kiendt54/.gradle/caches/9.1.0/transforms/e122c454de80630aec404f64945863c9/transformed/profileinstaller-1.4.0/AndroidManifest.xml:50:25-92
+93            </intent-filter>
+94        </receiver>
+95    </application>
+96
+97</manifest>

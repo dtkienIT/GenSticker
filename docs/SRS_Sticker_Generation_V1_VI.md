@@ -1,1061 +1,731 @@
-# Software Requirements Specification (SRS): Duhat Gen Sticker V1
-
-> **Trạng thái:** Bản thảo — chưa phải baseline để cam kết phát hành.  
-> Các mục gắn nhãn `TBD` chưa được quyết định và không được phép tự suy diễn khi thiết kế, triển khai hoặc kiểm thử.
+# Đặc tả yêu cầu phần mềm — Duhat Gen Sticker V1
 
 ## 0. Kiểm soát tài liệu
 
-### 0.1 Thông tin tài liệu
-
-| Trường                 | Giá trị                                                           |
-| ------------------------ | ------------------------------------------------------------------- |
-| Sản phẩm               | Duhat Gen Sticker                                                   |
-| Loại tài liệu         | Software Requirements Specification (SRS)                           |
-| Phiên bản tài liệu   | 0.1                                                                 |
-| Phiên bản sản phẩm   | V1                                                                  |
-| Trạng thái             | Draft                                                               |
-| Nền tảng mục tiêu    | Ứng dụng mobile độc lập trên Android và iOS                  |
-| Ngôn ngữ tài liệu    | Tiếng Việt                                                        |
-| Ngày soạn              | 12/08/2026                                                          |
-| Chủ sở hữu tài liệu | TBD                                                                 |
-| Nguồn yêu cầu chính  | [PRD_Sticker_Generation_V1_VI.md](./PRD_Sticker_Generation_V1_VI.md) |
-
-### 0.2 Lịch sử phiên bản
-
-| Phiên bản | Ngày      | Nội dung                                                                         | Trạng thái |
-| ----------- | ---------- | --------------------------------------------------------------------------------- | ------------ |
-| 0.1         | 12/08/2026 | Khởi tạo SRS từ PRD V1 và các quyết định phạm vi đã được xác nhận | Draft        |
-
-### 0.3 Thứ tự ưu tiên nguồn
-
-Khi có khác biệt giữa các nguồn, tài liệu này áp dụng thứ tự ưu tiên sau:
-
-1. Các quyết định phạm vi đã được xác nhận tại Bảng 0.4.
-2. `PRD_Sticker_Generation_V1_VI.md`.
-3. Các tài liệu của `origin/kien_v5` chỉ được dùng để tham khảo **cấu trúc tài liệu và cách truy vết yêu cầu**. Mọi chi tiết dành riêng cho bản web không phải yêu cầu của Duhat Gen Sticker V1.
-
-Snapshot tham khảo là commit `e24cfdc7a9649e7d61c58d9fe708887ede344000` của `origin/kien_v5` ngày 12/08/2026. Việc ghi snapshot chỉ phục vụ provenance; không biến implementation hoặc thông số của bản web thành yêu cầu V1.
-
-Không sử dụng source code hiện có làm căn cứ để thay đổi yêu cầu của PRD. Nếu một nội dung chưa được hai nguồn đầu tiên xác định, nội dung đó phải được ghi `TBD`.
-
-### 0.4 Các quyết định phạm vi đã xác nhận
-
-| ID      | Quyết định                                                                                           | Ảnh hưởng                                                                               |
-| ------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| DEC-001 | Tài liệu nguồn chính xác là `PRD_Sticker_Generation_V1_VI.md`.                                   | SRS và các tài liệu tiếp theo phải truy xuất yêu cầu từ PRD này.                |
-| DEC-002 | Sản phẩm là một ứng dụng riêng có tên **Duhat Gen Sticker**, chạy trên Android và iOS. | Thay thế bối cảnh tính năng nằm bên trong DUHAT của PRD.                           |
-| DEC-003 | Ba năng lực sản phẩm chính của V1 là tạo, lưu và chia sẻ/xuất sticker; thao tác chia sẻ/xuất sử dụng native share sheet của điện thoại. | Không tích hợp khay sticker, quản lý sticker hoặc chat của DUHAT; đích lưu cụ thể vẫn là `TBD-010`. Xóa dữ liệu và báo cáo được giữ như nghĩa vụ privacy/safety từ PRD, với luồng standalone chưa chốt. |
-| DEC-004 | V1 hỗ trợ ảnh có đúng một chủ thể chính: một người, một thú cưng hoặc một vật thể.  | Chốt phạm vi loại chủ thể trong PRD.                                                  |
-| DEC-005 | Một lần tạo thành công trả về chính xác **8 sticker**.                                    | Thay thế mọi mô tả “6–8 sticker” trong PRD.                                         |
-| DEC-006 | Phong cách hình ảnh cố định của V1 là **Chibi 3D**.                                        | Không có bộ chọn hoặc chuyển đổi phong cách trong V1.                             |
-| DEC-007 | Danh sách biểu cảm/câu chữ cố định bằng tiếng Việt và tiếng Anh chưa được chốt (`TBD-001`, `TBD-002`). | Product phải phê duyệt trước khi hoàn thiện generation contract và bộ kiểm thử. |
-| DEC-008 | Mọi thông tin PRD chưa xác định phải giữ nguyên là `TBD`.                                    | Không sử dụng giá trị của bản web hoặc tự đặt giá trị thay thế.              |
-
-Nguồn của DEC-001 đến DEC-008 là các xác nhận trực tiếp của người yêu cầu tài liệu trong phiên làm rõ SRS ngày 12/08/2026. Tên người xác nhận và quy trình phê duyệt chính thức là `TBD`; các quyết định này vẫn cần được đưa qua quy trình phê duyệt tài liệu tại Mục 16.
-
-### 0.5 Quy ước trạng thái yêu cầu
-
-| Trạng thái      | Ý nghĩa                                                                                                                 |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `Confirmed`     | Có căn cứ trực tiếp từ PRD hoặc quyết định tại Bảng 0.4; có thể dùng làm yêu cầu bắt buộc.            |
-| `TBD-dependent` | Hướng yêu cầu đã có nhưng còn phụ thuộc ít nhất một quyết định `TBD`; chưa thể kiểm thử đầy đủ. |
-| `TBD`           | Chưa có đủ căn cứ để xác định yêu cầu hoặc giá trị.                                                       |
-| `Out of scope`  | Đã được xác định là ngoài phạm vi V1.                                                                          |
-
-Trong các bảng yêu cầu, phần đứng trước dấu chấm phẩy trong cột **Trạng thái** là trạng thái chuẩn; phần đứng sau dấu chấm phẩy là ghi chú ngắn về dependency. Ví dụ, `Confirmed; threshold TBD` có trạng thái chuẩn là `Confirmed`. Khi cột này chứa `TBD-xxx` trong ngoặc, đó là tham chiếu tới TBD register, không phải trạng thái mới.
-
-Trong tài liệu này, “phải” biểu thị yêu cầu bắt buộc đã được xác nhận. Một câu chứa `TBD` không được xem là cam kết về giá trị chưa chốt.
-
-## 1. Giới thiệu
-
-### 1.1 Mục đích
-
-Tài liệu này đặc tả các hành vi có thể kiểm tra của Duhat Gen Sticker V1. SRS là đầu vào cho thiết kế kiến trúc, UI/UX, API, mô hình dữ liệu, kế hoạch triển khai và kiểm thử sau này.
-
-SRS chuyển các mục tiêu trong PRD thành:
-
-- ranh giới rõ ràng của ứng dụng mobile độc lập;
-- yêu cầu chức năng và quy tắc nghiệp vụ có ID;
-- yêu cầu an toàn, quyền riêng tư và chất lượng;
-- tiêu chí chấp nhận và ma trận truy vết;
-- danh sách quyết định chưa chốt, không che giấu bằng giả định kỹ thuật.
-
-### 1.2 Phạm vi sản phẩm
-
-Duhat Gen Sticker V1 cho phép người dùng sử dụng một ảnh có đúng một chủ thể chính để tạo một bộ gồm đúng 8 sticker Chibi 3D. Chủ thể có thể là một người, một thú cưng hoặc một vật thể. Người dùng được xem trước, chọn kết quả muốn lưu, tạo lại toàn bộ bộ sticker và chia sẻ/xuất kết quả bằng native share sheet của Android hoặc iOS.
-
-Ba năng lực sản phẩm chính là tạo, lưu và chia sẻ/xuất. Khả năng xóa dữ liệu đã lưu được giữ như yêu cầu privacy của PRD. Yêu cầu báo cáo/review/takedown cũng được giữ từ PRD, nhưng actor và luồng phù hợp cho app độc lập là `TBD-016`; tài liệu này không tự thêm một hệ thống quản lý sticker hoặc chat.
-
-Đầu vào và đầu ra phải vượt qua các lớp kiểm tra an toàn tương ứng trước khi đầu ra được hiển thị, lưu hoặc chia sẻ. Ảnh nguồn và dữ liệu tạo sinh phải được xử lý theo các yêu cầu về đồng ý, riêng tư, bảo mật và lưu trữ của tài liệu này.
-
-### 1.3 Đối tượng đọc
-
-- Product và chủ sở hữu sản phẩm.
-- Nhóm thiết kế UI/UX.
-- Nhóm phát triển mobile, backend và AI.
-- Nhóm QA/kiểm thử.
-- Nhóm Trust & Safety, Privacy và Legal.
-- Nhóm vận hành xử lý báo cáo và gỡ bỏ nội dung.
-
-Việc liệt kê các nhóm trên không mặc định phân công quyền sở hữu; người phê duyệt và RACI là `TBD`.
-
-### 1.4 Thuật ngữ và viết tắt
-
-| Thuật ngữ             | Định nghĩa trong tài liệu này                                                                                                                    |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Ảnh nguồn             | Một ảnh do người dùng chụp hoặc chọn để gửi vào một lần tạo.                                                                            |
-| Chủ thể chính        | Người, thú cưng hoặc vật thể mà hệ thống dùng làm đối tượng trung tâm của bộ sticker.                                               |
-| Job/tác vụ tạo       | Đơn vị xử lý bắt đầu sau khi người dùng chủ động yêu cầu tạo và kết thúc ở trạng thái thành công, thất bại hoặc quá giờ. |
-| Bộ sticker đầy đủ     | Kết quả đầy đủ của một lần tạo thành công, gồm chính xác 8 sticker.                                                                     |
-| Tập sticker đã lưu   | Tập con gồm các sticker người dùng chọn để lưu; số lượng tối thiểu và trạng thái chọn mặc định là `TBD-019`.                         |
-| Sticker/StickerVariant  | Một output riêng lẻ thuộc bộ sticker đầy đủ.                                                                                                  |
-| Sticker được chọn   | Sticker mà người dùng chủ động giữ trong tập sẽ lưu.                                                                                        |
-| Tạo lại/Regenerate    | Tạo lại toàn bộ bộ 8 sticker từ cùng ảnh nguồn và phong cách Chibi 3D.                                                                      |
-| Moderation/kiểm duyệt | Kiểm tra an toàn nội dung ở đầu vào hoặc đầu ra trước khi cho phép bước tiếp theo.                                                     |
-| Native share sheet      | Giao diện chia sẻ do Android hoặc iOS cung cấp để người dùng chọn ứng dụng/đích nhận.                                                   |
-| Riêng tư mặc định  | Dữ liệu không tự động được công khai hoặc chia sẻ cho người dùng khác.                                                                 |
-| TBD                     | To Be Determined — nội dung bắt buộc phải được quyết định sau, không phải một giá trị mặc định.                                     |
-
-## 2. Mô tả tổng quan
-
-### 2.1 Bối cảnh sản phẩm
-
-Duhat Gen Sticker là ứng dụng độc lập, không phải một màn hình hoặc module bên trong ứng dụng DUHAT. Tên “Duhat” trong tên sản phẩm không tạo ra yêu cầu tích hợp với tài khoản, khay sticker hoặc hệ thống chat của DUHAT. Việc Duhat Gen Sticker có tài khoản riêng hay không là `TBD-012`.
-
-Ranh giới logic của V1:
-
-```text
-                                    +---------------------------+
-                                    | Dịch vụ tạo/kiểm duyệt    |
-                                    | và lưu trữ (TBD-013)      |
-                                    +-------------^-------------+
-                                                  |
-+-------------+      +----------------------------+---------------------------+
-| Người dùng |----->|            Duhat Gen Sticker Mobile                    |
-+-------------+      |  chọn/chụp -> kiểm tra -> tạo -> xem -> lưu -> chia sẻ |
-                     +---------+-------------------------+---------------------+
-                               |                         |
-                               v                         v
-                     +-------------------+      +-----------------------+
-                     | Camera/Thư viện  |      | Android/iOS share     |
-                     | ảnh của thiết bị |      | sheet -> app bên ngoài|
-                     +-------------------+      +-----------------------+
-```
-
-Các dịch vụ tạo ảnh, kiểm duyệt, lưu trữ và tài khoản có thể nằm trong hoặc ngoài thiết bị; kiến trúc triển khai cụ thể là `TBD-013`.
-
-### 2.2 Mục tiêu
-
-- Cho phép đi từ chọn ảnh đến xem trước bộ 8 sticker trong một luồng của ứng dụng mobile.
-- Giảm thao tác thủ công trong việc tách nền, tạo phong cách và đóng gói sticker.
-- Cho phép người dùng quyết định sticker nào được lưu.
-- Cho phép chia sẻ/xuất qua cơ chế chuẩn của hệ điều hành.
-- Bảo vệ quyền sử dụng ảnh, sự riêng tư, nhận diện chủ thể và an toàn nội dung.
-- Đo lường hiệu quả của luồng mà không đưa nội dung ảnh vào analytics.
-
-Mục tiêu định lượng về chất lượng, độ trễ và khả năng vận hành thuộc `TBD-007`, `TBD-009` và `TBD-025`.
-
-### 2.3 Actor và stakeholder
-
-| Đối tượng             | Vai trò                                                                                                         | Ranh giới/quyền                                                                                                                                               |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Người dùng             | Chọn/chụp ảnh, xác nhận quyền sử dụng, tạo, xem, chọn, lưu, tạo lại, xóa, chia sẻ và báo cáo theo flow được duyệt. | Chỉ được chủ động xử lý dữ liệu thuộc phạm vi sở hữu/quyền sử dụng đã xác nhận. Mô hình tài khoản và định nghĩa owner là `TBD-012`; flow báo cáo là `TBD-016`. |
-| Android/iOS               | Cấp quyền camera/thư viện, cung cấp native share sheet và các khả năng lưu file được Product chọn. | Hành vi sau khi share sheet bàn giao dữ liệu cho app khác nằm ngoài ranh giới kiểm soát của Duhat Gen Sticker.                                       |
-| Dịch vụ tạo ảnh       | Tách nền và tạo bộ sticker theo contract.                                                                   | Nhà cung cấp, model, nơi xử lý dữ liệu và contract là `TBD-013`.                                                                                          |
-| Dịch vụ kiểm duyệt    | Kiểm duyệt ảnh đầu vào và kết quả đầu ra.                                                             | Công nghệ, taxonomy, ngưỡng và quy trình review thuộc `TBD-006` và `TBD-013`.                                                                               |
-| Product                   | Phê duyệt style, nội dung biểu cảm/câu chữ, quota, hành vi sản phẩm và ngưỡng chất lượng.        | Các quyết định mở được ghi tại Mục 15.                                                                                                                |
-| Privacy và Legal         | Phê duyệt retention, training-use, thông báo/đồng ý và chính sách ảnh trẻ vị thành niên.          | Các quyết định liên quan phải hoàn tất trước phát hành.                                                                                             |
-| Trust & Safety/Vận hành | Xử lý báo cáo, review và takedown.                                                                          | Quy trình, công cụ, SLA và phân công là `TBD-016`.                                                                                                      |
-
-### 2.4 Môi trường vận hành
-
-- Ứng dụng mobile độc lập trên Android và iOS.
-- Phiên bản hệ điều hành tối thiểu: `TBD-015`.
-- Danh sách loại thiết bị, kích thước màn hình và năng lực phần cứng được hỗ trợ: `TBD-015`.
-- Yêu cầu kết nối mạng và hành vi offline/mạng yếu: `TBD-024`.
-- Công nghệ mobile, backend, database, object storage, AI model và nhà cung cấp cloud: `TBD-013`.
-
-### 2.5 Phụ thuộc
-
-- Camera, thư viện ảnh, quyền truy cập và native share sheet của Android/iOS.
-- Khả năng kiểm tra hợp lệ và kiểm duyệt ảnh đầu vào.
-- Khả năng tách nền và tạo ảnh Chibi 3D.
-- Khả năng kiểm duyệt đầu ra trước khi hiển thị/chia sẻ.
-- Phong cách Chibi 3D và catalog biểu cảm/câu chữ cố định dùng cho 8 output, cần được Product phê duyệt.
-- Quyết định về lưu trữ, retention, xóa dữ liệu và training-use.
-- Quy trình báo cáo, review và takedown trước khi ra mắt.
-- Tập dữ liệu đánh giá chất lượng, an toàn, định kiến và độ trung thực nhận diện.
-
-### 2.6 Ràng buộc đã xác nhận
-
-- Mỗi lần tạo sử dụng đúng một ảnh nguồn.
-- Mỗi ảnh có đúng một chủ thể chính thuộc một trong ba loại: người, thú cưng hoặc vật thể.
-- Ảnh người phải có đúng một khuôn mặt rõ ràng.
-- Một lần tạo thành công trả đúng 8 sticker.
-- V1 chỉ có phong cách Chibi 3D.
-- Biểu cảm/câu chữ chỉ được lấy từ catalog cố định cần được Product phê duyệt; nội dung, số mục và mapping với 8 output là `TBD-001`/`TBD-002`.
-- Không có prompt tự do hoặc chỉnh sửa riêng từng sticker.
-- Chia sẻ/xuất chỉ qua native share sheet; không tích hợp DUHAT chat/tray.
-- Kiểm duyệt đầu vào và đầu ra phải hoàn tất trước các mốc cho phép tương ứng.
-
-### 2.7 Ngoài phạm vi V1
-
-- Ứng dụng web.
-- Tích hợp với khay sticker, quản lý pack hoặc chat của DUHAT. Mô hình tài khoản riêng của Duhat Gen Sticker vẫn là `TBD-012`.
-- Chat 1-1 hoặc chat nhóm bên trong Duhat Gen Sticker.
-- Câu chữ được AI sinh động theo ngữ cảnh hoặc phong cách người dùng.
-- Prompt văn bản tự do.
-- Chọn hoặc chuyển đổi giữa nhiều phong cách hình ảnh.
-- Chỉnh sửa riêng tư thế, biểu cảm, trang phục, câu chữ, style hoặc nền của từng sticker.
-- Tạo lại riêng một sticker.
-- Kết hợp hai sticker hoặc nhiều ảnh tham chiếu.
-- Tạo người nổi tiếng, nhân vật công cộng, nhân vật có thương hiệu hoặc nhân vật có bản quyền.
-- Marketplace, khám phá công khai, bán hoặc thương mại hóa bộ sticker.
-- Kết quả photorealistic hoặc deepfake.
-- Gợi ý sticker dựa trên ngữ cảnh trò chuyện riêng tư.
-- Tích hợp xuất trực tiếp dành riêng cho một nền tảng bên thứ ba. Các app bên thứ ba có thể xuất hiện như đích do native share sheet cung cấp.
-
-## 3. Luồng người dùng và use case
-
-### 3.1 Danh mục use case
-
-| ID    | Use case                                   | Trạng thái                                                |
-| ----- | ------------------------------------------ | ----------------------------------------------------------- |
-| UC-01 | Tạo và xem trước bộ 8 sticker         | Confirmed                                                   |
-| UC-02 | Chọn và lưu sticker                     | Confirmed; phụ thuộc `TBD-010` và `TBD-019`           |
-| UC-03 | Tạo lại toàn bộ bộ sticker            | Confirmed; phụ thuộc `TBD-005`                           |
-| UC-04 | Chia sẻ/xuất qua native share sheet      | Confirmed; phụ thuộc `TBD-011`                           |
-| UC-05 | Xóa dữ liệu đã lưu                    | Confirmed; chi tiết phụ thuộc `TBD-010` và `TBD-018`  |
-| UC-06 | Báo cáo output hoặc hành vi lạm dụng | TBD-dependent; luồng standalone là `TBD-016`            |
-
-### 3.2 UC-01 — Tạo và xem trước bộ sticker
-
-**Actor chính:** Người dùng.
-
-**Tiền điều kiện:**
-
-- Ứng dụng đã được mở.
-- Người dùng có quyền hợp pháp sử dụng ảnh và sẽ xác nhận điều này trong luồng.
-- Các điều kiện tài khoản/xác thực, nếu có, là `TBD-012`.
-
-**Luồng chính:**
-
-1. Người dùng bắt đầu luồng tạo trong Duhat Gen Sticker.
-2. Ứng dụng giải thích chức năng và yêu cầu đối với ảnh được hỗ trợ.
-3. Người dùng chọn ảnh từ thư viện hoặc chụp một ảnh bằng camera.
-4. Người dùng xác nhận sở hữu hoặc có quyền sử dụng ảnh.
-5. Hệ thống kiểm tra kỹ thuật, chất lượng, loại/số lượng chủ thể và an toàn đầu vào.
-6. Sau khi ảnh hợp lệ, người dùng chủ động bắt đầu tạo.
-7. Hệ thống hiển thị trạng thái tiến trình và xử lý bộ sticker.
-8. Hệ thống kiểm duyệt tất cả đầu ra.
-9. Nếu job thành công và toàn bộ điều kiện phát hành kết quả được đáp ứng, ứng dụng hiển thị đúng 8 sticker Chibi 3D.
-10. Người dùng có thể xem toàn bộ bộ và từng sticker.
-
-**Hậu điều kiện thành công:**
-
-- Bộ 8 sticker đã qua kiểm duyệt sẵn sàng để chọn và lưu.
-- Không sticker nào được tự động công khai hoặc chia sẻ.
-
-### 3.3 Luồng thay thế và lỗi của UC-01
-
-| Nhánh | Điều kiện                                                      | Hành vi yêu cầu                                                                                                                                |
-| ------ | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AF-01  | Quyền camera hoặc thư viện bị từ chối                      | Ứng dụng không được truy cập trái phép; hướng dẫn và đường khôi phục cụ thể là `TBD-022`.                                   |
-| AF-02  | Ảnh sai định dạng/dung lượng/độ phân giải/chất lượng | Giữ người dùng trong luồng, hiển thị lý do có thể hành động khi an toàn và cho chọn ảnh khác. Ngưỡng cụ thể là `TBD-008`. |
-| AF-03  | Không có đúng một chủ thể chính được hỗ trợ          | Từ chối và cho chọn ảnh khác. Quy tắc ảnh hỗn hợp/hậu cảnh là `TBD-008`.                                                            |
-| AF-04  | Ảnh người không có đúng một khuôn mặt rõ               | Từ chối; ảnh nhiều người phải kèm hướng dẫn cắt/chọn ảnh khác.                                                                     |
-| AF-05  | Ảnh không vượt qua kiểm duyệt đầu vào                    | Không bắt đầu generation; lý do chỉ được hiển thị ở mức an toàn.                                                                    |
-| AF-06  | Generation thất bại hoặc quá giờ                             | Hiển thị lỗi không chặn và cho thử lại; không tạo bộ đã lưu bán phần. Timeout/retry là `TBD-007` và `TBD-014`.               |
-| AF-07  | Một phần output không vượt kiểm duyệt                      | Không hiển thị/lưu/chia sẻ item bị chặn. Hủy toàn bộ hay hiển thị phần an toàn là `TBD-006`.                                      |
-| AF-08  | Người dùng rời màn hình sau khi submit thành công         | Job không bị âm thầm hủy hoặc mất chỉ vì điều hướng. Hành vi khi app bị kill/restart là `TBD-014`.                               |
-
-### 3.4 UC-02 — Chọn và lưu sticker
-
-1. Người dùng mở bộ sticker đã tạo thành công.
-2. Ứng dụng cho phép chọn hoặc bỏ chọn từng sticker.
-3. Người dùng chủ động yêu cầu lưu.
-4. Hệ thống chỉ lưu các sticker đang được chọn.
-5. Dữ liệu đã lưu ở trạng thái riêng tư mặc định. Đích lưu và hành vi truy cập lại thuộc `TBD-010`.
-
-Trạng thái chọn mặc định, số lượng tối thiểu được phép lưu và đích lưu là `TBD-019` và `TBD-010`.
-
-Nếu lưu thất bại, preview phải vẫn khả dụng để thử lưu lại mà không cần tạo lại ngay. Thời gian duy trì preview là `TBD-020`.
-
-### 3.5 UC-03 — Tạo lại toàn bộ bộ sticker
-
-1. Từ preview, người dùng chọn tạo lại.
-2. Hệ thống sử dụng cùng ảnh nguồn và phong cách Chibi 3D.
-3. Hệ thống tạo lại toàn bộ 8 sticker; không tạo lại hoặc sửa riêng một sticker.
-4. Kết quả mới trải qua kiểm duyệt đầu ra trước khi hiển thị.
-
-Quota, chi phí và việc giữ kết quả preview cũ là `TBD-005`; chính sách retry là `TBD-014`.
-
-### 3.6 UC-04 — Chia sẻ/xuất sticker
-
-1. Người dùng chủ động chọn thao tác chia sẻ/xuất trên output được phép chia sẻ.
-2. Ứng dụng chuẩn bị payload theo output contract được duyệt.
-3. Ứng dụng gọi native share sheet của Android hoặc iOS.
-4. Người dùng chọn hoặc hủy đích chia sẻ trong giao diện hệ điều hành.
-
-Nguồn màn hình cho phép share, yêu cầu phải lưu trước hay không, chia sẻ một/nhiều item, định dạng file và đóng gói là `TBD-011`.
-
-Việc app nhận bên ngoài lưu, gửi tiếp, thay đổi hoặc xóa payload sau khi nhận nằm ngoài ranh giới kiểm soát của Duhat Gen Sticker.
-
-### 3.7 UC-05 — Xóa dữ liệu đã lưu
-
-Người dùng phải có khả năng xóa dữ liệu sticker đã lưu. Cách tiếp cận dữ liệu để thực hiện thao tác xóa phụ thuộc mô hình lưu trữ tại `TBD-010`; đơn vị xóa, UX xác nhận, xóa mềm/xóa cứng, phạm vi áp dụng tới storage/cache/backup và SLA xóa là `TBD-018`.
-
-Việc xóa trong Duhat Gen Sticker không thể thu hồi các bản sao mà người dùng đã chia sẻ cho ứng dụng hoặc người nhận bên ngoài.
-
-### 3.8 UC-06 — Báo cáo output hoặc hành vi lạm dụng
-
-PRD yêu cầu khả năng báo cáo nội dung sử dụng hình ảnh không được phép, quấy rối, vi phạm bản quyền, kết quả không chính xác/“Không giống tôi” hoặc lạm dụng khác, đồng thời yêu cầu quy trình review và takedown trước khi ra mắt. Tuy nhiên, actor, entry point, đối tượng bị báo cáo và luồng xử lý trong app độc lập chưa được xác định. Use case này được giữ ở trạng thái `TBD-016` và không được tự thiết kế trước khi Product, Trust & Safety và Legal chốt quyết định.
-
-## 4. Yêu cầu chức năng
-
-### 4.1 Khởi tạo luồng và đồng ý
-
-| ID         | Yêu cầu                                                                                                                                      | Trạng thái  | Nguồn                                                      |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------------- |
-| FR-ENT-001 | Ứng dụng phải cung cấp một điểm bắt đầu luồng tạo ngay trong Duhat Gen Sticker.                                                    | Confirmed     | DEC-002; PRD §7.1 được điều chỉnh cho app độc lập |
-| FR-ENT-002 | Khi bắt đầu luồng, ứng dụng phải giải thích chức năng và yêu cầu đối với ảnh được hỗ trợ.                               | Confirmed     | PRD §7.1                                                   |
-| FR-CNS-001 | Trước khi gửi ảnh để tạo, ứng dụng phải yêu cầu người dùng chủ động xác nhận họ sở hữu hoặc có quyền sử dụng ảnh. | Confirmed     | PRD §5.1, §7.1, §8.1, F3                                 |
-| FR-CNS-002 | Hệ thống không được cho phép bắt đầu generation nếu chưa có xác nhận đồng ý cho ảnh nguồn hiện tại.                      | Confirmed     | PRD §7.1, §7.3, F3                                        |
-| FR-CNS-003 | Nội dung consent, version, bằng chứng và thời gian lưu consent phải tuân theo policy được duyệt.                                   | TBD-dependent | TBD-004, TBD-012, TBD-028                                   |
-
-### 4.2 Chọn ảnh và quyền thiết bị
-
-| ID         | Yêu cầu                                                                                                                                                       | Trạng thái  | Nguồn                                   |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ---------------------------------------- |
-| FR-INP-001 | Người dùng phải có thể chọn đúng một ảnh nguồn từ thư viện ảnh của thiết bị, tùy theo quyền nền tảng.                                    | Confirmed     | PRD §5.1, §7.2, F1                     |
-| FR-INP-002 | Người dùng phải có thể chụp đúng một ảnh nguồn bằng camera, tùy theo quyền nền tảng.                                                           | Confirmed     | PRD §5.1, §7.2, F1                     |
-| FR-INP-003 | Ứng dụng chỉ được truy cập camera/thư viện trong phạm vi quyền do người dùng và hệ điều hành cấp.                                           | Confirmed     | PRD §7.2; ràng buộc nền tảng mobile |
-| FR-INP-004 | Hành vi và UX khôi phục khi quyền camera/thư viện bị từ chối, giới hạn hoặc thu hồi phải theo quyết định `TBD-022`. | TBD | PRD §7.2 chưa xác định failure UX; TBD-022 |
-| FR-INP-005 | Ảnh nguồn không được tự động đưa vào thư viện công khai hoặc chia sẻ với người dùng khác.                                                 | Confirmed     | PRD §7.2                                |
-
-### 4.3 Kiểm tra hợp lệ và an toàn đầu vào
-
-| ID          | Yêu cầu                                                                                                                                                   | Trạng thái                  | Nguồn                        |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ----------------------------- |
-| FR-VAL-001  | Trước generation, hệ thống phải kiểm tra định dạng, dung lượng, độ phân giải tối thiểu, độ mờ, ánh sáng và khả năng hiển thị của chủ thể. | Confirmed; giá trị TBD      | PRD §5.1, §7.2, F2; TBD-008 |
-| FR-VAL-002  | Hệ thống chỉ được chấp nhận một ảnh có đúng một chủ thể chính thuộc loại người, thú cưng hoặc vật thể.                            | Confirmed; quy tắc biên TBD | DEC-004; PRD §5.1; TBD-008   |
-| FR-VAL-003  | Với ảnh người, hệ thống phải yêu cầu đúng một khuôn mặt rõ ràng.                                                                            | Confirmed; ngưỡng TBD       | PRD §5.1, §7.2, §8.1; TBD-008 |
-| FR-VAL-004  | Ảnh chứa nhiều người phải bị từ chối kèm hướng dẫn cắt ảnh hoặc chọn ảnh khác.                                                           | Confirmed                     | PRD §7.2                     |
-| FR-VAL-005  | Ảnh không đạt chất lượng hoặc an toàn phải bị từ chối kèm lý do cụ thể, có thể hành động khi việc cung cấp lý do là an toàn.     | Confirmed; reason taxonomy TBD | PRD §7.2, §7.6; TBD-021      |
-| FR-VAL-006  | Validation failure phải giữ người dùng trong luồng và cho phép chọn ảnh khác.                                                                    | Confirmed                     | PRD §7.6                     |
-| FR-SAFE-001 | Kiểm duyệt an toàn đầu vào phải hoàn tất trước khi generation được phép bắt đầu.                                                          | Confirmed                     | PRD §7.3, §8.2, F2, F6      |
-
-### 4.4 Tạo sticker
-
-| ID          | Yêu cầu                                                                                                                            | Trạng thái                        | Nguồn                                 |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- | -------------------------------------- |
-| FR-GEN-001  | Sau khi consent và validation thành công, generation chỉ được bắt đầu bởi hành động chủ động của người dùng.    | Confirmed                           | PRD §7.3                              |
-| FR-GEN-002  | Hệ thống phải tách nền và chuyển chủ thể thành hình ảnh phi thực tế theo phong cách Chibi 3D.                         | Confirmed; background contract TBD  | DEC-006; PRD §5.1, §7.3, F4; TBD-009 |
-| FR-GEN-003  | Một job tạo thành công phải trả về chính xác 8 sticker.                                                                     | Confirmed; partial moderation TBD   | DEC-005; PRD §4, §7.3, F5; TBD-006   |
-| FR-GEN-004  | Cả 8 sticker phải dùng biểu cảm và, nếu áp dụng cho item đó, câu chữ từ catalog cố định cần được Product phê duyệt. | TBD-dependent | DEC-007; PRD §5.1, §7.3, F5; TBD-001, TBD-002 |
-| FR-GEN-005  | Catalog phải hỗ trợ câu chữ cố định bằng tiếng Việt và tiếng Anh. Cách chọn hoặc ánh xạ ngôn ngữ là `TBD-002`. | TBD-dependent                       | PRD §5.1; TBD-001, TBD-002            |
-| FR-GEN-006  | V1 không được cung cấp prompt tự do hoặc bộ chọn style.                                                                     | Confirmed                           | DEC-006; PRD §5.2                     |
-| FR-GEN-007  | V1 không được cho phép sửa riêng câu chữ, tư thế, biểu cảm, trang phục, nền hoặc style của từng sticker.           | Confirmed                           | PRD §5.2, §7.4                       |
-| FR-GEN-008  | Giao diện phải hiển thị trạng thái tiến trình của job đã submit.                                                          | Confirmed; stage contract TBD       | PRD §7.3, §10.2; TBD-014             |
-| FR-GEN-009  | Điều hướng khỏi màn hình generation không được âm thầm hủy hoặc làm mất job đã submit thành công.               | Confirmed; app-restart behavior TBD | PRD §7.3, §10.2; TBD-014             |
-| FR-SAFE-002 | Tất cả output phải hoàn tất kiểm duyệt trước khi được hiển thị, lưu hoặc chia sẻ.                                   | Confirmed                           | PRD §4, §7.3, §8.2, F6              |
-| FR-SAFE-003 | Output bị xác định không an toàn hoặc lạm dụng không được hiển thị, lưu hoặc chia sẻ.                              | Confirmed                           | PRD §7.6, §8.2                       |
-| FR-SAFE-004 | Hành vi khi chỉ một phần trong 8 output bị chặn phải theo quyết định `TBD-006`.                                           | TBD                                 | PRD §7.6, §14                        |
-
-### 4.5 Xem trước, chọn và tạo lại
-
-| ID         | Yêu cầu                                                                                                      | Trạng thái | Nguồn                                 |
-| ---------- | -------------------------------------------------------------------------------------------------------------- | ------------ | -------------------------------------- |
-| FR-PRV-001 | Ứng dụng phải hiển thị giao diện xem trước toàn bộ bộ sticker đã được phép hiển thị.        | Confirmed    | PRD §5.1, §7.4, F7                   |
-| FR-PRV-002 | Người dùng phải có thể kiểm tra từng sticker trong preview.                                            | Confirmed    | PRD §5.1, §7.4                       |
-| FR-SEL-001 | Người dùng phải có thể chọn và bỏ chọn từng sticker trước khi lưu.                               | Confirmed    | PRD §5.1, §7.4, F7                   |
-| FR-SEL-002 | Trạng thái chọn mặc định và hành vi khi chọn 0 sticker phải theo `TBD-019`.                         | TBD          | PRD không xác định                 |
-| FR-REG-001 | Người dùng phải có thể tạo lại toàn bộ bộ 8 sticker từ cùng ảnh nguồn và phong cách Chibi 3D. | Confirmed    | DEC-005, DEC-006; PRD §5.1, §7.4, F7 |
-| FR-REG-002 | Tạo lại không được chỉ thay đổi riêng một sticker.                                                  | Confirmed    | PRD §7.4 và ngoài phạm vi V1       |
-| FR-REG-003 | Quota, tính phí, số lần tạo lại và việc giữ kết quả trước đó phải theo `TBD-005`.             | TBD          | PRD §7.4, §14                        |
-
-### 4.6 Lưu và quản lý dữ liệu đã lưu
-
-| ID         | Yêu cầu                                                                                                                                           | Trạng thái                   | Nguồn                                    |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ----------------------------------------- |
-| FR-SAV-001 | Lưu sticker phải là hành động chủ động của người dùng.                                                                                 | Confirmed                      | PRD §7.5                                 |
-| FR-SAV-002 | Hệ thống chỉ được lưu các sticker đang được người dùng chọn.                                                                        | Confirmed                      | PRD §5.1, §7.5, F7                      |
-| FR-SAV-003 | Sticker/bộ sticker đã lưu phải riêng tư mặc định và không được tự động công khai.                                                | Confirmed; ownership model TBD | PRD §5.1, §7.5, §8.5; TBD-010, TBD-012 |
-| FR-SAV-004 | Đích lưu, cách truy cập lại và khả năng xem/chia sẻ từ dữ liệu đã lưu phải theo mô hình được phê duyệt tại `TBD-010` và `TBD-011`. | TBD | DEC-003; thay thế DUHAT tray; TBD-010, TBD-011 |
-| FR-SAV-005 | Nếu lưu thất bại, preview hiện tại phải còn khả dụng để người dùng thử lưu lại mà không cần tạo lại ngay.                    | Confirmed; thời gian TBD      | PRD §7.6; TBD-020                        |
-| FR-SAV-006 | Job generation thất bại không được tạo ra bộ sticker đã lưu bán phần.                                                                  | Confirmed                      | PRD §7.6                                 |
-| FR-DEL-001 | Người dùng phải có khả năng xóa dữ liệu sticker đã lưu theo đơn vị xóa được Product phê duyệt. | Confirmed; semantics TBD | PRD §7.5, §8.5, F10; TBD-018 |
-
-### 4.7 Chia sẻ/xuất
-
-| ID         | Yêu cầu                                                                                                                               | Trạng thái           | Nguồn                                       |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | -------------------------------------------- |
-| FR-SHR-001 | Ứng dụng phải cho phép người dùng chủ động gọi native share sheet của Android/iOS đối với output được phép chia sẻ. | Confirmed; payload TBD | DEC-003; thay thế PRD §7.5/F9; TBD-011     |
-| FR-SHR-002 | Chỉ output đã vượt qua kiểm duyệt đầu ra mới được đưa vào share payload.                                                | Confirmed              | PRD §4, §8.2, F6                           |
-| FR-SHR-003 | Thao tác chia sẻ một sticker không được tự động công khai toàn bộ bộ sticker.                                             | Confirmed              | PRD §7.5 được điều chỉnh theo DEC-003 |
-| FR-SHR-004 | V1 không được phụ thuộc vào tích hợp khay sticker hoặc chat của DUHAT để chia sẻ.                                         | Confirmed              | DEC-002, DEC-003                             |
-| FR-SHR-005 | Nguồn màn hình, điều kiện phải lưu trước, số item mỗi lần share, định dạng và cách đóng gói phải theo `TBD-011`. | TBD                    | PRD không xác định cho app standalone    |
-
-### 4.8 Lỗi và khôi phục
-
-| ID         | Yêu cầu                                                                                                               | Trạng thái             | Nguồn                                   |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------ | ---------------------------------------- |
-| FR-ERR-001 | Lỗi validation phải giữ người dùng trong luồng và cho chọn ảnh khác.                                         | Confirmed                | PRD §7.6                                |
-| FR-ERR-002 | Generation timeout/failure phải hiển thị lỗi không chặn và cung cấp hành động thử lại.                     | Confirmed; policy TBD    | PRD §7.6; TBD-007, TBD-014              |
-| FR-ERR-003 | Lỗi lưu phải giữ preview để thử lưu lại.                                                                       | Confirmed; retention TBD | PRD §7.6; TBD-020                       |
-| FR-ERR-004 | Thông báo lỗi và dữ liệu chẩn đoán phía client không được làm lộ nội dung hoặc tham chiếu ảnh nhạy cảm. | Confirmed | PRD §8.5, §10.3 |
-| FR-ERR-005 | Taxonomy mã lỗi, retryable/non-retryable và thông điệp hiển thị là `TBD-021`.                                 | TBD                      | PRD chỉ xác định nhóm failure state |
-
-### 4.9 Báo cáo và gỡ bỏ
-
-| ID         | Yêu cầu                                                                                                                                                                                                         | Trạng thái                  | Nguồn                 |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ---------------------- |
-| FR-REP-001 | Hệ thống phải hỗ trợ báo cáo việc sử dụng hình ảnh không được phép, quấy rối, vi phạm bản quyền, kết quả không chính xác/“Không giống tôi” hoặc lạm dụng khác. Actor và entry point phù hợp cho app standalone là `TBD-016`. | TBD-dependent | PRD §5.1, §8.2, §8.4, F10 |
-| FR-REP-002 | Quy trình nhận báo cáo, review và takedown phải tồn tại trước khi ra mắt.                                                                                                                              | Confirmed; quy trình/SLA TBD | PRD §8.2; TBD-016     |
-| FR-REP-003 | Dữ liệu bằng chứng, quyền truy cập, retention, thông báo kết quả và appeal là `TBD-016`.                                                                                                             | TBD                           | PRD không xác định |
-
-### 4.10 Analytics
-
-| ID         | Yêu cầu                                                                                                                                                                              | Trạng thái          | Nguồn                 |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | ---------------------- |
-| FR-ANL-001 | Danh sách analytics event được bật, schema và policy ghi nhận phải theo `TBD-017`. Các event ứng viên từ PRD được liệt kê tại Mục 12.1. | TBD | PRD §11 mô tả event có thể ghi nhận; TBD-017 |
-| FR-ANL-002 | Analytics không được chứa nội dung ảnh nguồn hoặc ảnh được tạo.                                                                                                          | Confirmed             | PRD §4, §8.5, §11   |
-| FR-ANL-003 | Event “gửi sticker trong chat” và metric theo cuộc trò chuyện của PRD không áp dụng cho app standalone. Semantics đo share sheet là `TBD-017`.                           | TBD                   | DEC-003                |
-| FR-ANL-004 | Event schema, thuộc tính, consent, retention, deduplication và định nghĩa metric phải theo `TBD-017`.                                                                          | TBD                   | PRD không xác định |
-
-## 5. Quy tắc nghiệp vụ
-
-| ID     | Quy tắc                                                                                                                                                                                                | Trạng thái                        |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| BR-001 | Mỗi generation job sử dụng đúng một ảnh nguồn.                                                                                                                                                  | Confirmed                           |
-| BR-002 | Ảnh V1 phải có đúng một chủ thể chính là một người, một thú cưng hoặc một vật thể.                                                                                                  | Confirmed; boundary TBD             |
-| BR-003 | Ảnh người phải có đúng một khuôn mặt rõ; ảnh nhiều người bị từ chối.                                                                                                                  | Confirmed; threshold TBD            |
-| BR-004 | Consent hợp lệ cho ảnh hiện tại là điều kiện tiên quyết của generation.                                                                                                                     | Confirmed                           |
-| BR-005 | Một generation thành công theo full-set contract phải trả đúng 8 sticker.                                                                                                                        | Confirmed; partial moderation TBD   |
-| BR-006 | Style duy nhất của V1 là Chibi 3D; không có style selector.                                                                                                                                        | Confirmed                           |
-| BR-007 | Biểu cảm/câu chữ là catalog cố định do Product duyệt; người dùng không nhập prompt hoặc sửa riêng item.                                                                                | TBD-dependent                       |
-| BR-008 | Output phải phi thực tế, không phải photorealistic/deepfake.                                                                                                                                       | Confirmed; classifier/threshold TBD |
-| BR-009 | Input và output phải qua kiểm duyệt trước khi output được phép hiển thị, lưu hoặc chia sẻ.                                                                                               | Confirmed                           |
-| BR-010 | Item bị chặn không được hiển thị, lưu hoặc chia sẻ.                                                                                                                                          | Confirmed                           |
-| BR-011 | Save là hành động chủ động và chỉ áp dụng cho sticker được chọn.                                                                                                                         | Confirmed                           |
-| BR-012 | Sticker/bộ sticker được tạo mặc định không công khai.                                                                                                                                         | Confirmed                           |
-| BR-013 | Regenerate áp dụng cho toàn bộ bộ 8 sticker, không áp dụng từng item.                                                                                                                          | Confirmed                           |
-| BR-014 | Người nổi tiếng, nhân vật công cộng, nhân vật có thương hiệu hoặc bản quyền nằm ngoài phạm vi V1. | Confirmed |
-| BR-015 | Mạo danh, lừa đảo, quấy rối, tình dục hóa hoặc lạm dụng người khác đều bị cấm.                                                                                                       | Confirmed                           |
-| BR-016 | Nội dung không an toàn hoặc tình dục hóa liên quan đến trẻ vị thành niên luôn phải bị chặn. | Confirmed |
-| BR-017 | Job thất bại không được tạo bộ sticker đã lưu bán phần.                                                                                                                                    | Confirmed                           |
-| BR-018 | Ảnh nguồn không được đưa vào analytics hoặc application logs.                                                                                                                                 | Confirmed                           |
-| BR-019 | Không được sử dụng ảnh nguồn/output để training cho đến khi có policy, notice và consent phù hợp được phê duyệt.                                                                   | Confirmed; policy TBD               |
-| BR-020 | Chia sẻ V1 dùng native OS share sheet và không dùng DUHAT chat/tray integration.                                                                                                                   | Confirmed                           |
-| BR-021 | Cách phân biệt vật thể hợp lệ với logo, đồ chơi, sản phẩm hoặc nhân vật có thương hiệu/bản quyền phải theo `TBD-023`. | TBD |
-| BR-022 | Ảnh trẻ vị thành niên nói chung bị chặn hay được phép theo privacy rules nghiêm ngặt hơn phải theo `TBD-003`. | TBD |
-
-## 6. Vòng đời luồng tạo và job
-
-### 6.1 Trạng thái logic
-
-Bảng dưới mô tả trạng thái **quan sát được của toàn bộ luồng tạo**, không ấn định tên enum hoặc cách lưu trữ trong implementation. `GenerationJob` chỉ bắt đầu sau hành động submit của người dùng; ba trạng thái đầu là trạng thái của flow trước khi job tồn tại.
-
-| Trạng thái logic          | Ý nghĩa                                                             | Điều kiện rời trạng thái                                       |
-| --------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Chuẩn bị đầu vào       | Người dùng đang chọn ảnh/xác nhận consent.                    | Có ảnh và consent để validation.                                |
-| Đang kiểm tra             | Hệ thống kiểm tra kỹ thuật, chủ thể và an toàn đầu vào.   | Pass hoặc validation failure.                                       |
-| Sẵn sàng tạo             | Ảnh đã hợp lệ; chờ hành động chủ động của người dùng. | Người dùng yêu cầu tạo hoặc thay ảnh.                        |
-| Đã submit/đang xử lý   | Job đã được chấp nhận và đang tạo output.                   | Chuyển sang kiểm duyệt, failure hoặc timeout.                    |
-| Đang kiểm duyệt đầu ra | Output chưa được phép hiển thị.                                | Tất cả điều kiện phát hành pass hoặc áp dụng nhánh block. |
-| Sẵn sàng xem trước      | Bộ output được phép hiển thị.                                  | Người dùng chọn/lưu/regenerate/rời màn hình.                 |
-| Đang lưu                  | Hệ thống xử lý yêu cầu lưu chủ động.                        | Save success hoặc save failure.                                     |
-| Đã lưu                   | Dữ liệu đã lưu theo storage model được duyệt.                | Hành vi tiếp theo phụ thuộc `TBD-010`, `TBD-011` và `TBD-018`. |
-| Thất bại                  | Job không hoàn thành; không tạo saved partial set.               | Người dùng retry hoặc bắt đầu lại.                           |
-| Quá giờ                   | Job vượt timeout được duyệt.                                    | Người dùng retry hoặc hệ thống reconcile theo policy.          |
-
-Tên trạng thái kỹ thuật, stage, progress unit và event contract là `TBD-014`.
-
-### 6.2 Luồng chuyển trạng thái
-
-```text
-Chọn/chụp ảnh
-      |
-      v
-Consent -> Validation đầu vào --fail--> Chọn ảnh khác
-                 |
-                pass
-                 v
-       Người dùng bấm Tạo
-                 |
-                 v
-        Generation + progress ----failure/timeout----> Hành động thử lại (TBD-005/007)
-                 |
-                 v
-       Moderation đầu ra --------block---------------> TBD-006
-                 |
-                pass
-                 v
-        Preview đúng 8 sticker
-          |          |          |
-          v          v          v
-       Chọn/lưu   Regenerate   Share (điểm gọi TBD-011)
-          |
-       save fail -> giữ preview
-```
-
-### 6.3 Invariant bắt buộc
-
-- Không submit generation nếu thiếu consent hoặc ảnh chưa pass validation đầu vào.
-- Không hiển thị, lưu hoặc chia sẻ output trước khi moderation đầu ra hoàn tất.
-- Full-set success phải có đúng 8 sticker Chibi 3D.
-- Điều hướng khỏi màn hình không tự hủy job đã submit thành công.
-- Job thất bại không tạo saved partial set.
-- Save failure không làm mất preview ngay lập tức.
-- Regenerate không thay đổi style và không chỉ xử lý riêng một item.
-- Không tự động share hoặc public output.
-
-### 6.4 Retry, resume và idempotency
-
-PRD yêu cầu retry và không làm mất job khi rời màn hình, nhưng chưa xác định:
-
-- timeout và số lần retry;
-- retry thủ công/tự động;
-- backoff;
-- resume khi app background, bị kill, crash hoặc thiết bị restart;
-- cancel job;
-- chống submit trùng/idempotency key;
-- stale-job reconciliation;
-- việc giữ/tái sử dụng ảnh nguồn và artifact khi regenerate;
-- số job đồng thời.
-
-Toàn bộ các quyết định trên thuộc `TBD-005`, `TBD-007` và `TBD-014`.
-
-## 7. Yêu cầu giao diện
-
-### 7.1 Giao diện người dùng logic
-
-SRS yêu cầu các trạng thái giao diện sau nhưng không ấn định số lượng màn hình, route, layout hoặc design system:
-
-| UI state                   | Nội dung/hành động bắt buộc                                                 |
-| -------------------------- | --------------------------------------------------------------------------------- |
-| Giới thiệu/bắt đầu    | Mô tả tính năng, yêu cầu ảnh và điểm bắt đầu.                        |
-| Chọn ảnh                 | Camera, thư viện và consent; việc có preview ảnh nguồn hay không là quyết định UI `TBD-022`. |
-| Validation failure         | Lý do an toàn, có thể hành động; chọn ảnh khác.                         |
-| Sẵn sàng tạo            | Hành động chủ động bắt đầu generation.                                   |
-| Đang tạo                 | Progress, trạng thái và xử lý khi rời màn hình.                           |
-| Generation failure/timeout | Lỗi không chặn và hành động retry.                                         |
-| Preview                    | Xem bộ/từng sticker, chọn/bỏ chọn, lưu, regenerate và share theo decision. |
-| Save failure               | Giữ preview và cho retry save.                                                  |
-| Dữ liệu đã lưu        | Hành vi xem/share/xóa phụ thuộc `TBD-010`, `TBD-011` và `TBD-018`. |
-| Report                     | `TBD-016`.                                                                      |
-
-### 7.2 Giao diện hệ điều hành và thiết bị
-
-| ID        | Interface             | Yêu cầu                                                         | Chi tiết TBD                                                             |
-| --------- | --------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| IF-OS-001 | Camera                | Yêu cầu quyền phù hợp; nhận một ảnh nguồn.               | Permission copy, limited access, camera unavailable, metadata.            |
-| IF-OS-002 | Thư viện ảnh       | Yêu cầu quyền phù hợp; chọn một ảnh nguồn.               | Limited library, cloud-only asset, định dạng chuyển đổi.            |
-| IF-OS-003 | Share sheet           | Gọi native share sheet bằng hành động chủ động.           | Payload, MIME, file URI lifecycle, multi-item support, completion signal. |
-| IF-OS-004 | Lưu trên thiết bị | Chỉ áp dụng nếu storage model chọn Photos/Files/app storage. | `TBD-010`.                                                              |
-| IF-OS-005 | App lifecycle         | Không mất job chỉ vì điều hướng khỏi màn hình.         | Background/kill/restart/notification: `TBD-014`.                         |
-
-### 7.3 Giao diện dịch vụ logic
-
-Kiến trúc có thể thay đổi, nhưng giải pháp được chọn phải cung cấp các capability sau:
-
-| ID | Capability | Hành vi bắt buộc | Contract chưa chốt |
-| --- | --- | --- | --- |
-| IF-SVC-001 | Xác định người dùng/owner | Bảo vệ dữ liệu riêng tư theo owner model được duyệt. | Có tài khoản hay device-local, auth/token/session: `TBD-012`. |
-| IF-SVC-002 | Nhận ảnh | Nhận đúng một ảnh đã consent và áp dụng validation theo thiết kế được duyệt. | Boundary, endpoint/schema/upload/progress/abort: `TBD-013`, `TBD-014`. |
-| IF-SVC-003 | Tạo job | Bắt đầu generation chỉ sau hành động người dùng. | Request/response, idempotency: `TBD-013`, `TBD-014`. |
-| IF-SVC-004 | Theo dõi job | Cung cấp progress, terminal status và error an toàn. | Polling/push/background delivery: `TBD-014`. |
-| IF-SVC-005 | Regenerate | Tạo lại toàn bộ bộ từ cùng ảnh/style. | Artifact reuse, quota, idempotency: `TBD-005`, `TBD-014`. |
-| IF-SVC-006 | Moderation | Chặn input/output không an toàn ở boundary được kiến trúc phê duyệt. | Vendor, taxonomy, threshold, review: `TBD-006`, `TBD-013`. |
-| IF-SVC-007 | Lưu/xóa | Lưu riêng tư và xóa theo policy. | Storage, API, ownership, cascade: `TBD-010`, `TBD-018`. |
-| IF-SVC-008 | Báo cáo | Nhận report và hỗ trợ review/takedown nếu nằm trong app. | `TBD-016`. |
-
-Không có endpoint, provider hoặc schema từ `kien_v5` được mặc định áp dụng cho V1 này.
-
-## 8. Hợp đồng dữ liệu logic
-
-### 8.1 Thực thể
-
-Đây là mô hình logic để truy vết yêu cầu, không phải database schema. Tên thực thể và các chi tiết ở cột `TBD` là nhãn khái niệm/câu hỏi thiết kế, không phải schema hoặc field đã được phê duyệt.
-
-| Thực thể          | Mục đích                                                            | Quan hệ/ràng buộc tối thiểu                                                       | Chi tiết TBD                                         |
-| ------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| SourceImage         | Ảnh đầu vào của một job.                                         | Mỗi job có đúng một ảnh nguồn; không được ghi nội dung vào analytics/log. | ID, metadata, storage, retention, EXIF/normalization. |
-| ConsentState | Thể hiện việc người dùng đã xác nhận quyền sử dụng ảnh trong flow hiện tại. | Phải ở trạng thái đã xác nhận trước submit; việc lưu bằng chứng là `TBD-012`/`TBD-028`. | Nội dung, version, persistence, timestamp, owner, retention. |
-| ValidationResult    | Kết quả kiểm tra kỹ thuật, chủ thể, chất lượng và an toàn. | Có pass/fail và reason an toàn.                                                     | Schema, code, score/threshold.                        |
-| GenerationJob       | Theo dõi một lần tạo.                                              | Gắn một source; có progress và terminal outcome.                                   | ID, enum, event, retry/idempotency, ownership.        |
-| ModerationDecision  | Kết quả kiểm duyệt input/output.                                   | Output chưa pass không được hiển thị/lưu/share.                                | Taxonomy, score, model/version, evidence.             |
-| StickerVariant      | Một output trong bộ.                                                 | Full-set success có đúng 8 variant; dùng Chibi 3D và catalog cố định.          | Format, size, text mapping, checksum, expiration.     |
-| StickerSet          | Nhóm output của một job.                                            | Có đúng 8 output khi full-set success; trạng thái riêng tư mặc định.         | Pack name, cover, order, version.                     |
-| SavedSelection      | Tập variant người dùng chọn để lưu.                            | Chỉ chứa item được chọn.                                                         | Min/max selection, destination, persistence.          |
-| AbuseReport         | Báo cáo lạm dụng nếu flow được duyệt.                         | Gắn resource/category và phục vụ review/takedown.                                  | Toàn bộ contract: `TBD-016`.                       |
-| AnalyticsEvent      | Metadata sản phẩm.                                                   | Không chứa nội dung ảnh nguồn/output.                                             | Schema, ID, retention, deduplication.                 |
-
-### 8.2 Ownership và quyền truy cập
-
-- Sticker/bộ sticker đã lưu phải riêng tư mặc định.
-- Source, intermediate và output phải tuân theo least privilege.
-- Cách xác định owner khi app có hoặc không có tài khoản là `TBD-012`.
-- Route/file reference/output URL, nếu có, không được cho phép truy cập chéo owner; đây là cách áp dụng NFR-SEC-002, còn cơ chế cụ thể phụ thuộc `TBD-012` và `TBD-013`.
-- Quyền của nhân sự vận hành và dịch vụ đối với ảnh phải được giới hạn theo mục đích được phê duyệt; mô hình quyền là `TBD-013`.
-
-### 8.3 Vòng đời dữ liệu
-
-| Loại dữ liệu               | Mục đích                             | Có được đưa vào analytics/log không?                        | Retention/xóa                                                |
-| ----------------------------- | --------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Ảnh nguồn                   | Validation và generation               | Không được đưa nội dung ảnh vào analytics/application log. | `TBD-004`                                                   |
-| Ảnh trung gian               | Tách nền/generation/post-processing   | Không được lộ reference nhạy cảm.                            | `TBD-004`                                                   |
-| Job thất bại                | Khôi phục, debug an toàn hoặc retry | Chỉ metadata không nhạy cảm nếu được duyệt.                | `TBD-004`                                                   |
-| Output chưa lưu/preview     | Preview, chọn và retry save           | Không đưa nội dung ảnh vào analytics.                         | `TBD-004`, `TBD-020`                                      |
-| Tập sticker đã lưu       | Lưu các item được chọn; hành vi truy cập lại/chia sẻ là TBD | Chỉ metadata được duyệt. | `TBD-004`, `TBD-010`, `TBD-011`, `TBD-018` |
-| Bằng chứng report           | Review/takedown                         | Chỉ theo policy và quyền truy cập được duyệt.               | `TBD-004`, `TBD-016`                                      |
-| Analytics metadata            | Đo hiệu quả/safety                   | Không chứa nội dung ảnh.                                        | `TBD-017`                                                   |
-| Bản sao đã share ra ngoài | Do OS/app nhận quản lý               | Nằm ngoài analytics nội dung của app.                           | Nằm ngoài quyền xóa của Duhat Gen Sticker sau bàn giao. |
-
-### 8.4 Xóa dữ liệu
-
-Người dùng phải xóa được dữ liệu sticker đã lưu theo đơn vị xóa được duyệt. Những nội dung sau chưa được xác định:
-
-- xóa từng sticker hay cả bộ;
-- xóa mềm hay xóa cứng;
-- SLA xóa ở local storage, backend, object storage và cache/CDN;
-- backup, disaster recovery và legal hold;
-- xử lý job/ảnh nguồn/output liên quan;
-- hành vi của lịch sử analytics sau xóa;
-- thông báo hoặc xác nhận xóa.
-
-Các quyết định này thuộc `TBD-004` và `TBD-018`.
-
-## 9. Hợp đồng input và output
-
-### 9.1 Input contract
-
-| Thuộc tính             | Yêu cầu hiện tại                                         | Giá trị chưa chốt                                        |
-| ------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| Số ảnh                 | Chính xác 1 ảnh cho mỗi job                              | —                                                           |
-| Nguồn                   | Camera hoặc thư viện thiết bị                           | Permission UX: `TBD-022`                                    |
-| Chủ thể                | Chính xác 1 người, 1 thú cưng hoặc 1 vật thể chính | Boundary ảnh hỗn hợp/hậu cảnh: `TBD-008`               |
-| Ảnh người             | Chính xác 1 khuôn mặt rõ                                | Detector, threshold, liveness/identity semantics: `TBD-008` |
-| Định dạng             | Phải thuộc danh sách được hỗ trợ                     | Danh sách MIME/format: `TBD-008`                           |
-| Dung lượng             | Phải dưới giới hạn được duyệt                       | `TBD-008`                                                  |
-| Độ phân giải tối thiểu | Phải đáp ứng ngưỡng tối thiểu được duyệt        | `TBD-008`                                                  |
-| Chất lượng            | Kiểm tra blur, ánh sáng, visibility                       | Metric/threshold: `TBD-008`                                 |
-| An toàn                 | Phải pass moderation đầu vào                             | Taxonomy/threshold/manual review: `TBD-006`, `TBD-013`    |
-| Consent                  | Người dùng xác nhận quyền sử dụng trước submit     | Copy/version/evidence: `TBD-012`, `TBD-028`               |
-
-Một face detector, nếu được chọn, không được mặc định mô tả là xác minh danh tính, liveness hoặc quyền sử dụng ảnh nếu giải pháp thực tế không cung cấp và kiểm thử các khả năng đó.
-
-### 9.2 Output contract
-
-| Thuộc tính                 | Yêu cầu hiện tại                                                            | Giá trị chưa chốt                                                     |
-| ---------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Số lượng full-set success | Chính xác 8 sticker                                                           | Hành vi partial moderation: `TBD-006`                                   |
-| Style                        | Chibi 3D cố định                                                             | Visual style specification/golden reference: `TBD-001`, `TBD-009`      |
-| Hình thức                  | Phi thực tế, phù hợp làm sticker trò chuyện                              | Quality rubric: `TBD-009`                                                |
-| Biểu cảm/câu chữ         | Catalog cố định được Product duyệt, hỗ trợ tiếng Việt và tiếng Anh | Nội dung/mapping/font/language behavior: `TBD-001`, `TBD-002`         |
-| Nhận diện                  | Giữ nhận diện người hoặc đặc điểm chính của pet/vật thể           | Metric/threshold/dataset: `TBD-009`                                      |
-| Tông da/tuổi/đặc điểm  | Không thay đổi ngoài ý muốn                                               | Metric/threshold/dataset: `TBD-009`                                      |
-| Cutout                       | Đường cắt sạch                                                             | Metric/threshold: `TBD-009`                                              |
-| Nền                         | Trong suốt hoặc nền được Product phê duyệt                              | Lựa chọn cuối: `TBD-009`                                              |
-| File                         | Phù hợp với lưu và native share sheet                                      | Format, MIME, dimensions, max bytes, color/alpha: `TBD-009`, `TBD-011` |
-| An toàn                     | Pass moderation trước display/save/share                                      | Taxonomy/threshold: `TBD-006`, `TBD-013`                               |
-
-### 9.3 Quality gate
-
-Quality gate phải đánh giá tối thiểu các nhóm mà PRD yêu cầu:
-
-- độ giống/nhận diện đối với người;
-- đặc điểm thị giác chính đối với thú cưng/vật thể;
-- thay đổi không mong muốn về tông da, sắc tộc, giới tính, tuổi và đặc điểm cốt lõi;
-- chất lượng đường cắt/nền;
-- độ dễ đọc và tính chính xác của câu chữ;
-- an toàn nội dung;
-- tính đa dạng thích hợp giữa 8 sticker.
-
-Dataset, phương pháp chấm, ngưỡng pass/fail, automated/manual review và hành vi reject là `TBD-009`.
-
-## 10. Yêu cầu phi chức năng
-
-### 10.1 Chất lượng
-
-| ID          | Yêu cầu                                                                                                                                 | Trạng thái                      |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| NFR-QLT-001 | Sticker người phải giữ nhận diện có thể nhận biết xuyên suốt bộ 8 theo metric và ngưỡng được Product duyệt. | Confirmed; metric/threshold `TBD-009` |
-| NFR-QLT-002 | Sticker thú cưng/vật thể phải giữ các đặc điểm thị giác chính của chủ thể nguồn theo rubric và ngưỡng được Product duyệt. | Confirmed; rubric/threshold `TBD-009` |
-| NFR-QLT-003 | Sticker phải có đường cắt sạch, câu chữ dễ đọc khi item có câu chữ, và nền theo output contract được duyệt. | Confirmed; threshold/contract `TBD-009` |
-| NFR-QLT-004 | Đánh giá phải bao phủ tông da và các nhóm nhân khẩu học đại diện theo dataset được Product phê duyệt. | Confirmed; dataset `TBD-009` |
-| NFR-QLT-005 | Hệ thống phải hạn chế thay đổi ngoài ý muốn về tông da, sắc tộc, giới tính, tuổi và đặc điểm nhận dạng cốt lõi theo metric/ngưỡng được duyệt. | Confirmed; metric/threshold `TBD-009` |
-
-### 10.2 Hiệu năng và khả năng phục hồi
-
-| ID           | Yêu cầu                                                                                 | Trạng thái                    |
-| ------------ | ----------------------------------------------------------------------------------------- | ------------------------------- |
-| NFR-PERF-001 | Job phải có trạng thái tiến trình rõ, timeout và khả năng retry.                | Confirmed; `TBD-007`, `TBD-014` |
-| NFR-PERF-002 | Mục tiêu latency định lượng phải được phê duyệt sau benchmarking prototype.   | TBD; `TBD-007`                   |
-| NFR-REL-001  | Điều hướng khỏi màn hình generation không được âm thầm hủy job đã submit. | Confirmed                       |
-| NFR-REL-002  | Failure không được tạo saved partial set.                                            | Confirmed                       |
-| NFR-REL-003  | Save failure phải giữ preview đủ để retry theo thời gian được duyệt.           | Confirmed; `TBD-020`            |
-| NFR-REL-004  | Availability, concurrency, throughput, capacity và rate limit là `TBD-025`.            | TBD                             |
-| NFR-REL-005  | RPO, RTO, backup và disaster recovery là `TBD-025`.                                    | TBD                             |
-
-### 10.3 Bảo mật
-
-| ID          | Yêu cầu                                                                                                                                            | Trạng thái                   |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| NFR-SEC-001 | Ảnh phải được mã hóa khi truyền và khi lưu trong bất kỳ thời gian retention tạm thời nào được duyệt.                             | Confirmed; `TBD-013`          |
-| NFR-SEC-002 | Truy cập ảnh nguồn, ảnh trung gian và output phải theo least privilege.                                                                        | Confirmed; `TBD-012`, `TBD-013` |
-| NFR-SEC-003 | Nội dung và tham chiếu ảnh nhạy cảm không được xuất hiện trong client-visible log hoặc analytics. | Confirmed |
-| NFR-SEC-004 | Vị trí thực thi lớp validation authoritative và cách ngăn request bỏ qua kiểm tra phía client phải được xác định cùng kiến trúc. | TBD; `TBD-013` |
-| NFR-SEC-005 | Cách quản lý secret/token của các dịch vụ, nếu kiến trúc sử dụng chúng, phải được xác định trong thiết kế bảo mật. | TBD; `TBD-013` |
-
-NFR-SEC-004 và NFR-SEC-005 ghi nhận quyết định kỹ thuật còn thiếu, không khẳng định backend, secret hoặc token cụ thể đã tồn tại.
-
-### 10.4 Quyền riêng tư
-
-| ID          | Yêu cầu                                                                                                                                                           | Trạng thái                      |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| NFR-PRI-001 | Ảnh nguồn không được đưa vào product analytics hoặc application logs.                                                                                     | Confirmed                         |
-| NFR-PRI-002 | Bộ sticker đã lưu phải riêng tư mặc định.                                                                                                                 | Confirmed; `TBD-010`, `TBD-012`  |
-| NFR-PRI-003 | Retention của ảnh nguồn, ảnh trung gian, job thất bại, output và report evidence phải được Product, Privacy và Legal quyết định trước phát hành. | TBD; `TBD-004` |
-| NFR-PRI-004 | Sử dụng ảnh nguồn/output cho model training yêu cầu policy rõ ràng cùng notice/consent phù hợp.                                                          | Confirmed; `TBD-004`, `TBD-028`   |
-| NFR-PRI-005 | Người dùng phải có khả năng xóa dữ liệu sticker đã lưu theo đơn vị xóa được duyệt. | Confirmed; deletion semantics TBD |
-| NFR-PRI-006 | Có truyền ảnh tới bên thứ ba hay không và yêu cầu notice/consent tương ứng phải được Product, Privacy và Legal xác định sau khi chốt kiến trúc. | TBD; `TBD-013`, `TBD-028` |
-
-### 10.5 Tương thích và trải nghiệm mobile
-
-| ID           | Yêu cầu                                                                                                    | Trạng thái                    |
-| ------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------- |
-| NFR-COMP-001 | Ứng dụng phải chạy trên Android và iOS.                                                                | Confirmed                       |
-| NFR-COMP-002 | Phiên bản OS, device matrix, screen-size matrix và hành vi tablet là `TBD-015`.                        | TBD                             |
-| NFR-ACC-001  | Chuẩn accessibility, screen reader, dynamic text, contrast, reduced motion và touch-target là `TBD-026`. | TBD                             |
-| NFR-L10N-001 | Nội dung sticker cố định phải hỗ trợ tiếng Việt và tiếng Anh.                                     | Confirmed; `TBD-001`, `TBD-002` |
-| NFR-L10N-002 | Ngôn ngữ giao diện ứng dụng, fallback font và xử lý dấu tiếng Việt là `TBD-026`.                | TBD                             |
-| NFR-MOB-001  | Mục tiêu battery, memory, network usage và storage footprint là `TBD-027`.                              | TBD                             |
-| NFR-MOB-002  | Hành vi offline, mạng yếu và chuyển mạng là `TBD-024`.                                               | TBD                             |
-
-### 10.6 Observability và analytics
-
-| ID          | Yêu cầu                                                                                                                                                                      | Trạng thái                      |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
-| NFR-OBS-001 | Hệ thống phải cho phép đo Generation Completion Rate và Generation-to-Save Rate bằng metadata không chứa nội dung ảnh. | Confirmed; schema/denominator `TBD-017` |
-| NFR-OBS-002 | Việc đo regeneration, validation failure, safety block/report và reuse 7 ngày phải được quyết định trong analytics plan. | TBD; `TBD-017` |
-| NFR-OBS-003 | “Send rate per conversation” không áp dụng. Metric share initiation/completion là `TBD-017`.                                                                            | TBD                               |
-| NFR-OBS-004 | Operational monitoring, alerting, audit trail và retention là `TBD-025`.                                                                                                    | TBD                               |
-
-## 11. Trust, Safety và Compliance
-
-### 11.1 Consent và nhận diện
-
-- Người dùng phải xác nhận sở hữu hoặc có quyền sử dụng ảnh trước generation.
-- Ảnh người chỉ được chấp nhận khi có đúng một khuôn mặt rõ trong V1.
-- Mạo danh, lừa đảo, quấy rối, tình dục hóa hoặc lạm dụng người khác bị cấm.
-- Hình ảnh người nổi tiếng và nhân vật công cộng nằm ngoài phạm vi; phải bị chặn khi phát hiện đáng tin cậy hoặc được xử lý qua moderation/report flow.
-- Face count không mặc định đồng nghĩa với xác minh danh tính, liveness, consent hoặc số người toàn ảnh; năng lực thực tế phải được mô tả đúng theo giải pháp được chọn.
-
-### 11.2 An toàn nội dung
-
-- Ảnh nguồn phải được kiểm tra đối với nội dung khiêu dâm, bóc lột, lạm dụng hoặc bất hợp pháp bị cấm.
-- Output hình ảnh và câu chữ phải được kiểm duyệt trước display/save/share.
-- Output không an toàn hoặc lạm dụng phải bị chặn.
-- Taxonomy, model/vendor, threshold, precision/recall target, false-positive handling và manual review là `TBD-006`/`TBD-013`.
-
-### 11.3 An toàn trẻ em
-
-- Nội dung không an toàn hoặc tình dục hóa liên quan đến trẻ vị thành niên phải bị chặn.
-- Product và Legal phải quyết định một trong hai hướng trước phát hành:
-  - chặn hoàn toàn ảnh của trẻ vị thành niên trong V1; hoặc
-  - cho phép theo các quy tắc riêng tư nghiêm ngặt hơn.
-- SRS không chọn thay giữa hai phương án. Quyết định được theo dõi bằng `TBD-003`.
-
-### 11.4 Định kiến và độ trung thực nhận diện
-
-- Hệ thống phải tránh thay đổi ngoài ý muốn về tông da, sắc tộc, giới tính, tuổi và đặc điểm nhận dạng cốt lõi.
-- Đánh giá phải bao phủ tông da và nhóm nhân khẩu học đại diện.
-- Cơ chế để người dùng báo cáo “Không giống tôi” hoặc kết quả không chính xác thuộc `TBD-016`.
-
-### 11.5 Báo cáo và takedown
-
-PRD yêu cầu report/takedown trước khi ra mắt, trong khi phạm vi mới là app độc lập và không có recipient-side action menu của DUHAT. Product phải xác định:
-
-- ai có thể report và report từ đâu;
-- resource nào được report;
-- category, evidence và trạng thái review;
-- kênh hỗ trợ ngoài app hoặc trong app;
-- takedown đối với output đã lưu và giới hạn đối với bản đã share ra ngoài;
-- SLA, escalation và appeal;
-- retention bằng chứng.
-
-Toàn bộ thuộc `TBD-016`; readiness của workflow là release blocker.
-
-## 12. Analytics và chỉ số
-
-### 12.1 Event logic được phép xem xét
-
-Các event sau có thể được ghi dưới dạng metadata không chứa nội dung ảnh:
-
-- mở luồng tạo;
-- xác nhận consent;
-- chọn camera hoặc thư viện;
-- validation pass/fail theo reason category không nhạy cảm;
-- generation started/completed/failed/timed out;
-- regenerate;
-- sticker selected/deselected;
-- save succeeded/failed;
-- delete;
-- report, nếu flow được duyệt;
-- native share sheet invoked, nếu Product/Privacy phê duyệt semantics.
-
-Khả năng native share sheet cung cấp tín hiệu completion nào và cách diễn giải tín hiệu đó trong analytics là `TBD-017`; SRS chưa coi việc mở hoặc đóng share sheet là bằng chứng gửi thành công.
-
-### 12.2 Chỉ số đề xuất từ PRD
-
-| Chỉ số                                     | Trạng thái trong app standalone                                     |
-| -------------------------------------------- | --------------------------------------------------------------------- |
-| Generation Completion Rate                   | Giữ; denominator và event schema `TBD-017`.                        |
-| Generation-to-Save Rate                      | Giữ; phụ thuộc storage model.                                      |
-| Generated Sticker Send Rate per Conversation | Loại bỏ vì không có chat; metric share thay thế là `TBD-017`. |
-| Seven-day Reuse Rate                         | `TBD-017`, phụ thuộc khả năng nhận diện việc tái sử dụng. |
-| Regeneration Rate                            | Giữ; denominator `TBD-017`.                                         |
-| Validation Failure Rate                      | Giữ; reason taxonomy `TBD-008`, `TBD-017`.                        |
-| Safety Block and Report Rate                 | Giữ; phụ thuộc moderation/report contract.                         |
-
-## 13. Tiêu chí chấp nhận và verification
-
-### 13.1 Tiêu chí chấp nhận cấp sản phẩm
-
-| ID | Given | When | Then | Blocker/TBD |
-| --- | --- | --- | --- | --- |
-| AC-001 | Ứng dụng được cài trên nền tảng được hỗ trợ | Người dùng mở app | Duhat Gen Sticker hoạt động như app độc lập, không cần đi qua DUHAT | OS matrix `TBD-015` |
-| AC-002 | Người dùng chưa xác nhận quyền sử dụng ảnh | Người dùng yêu cầu tạo | Hệ thống không submit generation | Consent copy/evidence `TBD-012`, `TBD-028` |
-| AC-003 | Quyền camera/thư viện được cấp | Người dùng chọn nguồn ảnh | Có thể chụp hoặc chọn đúng một ảnh | Input contract `TBD-008` |
-| AC-004 | Ảnh không đạt validation | Validation kết thúc | Ảnh bị từ chối, người dùng ở lại flow và có thể chọn ảnh khác | `TBD-008`, `TBD-021` |
-| AC-005 | Ảnh người có nhiều người hoặc không có đúng một khuôn mặt rõ | Validation chạy | Ảnh bị từ chối; trường hợp nhiều người có hướng dẫn crop/chọn ảnh khác | `TBD-008` |
-| AC-006 | Ảnh có đúng một pet hoặc vật thể chính hợp lệ | Validation chạy | Ảnh có thể đi tiếp nếu vượt tất cả quality/safety gate | `TBD-008` |
-| AC-007 | Ảnh đã consent và pass validation | Người dùng chủ động bấm tạo | Job mới được submit và UI hiển thị progress | `TBD-014` |
-| AC-008 | Job đã submit thành công | Người dùng điều hướng khỏi màn hình rồi quay lại | Job không bị âm thầm hủy hoặc mất | App kill/restart `TBD-014` |
-| AC-009 | Job vượt tất cả input/output gate | Job hoàn thành | Preview có đúng 8 sticker Chibi 3D | `TBD-001`, `TBD-002`, `TBD-009` |
-| AC-010 | Output chưa được moderation hoặc đã bị block | Người dùng cố xem/lưu/share | Output không được hiển thị, lưu hoặc chia sẻ | `TBD-006` |
-| AC-011 | Preview hợp lệ | Người dùng chọn/bỏ chọn item | Tập sẽ lưu phản ánh đúng lựa chọn | `TBD-019` |
-| AC-012 | Preview hợp lệ | Người dùng regenerate | Toàn bộ bộ được tạo lại từ cùng source và Chibi 3D; không tạo lại riêng item | `TBD-005` |
-| AC-013 | Một số sticker bị bỏ chọn | Người dùng lưu | Chỉ sticker được chọn được lưu và dữ liệu không tự public | `TBD-010` |
-| AC-014 | Thao tác lưu trả lỗi | Người dùng thực hiện save | Preview vẫn tồn tại và có hành động retry save | `TBD-020` |
-| AC-015 | Generation thất bại hoặc quá giờ | Job kết thúc | Không có saved partial set; có lỗi không chặn và hành động retry | `TBD-007`, `TBD-014` |
-| AC-016 | Output đủ điều kiện chia sẻ | Người dùng chọn Share | Native share sheet Android/iOS được gọi; không dùng DUHAT chat/tray | `TBD-011` |
-| AC-017 | Share sheet được mở hoặc đóng | Hệ thống xử lý analytics liên quan | Trạng thái/event chỉ được ghi theo semantics đã phê duyệt | `TBD-017` |
-| AC-018 | Có dữ liệu sticker đã lưu | Người dùng yêu cầu xóa | Dữ liệu được xóa theo policy được duyệt | `TBD-018` |
-| AC-019 | Analytics/logging được bật | Thực hiện toàn bộ happy/error flow | Analytics không chứa nội dung ảnh nguồn/output; application log không chứa ảnh nguồn; client-visible log/analytics không chứa reference ảnh nhạy cảm | `TBD-017` |
-| AC-020 | Bộ benchmark đại diện đã được phê duyệt | Chạy đánh giá output | Identity, cutout, text khi áp dụng, safety, bias và diversity đạt ngưỡng được duyệt | `TBD-009` |
-| AC-021 | Flow báo cáo đã được phê duyệt và có output cần báo cáo | Actor dùng entry point được duyệt | Flow hỗ trợ các nhóm lý do tại FR-REP-001 và chuyển report vào quy trình review/takedown | `TBD-016` |
-| AC-022 | Quyền camera/thư viện bị từ chối, giới hạn hoặc thu hồi | Người dùng đi vào luồng chọn ảnh | Ứng dụng thực hiện đúng UX khôi phục đã được duyệt và không truy cập ngoài quyền hệ điều hành cấp | `TBD-022` |
-| AC-023 | Input vi phạm chính sách an toàn | Kiểm duyệt đầu vào hoàn tất | Generation không bắt đầu và UI chỉ hiển thị lý do an toàn đã được duyệt | `TBD-006`, `TBD-021` |
-| AC-024 | Người dùng ở luồng V1 | Người dùng thao tác tạo/preview | Không có prompt tự do, style selector, per-item regenerate/edit; người dùng vẫn xem được từng sticker | — |
-| AC-025 | Ảnh nguồn đã được chọn | Người dùng chưa chủ động lưu/share output | Ảnh nguồn không tự động được public hoặc chia sẻ cho người dùng khác | `TBD-010`, `TBD-012` |
-| AC-026 | Ảnh có đúng một người với đúng một khuôn mặt rõ | Validation chạy | Ảnh có thể đi tiếp nếu vượt tất cả quality/safety gate | `TBD-008` |
-
-### 13.2 Ma trận SRS → acceptance criteria
-
-Ma trận dưới dùng ID chính xác. Yêu cầu chưa có AC thực thi vì còn `TBD` được truy vết tới decision tương ứng thay vì tạo kết quả kiểm thử giả định.
-
-| Nhóm SRS/Interface ID | Acceptance criteria / quyết định chặn |
+| Trường | Giá trị |
 | --- | --- |
-| AF-01 | AC-022; TBD-022 |
-| AF-02 | AC-004; TBD-008; TBD-021 |
-| AF-03 | AC-004; AC-005; AC-006; AC-026; TBD-008 |
-| AF-04 | AC-005; TBD-008 |
-| AF-05 | AC-023; TBD-006; TBD-021 |
-| AF-06 | AC-015; TBD-007; TBD-014 |
-| AF-07 | AC-010; TBD-006 |
-| AF-08 | AC-008; TBD-014 |
-| FR-ENT-001, NFR-COMP-001 | AC-001 |
-| FR-ENT-002 | AC-001; content review |
-| FR-CNS-001, FR-CNS-002, FR-CNS-003, BR-004 | AC-002; TBD-004; TBD-012; TBD-028 |
-| FR-INP-001, FR-INP-002 | AC-003 |
-| FR-INP-003, FR-INP-004 | AC-022; TBD-022 |
-| FR-INP-005 | AC-025 |
-| FR-VAL-001, FR-VAL-005, FR-VAL-006, FR-ERR-001 | AC-004 |
-| FR-VAL-002, FR-VAL-003, FR-VAL-004, BR-002, BR-003 | AC-005; AC-006; AC-026 |
-| FR-SAFE-001 | AC-023 |
-| FR-SAFE-002, FR-SAFE-003, FR-SAFE-004, BR-009, BR-010 | AC-010; TBD-006 |
-| FR-GEN-001, FR-GEN-008 | AC-007 |
-| FR-GEN-002, FR-GEN-003, FR-GEN-004, FR-GEN-005, BR-005, BR-006, BR-007, BR-008 | AC-009; AC-020; TBD-001; TBD-002; TBD-009 |
-| FR-GEN-006, FR-GEN-007 | AC-024 |
-| FR-GEN-009, NFR-REL-001 | AC-008; TBD-014 |
-| FR-PRV-001 | AC-009 |
-| FR-PRV-002 | AC-024 |
-| FR-SEL-001, FR-SEL-002 | AC-011; TBD-019 |
-| FR-REG-001, FR-REG-002, FR-REG-003, BR-013 | AC-012; TBD-005 |
-| FR-SAV-001, FR-SAV-002, FR-SAV-004, BR-011 | AC-013; TBD-010; TBD-011 |
-| FR-SAV-003, BR-012, NFR-PRI-002 | AC-013; AC-025 |
-| FR-SAV-005, FR-ERR-003, NFR-REL-003 | AC-014; TBD-020 |
-| FR-SAV-006, FR-ERR-002, BR-017, NFR-PERF-001, NFR-REL-002 | AC-015; TBD-007; TBD-014 |
-| FR-DEL-001, NFR-PRI-005 | AC-018; TBD-018 |
-| FR-SHR-001, FR-SHR-002, FR-SHR-003, FR-SHR-004, FR-SHR-005, BR-020 | AC-016; AC-017; TBD-011 |
-| FR-ERR-004, NFR-SEC-003, NFR-PRI-001, BR-018 | AC-019 |
-| FR-ERR-005 | AC-004; AC-015; AC-023; TBD-021 |
-| FR-REP-001, FR-REP-002, FR-REP-003 | AC-021; TBD-016 |
-| FR-ANL-001, FR-ANL-002, FR-ANL-003, FR-ANL-004, NFR-OBS-001, NFR-OBS-002, NFR-OBS-003 | AC-017; AC-019; TBD-017 |
-| BR-001 | AC-003; AC-007 |
-| BR-014, BR-021 | AC-023; TBD-006; TBD-013; TBD-023 |
-| BR-015 | AC-010; AC-023 |
-| BR-016, BR-022 | AC-010; AC-023; TBD-003 |
-| BR-019 | TBD-004; privacy verification sau khi policy được duyệt |
-| NFR-QLT-001, NFR-QLT-002, NFR-QLT-003, NFR-QLT-004, NFR-QLT-005 | AC-020; TBD-009 |
-| NFR-PERF-002 | TBD-007 |
-| NFR-REL-004, NFR-REL-005, NFR-OBS-004 | TBD-025 |
-| NFR-SEC-001, NFR-SEC-002, NFR-SEC-004, NFR-SEC-005 | Security verification sau TBD-012 và TBD-013 |
-| NFR-PRI-003, NFR-PRI-004 | TBD-004; privacy verification sau khi policy được duyệt |
-| NFR-PRI-006 | TBD-013; TBD-028; privacy verification sau khi architecture/notice được duyệt |
-| NFR-COMP-002 | AC-001; TBD-015 |
-| NFR-ACC-001, NFR-L10N-002 | TBD-026 |
-| NFR-L10N-001 | AC-009; TBD-001; TBD-002 |
-| NFR-MOB-001 | TBD-027 |
-| NFR-MOB-002 | TBD-024 |
-| IF-OS-001, IF-OS-002 | AC-003; AC-022 |
-| IF-OS-003 | AC-016; AC-017 |
-| IF-OS-004 | AC-013; AC-018; TBD-010 |
-| IF-OS-005 | AC-008; TBD-014 |
-| IF-SVC-001 | AC-013; AC-018; TBD-012 |
-| IF-SVC-002 | AC-004; AC-005; AC-006; AC-007; AC-023; AC-026; TBD-013; TBD-014 |
-| IF-SVC-003, IF-SVC-004 | AC-007; AC-008; AC-015; TBD-013; TBD-014 |
-| IF-SVC-005 | AC-012; TBD-005; TBD-014 |
-| IF-SVC-006 | AC-010; AC-023; TBD-006; TBD-013 |
-| IF-SVC-007 | AC-013; AC-018; TBD-010; TBD-018 |
-| IF-SVC-008 | AC-021; TBD-016 |
+| Mã tài liệu | SRS-DGS-V1 |
+| Phiên bản | 1.0 |
+| Ngày chốt chuẩn | 14/08/2026 |
+| Trạng thái | Đã chốt làm cơ sở triển khai |
+| Sản phẩm | Duhat Gen Sticker — ứng dụng di động độc lập |
+| Nguồn sản phẩm bất biến | `PRD_Sticker_Generation_V1_VI.md` |
+| Bản tham chiếu bằng tiếng Anh | `PRD_Sticker_Generation_V1.md` |
 
-### 13.3 Phạm vi verification đề xuất
+### 0.1 Thứ tự ưu tiên nguồn
 
-PRD không xác định chiến lược, cấp độ hoặc công cụ kiểm thử; các nội dung đó được theo dõi tại `TBD-029`. Danh sách dưới đây là phạm vi verification đề xuất để lập Software Test Plan sau khi các contract liên quan được duyệt:
+1. PRD là nguồn yêu cầu sản phẩm chính và không được sửa bởi bộ tài liệu này.
+2. SRS ghi lại cách áp dụng PRD cho ứng dụng Duhat Gen Sticker độc lập và các
+   quyết định sản phẩm/kỹ thuật đã được người yêu cầu chốt.
+3. Tài liệu Thiết kế kiến trúc và kỹ thuật hiện thực hóa SRS.
+4. Tài liệu Bàn giao triển khai MVP mô tả trạng thái mã nguồn và khoảng cách tới SRS.
+5. Tài liệu Danh sách công việc và kế hoạch chu kỳ lập thứ tự thực hiện.
+6. TDD quy định bằng chứng kiểm thử cho SRS và kiến trúc.
 
-- kiểm thử unit cho validation/rule/state logic;
-- kiểm thử contract tại boundary mobile–service–storage–moderation;
-- kiểm thử integration camera, thư viện, permission và native share sheet;
-- kiểm thử end-to-end happy path và mọi failure state trên Android/iOS;
-- kiểm thử security/privacy về ownership, encryption và log/analytics redaction;
-- kiểm thử moderation input/output và abuse cases;
-- benchmark chất lượng/identity/bias trên dataset được duyệt;
-- benchmark latency/timeout sau prototype;
-- kiểm thử background/foreground/resume theo lifecycle policy được chốt;
-- kiểm thử xóa/retention theo data lifecycle được chốt.
+Nếu mã nguồn hoặc tài liệu kế tiếp khác SRS, mã nguồn/tài liệu kế tiếp phải được
+sửa. Nếu SRS khác mục tiêu PRD mà không có quyết định điều chỉnh được liệt kê tại
+Mục 0.2, PRD thắng.
 
-### 13.4 Release gate
+### 0.2 Danh mục quyết định đã chốt
 
-SRS đang ở trạng thái Draft nên chưa thể dùng làm baseline phát hành. Tối thiểu, V1 chưa được coi là sẵn sàng phát hành cho đến khi:
+| ID | Quyết định | Quan hệ với PRD |
+| --- | --- | --- |
+| DEC-001 | PRD tiếng Việt là nguồn chính; PRD tiếng Anh là bản tham chiếu. Hai tệp PRD giữ nguyên. | Thiết lập quy tắc quản trị tài liệu. |
+| DEC-002 | Duhat Gen Sticker là ứng dụng Android/iOS độc lập, không phải mô-đun DUHAT Chat. | Thay bối cảnh tích hợp nhưng giữ mục tiêu tạo sticker. |
+| DEC-003 | Ba năng lực V1 là tạo, lưu và chia sẻ/xuất; chia sẻ dùng bảng chia sẻ của hệ điều hành. | Thay khay sticker/khung chat DUHAT bằng năng lực tương đương của ứng dụng độc lập. |
+| DEC-004 | Ảnh đầu vào có đúng một chủ thể chính: một người, một thú cưng hoặc một vật thể. | Chốt lựa chọn PRD §14.1. |
+| DEC-005 | Một bộ được tạo thành công có chính xác 8 sticker. | Chuẩn hóa khoảng 6–8 của PRD thành 8. |
+| DEC-006 | Phong cách V1 cố định là Chibi 3D, phi thực tế. | Chốt phong cách theo PRD §14.2. |
+| DEC-007 | Danh mục có 8 vị trí cố định ở Mục 8.3; mọi vị trí có câu chữ Việt/Anh. | Chốt danh mục PRD §5.1. |
+| DEC-008 | Mọi quyết định lịch sử đã được đóng tại DEC-011..039; tài liệu kế tiếp không được tự tạo giá trị khác. | Hoàn tất quyết định PRD §14. |
+| DEC-009 | Chỉ nhận ảnh tĩnh JPEG, PNG, WebP, HEIC, HEIF; từ chối GIF, SVG, TIFF, BMP, RAW, AVIF và mọi ảnh nhiều khung hình. | Cụ thể hóa quy tắc kiểm tra định dạng. |
+| DEC-010 | Thư viện riêng tư dùng Supabase PostgreSQL và Supabase Storage riêng tư, truy cập qua FastAPI theo chủ sở hữu; người dùng tải từng sticker đã lưu về thiết bị. | Thay khay sticker DUHAT bằng thư viện trong ứng dụng. |
+| DEC-011 | Ngôn ngữ ứng dụng tại lúc gửi yêu cầu chọn danh mục `vi` hoặc `en`; ngôn ngữ của tác vụ không đổi sau khi gửi. | Chốt ánh xạ ngôn ngữ. |
+| DEC-012 | V1 chặn toàn bộ ảnh người bị đánh giá có khả năng là trẻ vị thành niên; không thu thập ngày sinh. | Chọn phương án bảo thủ của PRD §8.3. |
+| DEC-013 | Thời hạn lưu giữ cố định theo Mục 7.3; dữ liệu không dùng để huấn luyện mô hình. | Chốt PRD §8.5/§14.4. |
+| DEC-014 | Mỗi chủ sở hữu có 5 yêu cầu tạo/tạo lại mỗi ngày UTC và tối đa 1 tác vụ đang hoạt động; V1 không thu phí. | Chốt PRD §14.5. |
+| DEC-015 | Nếu ảnh đầu ra bị chặn hoặc không hợp lệ, tiến trình xử lý tạo bù tối đa 2 lần; vẫn không đủ đúng 8 thì toàn bộ tác vụ thất bại, không hiển thị bộ chưa đầy đủ. | Chốt PRD §7.6/§14.6. |
+| DEC-016 | SLO và thời gian chờ cố định tại Mục 9.2; giới hạn cứng cho việc tạo ảnh là 180 giây. | Chốt PRD §14.7. |
+| DEC-017 | Ngưỡng ảnh đầu vào cố định tại Mục 8.1–8.2. | Hoàn thành hợp đồng ảnh đầu vào. |
+| DEC-018 | Ảnh đầu ra là PNG 1024×1024 RGBA/sRGB, nền trong suốt, tối đa 4 MiB/ảnh. | Chốt hợp đồng ảnh đầu ra. |
+| DEC-019 | Chia sẻ một sticker mỗi lần từ màn hình xem trước hoặc thư viện; không bắt buộc lưu trước; dữ liệu chia sẻ là PNG. | Chốt luồng chia sẻ của ứng dụng độc lập. |
+| DEC-020 | Môi trường sản xuất dùng Supabase Anonymous Auth; chủ sở hữu là `auth.users.id`. V1 không đồng bộ/khôi phục đa thiết bị. | Chốt tài khoản và quyền sở hữu. |
+| DEC-021 | Việc tạo ảnh dùng OpenAI Images `gpt-image-1.5` qua điểm cuối OpenAI chính thức; việc đánh giá dùng AWS Rekognition `ap-southeast-1`; Supabase đặt tại Singapore. | Chốt nhà cung cấp và luồng dữ liệu. |
+| DEC-022 | Tác vụ dùng Supabase Queues/PGMQ, tiến trình xử lý riêng, thăm dò mỗi 2 giây, bảo đảm lũy đẳng cho mọi thao tác thay đổi dữ liệu và tiếp tục sau khi khởi động lại. | Chốt kiến trúc xử lý tác vụ. |
+| DEC-023 | Hỗ trợ Android 7+ và iOS 15.1+ theo Expo SDK 54; điện thoại dọc là giao diện chính, máy tính bảng có bố cục thích ứng. | Chốt ma trận nền tảng. |
+| DEC-024 | Chức năng báo cáo có ở màn hình xem trước/thư viện; duyệt trong 72 giờ, trường hợp an toàn khẩn cấp trong 24 giờ; điểm cuối và hợp đồng dữ liệu ở Mục 6. | Chốt quy trình báo cáo/gỡ bỏ. |
+| DEC-025 | Phân tích sản phẩm do hệ thống tự quản lý, yêu cầu người dùng đồng ý và chỉ nhận sự kiện trong danh sách Mục 11; mở bảng chia sẻ không đồng nghĩa gửi thành công. | Chốt ý nghĩa dữ liệu phân tích. |
+| DEC-026 | V1 xóa theo gói sticker đã lưu; xóa cứng siêu dữ liệu/ảnh chính trong 24 giờ, bản sao lưu hết hạn tối đa 30 ngày. | Chốt ý nghĩa thao tác xóa. |
+| DEC-027 | Màn hình xem trước mặc định chọn cả 8; cần chọn ít nhất 1 sticker để lưu. | Chốt cách lựa chọn. |
+| DEC-028 | Bản xem trước chưa lưu được giữ 24 giờ từ khi tác vụ kết thúc; lỗi lưu không rút ngắn thời hạn này. | Chốt vòng đời bản xem trước. |
+| DEC-029 | Danh mục/phiên bản lỗi và khả năng thử lại cố định tại Mục 5.4. | Chốt trải nghiệm xử lý lỗi. |
+| DEC-030 | Quyền bị từ chối/giới hạn/thu hồi phải có thao tác thử lại và Mở cài đặt; ảnh chỉ có trên đám mây phải tải xong trước khi tải lên máy chủ. | Chốt cách khôi phục quyền truy cập. |
+| DEC-031 | AWS RecognizeCelebrities và Rekognition Custom Labels chặn nhân vật công chúng, biểu trưng và nhân vật có thương hiệu tại ngưỡng quy định. | Chốt ranh giới thương hiệu/sở hữu trí tuệ. |
+| DEC-032 | Tạo, lưu, tải xuống và chia sẻ ảnh cần mạng; ứng dụng cho xem siêu dữ liệu thư viện đã lưu đệm khi ngoại tuyến nhưng không bảo đảm mở được tệp chưa lưu đệm. | Chốt hành vi ngoại tuyến. |
+| DEC-033 | Độ sẵn sàng 99,5%/tháng; RPO 24 giờ; RTO 4 giờ; năng lực cơ sở tại Mục 9.3. | Chốt mục tiêu vận hành. |
+| DEC-034 | Giao diện Việt/Anh đạt WCAG 2.2 AA, hỗ trợ trình đọc màn hình, cỡ chữ động và vùng chạm theo chuẩn nền tảng. | Chốt khả năng tiếp cận và bản địa hóa. |
+| DEC-035 | Ngân sách tài nguyên ứng dụng di động tại Mục 9.5. | Chốt pin, bộ nhớ, mạng và lưu trữ. |
+| DEC-036 | Nội dung đồng ý phiên bản `consent-v1.0`, lưu bằng chứng 365 ngày sau khi xóa ảnh nguồn và nêu rõ Supabase/AWS/OpenAI. | Chốt bằng chứng đồng ý. |
+| DEC-037 | Xác minh gồm kiểm thử đơn vị, hợp đồng, tích hợp, E2E trên thiết bị, bảo mật và đánh giá chuẩn; điều kiện phát hành tại Mục 12. | Chốt chiến lược kiểm thử. |
+| DEC-038 | Chỉ dùng API OpenAI chính thức; cấm proxy AI bên thứ ba ở môi trường tiền sản xuất/sản xuất. | Chốt bảo mật nhà cung cấp. |
+| DEC-039 | Báo cáo và dữ liệu phân tích lưu ở Supabase; không đưa ảnh, câu lệnh thô, URL có chữ ký vào sự kiện hoặc nhật ký. | Chốt ranh giới dữ liệu vận hành. |
 
-- các mục có mốc **Trước cam kết V1** hoặc **Trước phát hành** tại Mục 15 được phê duyệt;
-- catalog biểu cảm/câu chữ dùng cho 8 output và specification Chibi 3D được Product duyệt;
-- policy trẻ vị thành niên được Product và Legal duyệt;
-- retention/deletion/training-use được Product, Privacy và Legal duyệt;
-- input/output moderation cùng report/review/takedown workflow sẵn sàng;
-- ngưỡng chất lượng và latency được phê duyệt từ kết quả benchmark;
-- test trên cả Android và iOS theo device/OS matrix được duyệt đạt yêu cầu;
-- security/privacy review xác nhận encryption, least privilege và không lộ dữ liệu ảnh trong log/analytics;
-- traceability PRD → SRS → test không còn yêu cầu bắt buộc bị bỏ sót.
+### 0.3 Điều chỉnh bối cảnh PRD
 
-Các mục có mốc `TBD` trong register không mặc nhiên là không chặn phát hành; Product phải gán mốc trước khi baseline SRS được phê duyệt.
+| PRD mô tả | Áp dụng trong app độc lập |
+| --- | --- |
+| Điểm vào từ khay sticker DUHAT | Điểm vào từ màn hình Trang chủ/Tạo của Duhat Gen Sticker. |
+| Sticker đã lưu vào khay DUHAT | Sticker đã lưu vào thư viện riêng tư trên Supabase. |
+| Gửi trong khung chat DUHAT | Mở bảng chia sẻ Android/iOS cho một ảnh PNG. |
+| Tỷ lệ gửi trên mỗi cuộc trò chuyện | Đo `native_share_sheet_invoked`; không suy diễn gửi thành công. |
+| 6–8 ảnh đầu ra | Một bộ thành công có chính xác 8 ảnh đầu ra. |
 
-## 14. Traceability
+## 1. Phạm vi sản phẩm
 
-Ký hiệu `A..B` và `*` trong các bảng 14.1–14.3 chỉ là cách viết gọn cho người đọc. Ma trận ID chính xác tại Mục 13.2 là nguồn dùng để audit yêu cầu SRS → acceptance criteria.
+### 1.1 Mục tiêu
 
-### 14.1 PRD Functional Requirements → SRS
+Duhat Gen Sticker cho phép người dùng biến đúng một ảnh của bản thân, thú cưng
+hoặc vật thể thành 8 sticker Chibi 3D, xem trước/chọn/lưu vào thư viện riêng tư,
+tải về thiết bị, chia sẻ qua bảng chia sẻ của hệ điều hành, xóa và báo cáo ảnh đầu ra.
 
-| PRD ID | Nội dung PRD                                       | SRS liên quan                             | Điều chỉnh                                                    |
-| ------ | --------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------- |
-| F1     | Nhận một ảnh từ camera/thư viện               | FR-INP-001..005                            | Giữ cho app mobile độc lập.                                  |
-| F2     | Kiểm tra chất lượng, chủ thể và an toàn     | FR-VAL-001..006, FR-SAFE-001               | Hỗ trợ person/pet/object theo DEC-004; threshold thuộc `TBD-006`, `TBD-008`. |
-| F3     | Xác nhận consent trước gửi ảnh                | FR-CNS-001..003                            | Giữ nguyên mục tiêu; evidence thuộc `TBD-028`.                |
-| F4     | Tách nền và style phi thực tế cố định       | FR-GEN-002                                 | Style được chốt Chibi 3D theo DEC-006.                       |
-| F5     | Tạo 6–8 biến thể với fixed expression/wording  | FR-GEN-003..005                            | Số lượng đổi thành đúng 8 theo DEC-005; catalog thuộc `TBD-001`, `TBD-002`. |
-| F6     | Moderation input/output trước hiển thị/chia sẻ | FR-SAFE-001..004                           | Giữ nguyên; partial-output behavior thuộc `TBD-006`.          |
-| F7     | Preview, select, regenerate, save                   | FR-PRV-*, FR-SEL-*, FR-REG-*, FR-SAV-* | Regenerate toàn bộ; storage thuộc `TBD-010`.                  |
-| F8     | Thêm vào khay sticker DUHAT                       | FR-SAV-003..004                            | Thay bằng lưu riêng tư theo mô hình `TBD-010`; không giả định app-local hay backend. |
-| F9     | Gửi qua messaging DUHAT                            | FR-SHR-001..005                            | Thay bằng native share sheet theo DEC-003.                      |
-| F10    | Report và delete                                   | FR-DEL-001, FR-REP-001..003                | Delete giữ; report standalone flow thuộc `TBD-016`.           |
+### 1.2 Tác nhân
 
-### 14.2 PRD Non-Functional/Compliance → SRS
+| Tác nhân | Trách nhiệm/quyền |
+| --- | --- |
+| Người dùng | Chọn/chụp ảnh, đồng ý xử lý, tạo, xem, chọn, lưu, tạo lại, tải xuống, chia sẻ, xóa và báo cáo. |
+| Ứng dụng di động | Xử lý quyền truy cập, trạng thái/bộ nhớ đệm cục bộ, trải nghiệm người dùng, mã xác thực và gọi FastAPI. |
+| FastAPI | Xác thực/chủ sở hữu, kiểm tra hợp lệ có thẩm quyền, điều phối, chính sách, API và ranh giới truy cập ảnh. |
+| Tiến trình xử lý | Nhận thông điệp hàng đợi, gọi AWS/OpenAI, kiểm tra ảnh và công bố nguyên tử. |
+| Supabase | Xác thực ẩn danh, PostgreSQL, hàng đợi, kho lưu trữ riêng tư và sao lưu. |
+| Nhân sự Tin cậy và An toàn | Duyệt báo cáo, chặn/gỡ bỏ, kiểm toán và xử lý khiếu nại. |
 
-| Nguồn PRD                       | SRS liên quan                             |
-| -------------------------------- | ------------------------------------------ |
-| §8.1 Consent and Identity       | FR-CNS-*, BR-004, BR-014..016, Mục 11.1   |
-| §8.2 Content Safety             | FR-SAFE-*, FR-REP-*, Mục 11.2, 11.5     |
-| §8.3 Child Safety               | BR-016, Mục 11.3, TBD-003                 |
-| §8.4 Bias and Identity Fidelity | NFR-QLT-001..005, Mục 11.4, TBD-009       |
-| §8.5 Privacy and Retention      | NFR-PRI-*, Mục 8.2..8.4, TBD-004, TBD-018 |
-| §10.1 Quality                   | NFR-QLT-*, Mục 9.2..9.3                   |
-| §10.2 Performance               | NFR-PERF-*, NFR-REL-*, Mục 6            |
-| §10.3 Security                  | NFR-SEC-*, Mục 8.2, 8.3                   |
-| §11 Analytics                   | FR-ANL-*, NFR-OBS-*, Mục 12             |
-| §12 Dependencies                | Mục 2.5, 7.2, 7.3                         |
-| §14 Product Decisions           | Mục 15                                    |
+### 1.3 Trong phạm vi V1
 
-### 14.3 Quyết định đã xác nhận → SRS
+- Ứng dụng Android/iOS độc lập; giao diện tiếng Việt và tiếng Anh.
+- Một ảnh tĩnh, đúng một người/thú cưng/vật thể chính; người có đúng một mặt rõ.
+- Các bước chấp thuận, kiểm tra kỹ thuật, chất lượng, chủ thể và an toàn đầu vào.
+- 8 ảnh PNG Chibi 3D theo danh mục cố định.
+- Xem trước, chọn, tạo lại toàn bộ, lưu một phần đã chọn.
+- Thư viện Supabase riêng tư; tải từng sticker đã lưu.
+- Chia sẻ một sticker từ màn hình xem trước hoặc thư viện qua hệ điều hành.
+- Xóa gói đã lưu, báo cáo và gỡ bỏ nội dung.
+- Phân tích sản phẩm có sự đồng ý và khả năng quan sát vận hành do hệ thống tự quản lý.
 
-| Decision | SRS áp dụng                                |
-| -------- | -------------------------------------------- |
-| DEC-001  | Mục 0.1, 0.3 và toàn bộ traceability     |
-| DEC-002  | FR-ENT-001, NFR-COMP-001, Mục 2.1, 2.4      |
-| DEC-003  | FR-SAV-001..004, FR-SHR-001..005, BR-020, Mục 1.2, 2.7, 3.4, 3.6, 7.2 |
-| DEC-004  | FR-VAL-002..004, BR-002..003, Mục 9.1       |
-| DEC-005  | FR-GEN-003, BR-005, Mục 6 và 9.2           |
-| DEC-006  | FR-GEN-002, FR-GEN-006, FR-REG-001, BR-006, Mục 9.2 |
-| DEC-007  | FR-GEN-004, FR-GEN-005, BR-007, TBD-001, TBD-002 |
-| DEC-008  | Mục 0.5 và toàn bộ registry `TBD`       |
+### 1.4 Ngoài phạm vi V1
 
-## 15. Danh sách quyết định chưa chốt
+- Tài khoản/khung chat/khay sticker DUHAT, ứng dụng web và chợ nội dung công khai.
+- Câu lệnh tự do, chữ động, bộ chọn phong cách, chỉnh sửa/tạo lại từng sticker.
+- Nhiều ảnh tham chiếu, hoán đổi khuôn mặt, giả mạo sâu hoặc ảnh đầu ra chân thực như ảnh chụp.
+- Tạo ảnh nhân vật công chúng, người nổi tiếng, nhân vật có thương hiệu/bản quyền.
+- Thanh toán, gói thương mại, tạo ảnh ngoại tuyến và đồng bộ/khôi phục đa thiết bị.
 
-### 15.1 TBD register
+## 2. Các trường hợp sử dụng
 
-| ID | Câu hỏi cần quyết định | Căn cứ/đầu mối được nguồn nêu | Ảnh hưởng | Mốc bắt buộc |
-| --- | --- | --- | --- | --- |
-| TBD-001 | Catalog biểu cảm/câu chữ Việt–Anh dùng cho 8 output và visual specification/golden reference của Chibi 3D là gì? | Product; PRD §5.1, §14.2; DEC-006, DEC-007 | Generation contract, UI, QA golden set | Trước cam kết V1 |
-| TBD-002 | Ngôn ngữ câu chữ lấy theo app locale, do người dùng chọn hay theo cơ chế khác? Mỗi sticker có bắt buộc có chữ không? | Product; PRD §5.1, §14.2 | UI, font/rendering, generation contract, test | Trước cam kết V1 |
-| TBD-003 | Ảnh trẻ vị thành niên bị chặn hoàn toàn hay được phép theo privacy rules nghiêm ngặt hơn? | Product và Legal; PRD §8.3, §14.3 | Validation, moderation, release policy | Trước cam kết V1 |
-| TBD-004 | Retention của source, intermediate, failed job, preview, generated output và report evidence là bao lâu? Training-use policy là gì? | Product, Privacy và Legal; PRD §8.5, §14.4 | Storage, cleanup, notice/consent, deletion | Trước cam kết V1 |
-| TBD-005 | Quota tạo/tạo lại, miễn phí hay giới hạn lượt và việc giữ kết quả trước khi regenerate là gì? | Product; PRD §7.4, §14.5 | UX, cost, generation policy | Trước cam kết V1 |
-| TBD-006 | Nếu một phần trong 8 output fail moderation thì hiển thị phần an toàn, tạo bù để đủ 8 hay fail cả lần tạo? Thế nào là full-set success? | Product; PRD §7.6, §14.6 | Exact-8 invariant, job status, UI, safety | Trước cam kết V1 |
-| TBD-007 | Metric và ngưỡng định lượng về generation latency/timeout là gì? | Product sau benchmarking; PRD §4, §10.2, §14.7 | UX, capacity, verification | Trước cam kết V1 |
-| TBD-008 | MIME/format hỗ trợ, max bytes, minimum resolution, blur/light/visibility threshold và quy tắc “một chủ thể chính” là gì? | PRD §7.2/F2; đầu mối quyết định `TBD` | Input validation, error catalog, QA | `TBD` |
-| TBD-009 | Output format, dimensions, max bytes, alpha/background, quality/fidelity/bias threshold, dataset và rubric là gì? | Product; PRD §10.1, §14.7 | Output/share contract, benchmark, release | Trước cam kết V1 |
-| TBD-010 | Sticker được lưu ở app storage, Photos, Files hay storage gắn với account? Cấu trúc tập lưu, persistence và quota là gì? | Khoảng trống do DEC-003 thay DUHAT tray; đầu mối quyết định `TBD` | Data model, ownership, delete, reuse, offline | `TBD` |
-| TBD-011 | Share từ preview hay dữ liệu đã lưu? Có cần save trước? Chia sẻ một item, nhiều item hay cả tập? Format/MIME/packaging là gì? | DEC-003; đầu mối quyết định `TBD` | Native share integration, UX, analytics, test | `TBD` |
-| TBD-012 | App có yêu cầu tài khoản không? Nếu không, owner được xác định theo thiết bị thế nào? Nếu có, auth/session/recovery model là gì? | Khoảng trống của app standalone; đầu mối quyết định `TBD` | Private storage, consent, cross-device, delete, API | `TBD` |
-| TBD-013 | Kiến trúc mobile/service/job/provider/storage/moderation, API contract, data region và third-party disclosure là gì? | PRD §12 không chốt công nghệ; chủ sở hữu kiến trúc `TBD` | Technical design, security/privacy review, integration test | `TBD` |
-| TBD-014 | Job state/event contract, progress, polling/push, retry/backoff, background/kill/restart resume, cancel, idempotency và stale reconciliation là gì? | PRD §7.3, §10.2; đầu mối quyết định `TBD` | Reliability, API, mobile lifecycle | `TBD` |
-| TBD-015 | Android/iOS minimum versions, device/screen/tablet matrix là gì? | DEC-002 chỉ chốt hai nền tảng; đầu mối quyết định `TBD` | Compatibility, release QA | `TBD` |
-| TBD-016 | Report/review/takedown hoạt động thế nào trong app standalone? Ai report, report từ đâu, evidence/SLA/appeal ra sao? | PRD §8.2; đầu mối phê duyệt `TBD` | Safety operations, data retention, FR-REP | Trước phát hành |
-| TBD-017 | Analytics event schema, consent, retention, deduplication, denominator và native share semantics là gì? | PRD §11; đầu mối quyết định `TBD` | KPI, privacy, instrumentation | `TBD` |
-| TBD-018 | Delete là per-item/per-set, soft/hard; cascade tới source/output/cache/backup thế nào và SLA bao lâu? | PRD §8.5/F10; đầu mối quyết định `TBD` | Data lifecycle, storage, compliance | `TBD` |
-| TBD-019 | Sticker mặc định được chọn hay bỏ chọn? Có cho save khi chọn 0 item không? | PRD không xác định; đầu mối quyết định `TBD` | Preview/save UX, acceptance test | `TBD` |
-| TBD-020 | Preview được giữ bao lâu và ở đâu sau save failure hoặc khi người dùng rời màn hình? | PRD §7.6 chỉ yêu cầu giữ để retry; đầu mối quyết định `TBD` | Reliability, retention, storage | `TBD` |
-| TBD-021 | Stable error codes, reason taxonomy, safe user copy và retryable/non-retryable mapping là gì? | PRD §7.2, §7.6; đầu mối quyết định `TBD` | UI, API, localization, support | `TBD` |
-| TBD-022 | UX khi permission bị deny/limited/revoked, camera unavailable hoặc asset cloud-only là gì? | PRD §7.2; đầu mối quyết định `TBD` | Input flow, mobile QA | `TBD` |
-| TBD-023 | Phân biệt vật thể hợp lệ với logo, đồ chơi, sản phẩm hoặc nhân vật có thương hiệu/bản quyền như thế nào? | PRD §5.1–§5.2; đầu mối quyết định `TBD` | Scope, validation, moderation, report | `TBD` |
-| TBD-024 | Generation có yêu cầu online không? Hành vi offline, mạng yếu, chuyển mạng và resume upload/job là gì? | PRD không xác định; đầu mối quyết định `TBD` | UX, retry, data usage | `TBD` |
-| TBD-025 | Availability, concurrency, throughput, rate limit, monitoring/alerting, backup, RPO và RTO là gì? | PRD không xác định; đầu mối quyết định `TBD` | SLA, architecture, cost, operations | `TBD` |
-| TBD-026 | Accessibility target và ngôn ngữ UI/fallback font là gì? | PRD không xác định; đầu mối quyết định `TBD` | UI design, QA, localization | `TBD` |
-| TBD-027 | Giới hạn battery, memory, network và local storage của app là gì? | PRD không xác định; đầu mối quyết định `TBD` | Performance, device compatibility | `TBD` |
-| TBD-028 | Consent copy/version/evidence, thời gian lưu và notice khi chuyển dữ liệu cho bên thứ ba là gì? | PRD §7.1, §8.1, §8.5; đầu mối quyết định `TBD` | Consent UX, evidence, privacy notice, integration | `TBD` |
-| TBD-029 | Chiến lược, cấp độ, môi trường và công cụ kiểm thử/verification là gì? | PRD không xác định; đầu mối quyết định `TBD` | Software Test Plan, evidence, release verification | `TBD` |
+### UC-01 — Chọn và kiểm tra ảnh
 
-### 15.2 Mâu thuẫn/phụ thuộc cần giải quyết
+1. Người dùng mở màn hình Tạo và đọc yêu cầu đối với ảnh.
+2. Người dùng chụp hoặc chọn đúng một ảnh.
+3. Ứng dụng đặt lại trạng thái đồng ý/kiểm tra cũ và hiển thị bản xem trước cục bộ.
+4. Người dùng chấp nhận nội dung đồng ý `consent-v1.0` cho ảnh hiện tại.
+5. Ứng dụng tải lên bằng khóa lũy đẳng; máy chủ giải mã, chuẩn hóa và kiểm tra.
+6. Nếu một bước kiểm tra thất bại, giao diện giữ người dùng trong luồng, hiển thị lý do an toàn và cho chọn lại.
+7. Nếu mọi bước đều đạt, ảnh nguồn chuyển sang `ready` và nút Tạo được bật.
 
-1. **Đúng 8 output và partial moderation:** DEC-005 yêu cầu một lần tạo thành công có đúng 8 sticker, trong khi PRD chưa quyết định có hiển thị các output an toàn khi một số item bị chặn. `TBD-006` phải định nghĩa success/failure và UX cuối cùng; nếu hiển thị ít hơn 8 item thì trạng thái đó không được gọi là full-set success.
-2. **Vật thể hợp lệ và nội dung có thương hiệu/bản quyền:** Vật thể thuộc phạm vi, nhưng nhân vật có thương hiệu/bản quyền nằm ngoài phạm vi. `TBD-023` phải xác định ranh giới đối với logo, đồ chơi và sản phẩm.
-3. **Lưu riêng tư trong app độc lập:** PRD dựa vào khay sticker DUHAT, nhưng DEC-003 loại bỏ tích hợp đó. `TBD-010` và `TBD-012` phải thay thế bằng storage/ownership model cụ thể.
-4. **Report từ app standalone:** PRD giả định action menu của sticker trong hệ sinh thái DUHAT. `TBD-016` phải xác định kênh report phù hợp mà không mô tả một tính năng chưa tồn tại.
-5. **Nền output:** PRD vừa yêu cầu tách nền vừa cho phép nền trong suốt hoặc nền được Product duyệt. `TBD-009` phải chốt output contract.
+### UC-02 — Tạo và xem trước
 
-## 16. Phê duyệt
+1. Người dùng chủ động bấm Tạo.
+2. Máy chủ kiểm tra chủ sở hữu, ảnh nguồn sẵn sàng, hạn mức và quy tắc chỉ có một tác vụ hoạt động.
+3. Tác vụ vào hàng đợi; ứng dụng thăm dò mỗi 2 giây và người dùng có thể rời màn hình.
+4. Tiến trình xử lý tạo, kiểm tra và kiểm duyệt đủ 8 ảnh đầu ra.
+5. Khi thành công, hệ thống công bố nguyên tử một bộ xem trước đúng 8 ảnh; khi thất bại không công bố bộ chưa đầy đủ.
+6. Ứng dụng hiển thị toàn bộ và cho xem kỹ từng sticker.
 
-| Vai trò                 | Người phê duyệt | Trạng thái      | Ngày |
-| ------------------------ | ------------------- | ----------------- | ----- |
-| Product                  | TBD                 | Chưa phê duyệt | TBD   |
-| Privacy                  | TBD                 | Chưa phê duyệt | TBD   |
-| Legal                    | TBD                 | Chưa phê duyệt | TBD   |
-| Trust & Safety           | TBD                 | Chưa phê duyệt | TBD   |
-| Engineering/Architecture | TBD                 | Chưa phê duyệt | TBD   |
-| QA                       | TBD                 | Chưa phê duyệt | TBD   |
+### UC-03 — Chọn, lưu, xem thư viện và tải xuống
 
----
+1. Bản xem trước mặc định chọn cả 8; người dùng chọn/bỏ từng ảnh và phải chọn ít nhất 1 ảnh khi lưu.
+2. Hệ thống lưu nguyên tử phần được chọn vào thư viện riêng tư.
+3. Người dùng mở lại thư viện và xem danh sách/chi tiết từ Supabase qua FastAPI.
+4. Người dùng chọn Tải xuống trên một sticker đã lưu; ứng dụng tải PNG theo đúng chủ sở hữu và lưu
+   vào album `Duhat Gen Sticker` bằng quyền chỉ thêm ảnh vào thư viện thiết bị.
+5. Tải xuống tạo một bản sao cục bộ và không xóa bản trên đám mây.
 
-**Nguyên tắc cập nhật:** Khi một `TBD` được chốt, phải cập nhật đồng thời requirement liên quan, acceptance criteria, data/interface contract, traceability và release gate. Không được chỉ thay giá trị trong một mục riêng lẻ.
+### UC-04 — Tạo lại
+
+Tạo lại sinh một tác vụ mới từ cùng ảnh nguồn, phong cách, ngôn ngữ và phiên bản
+danh mục; tiêu thụ một lượt hạn mức. Không thay đổi bộ cũ và không tạo lại riêng từng ảnh.
+
+### UC-05 — Chia sẻ
+
+Người dùng chia sẻ một sticker đã qua kiểm duyệt từ màn hình xem trước hoặc thư
+viện. Ứng dụng tải tệp tạm, mở bảng chia sẻ của hệ điều hành và xóa tệp tạm trong
+`finally`. Ứng dụng chỉ ghi nhận việc mở bảng chia sẻ, không ghi nhận “đã gửi”.
+
+### UC-06 — Xóa
+
+Người dùng xác nhận xóa một gói đã lưu. Máy chủ xóa cứng liên kết ngay, đưa ảnh
+không còn được tham chiếu vào hàng đợi xóa và hoàn thành việc xóa dữ liệu chính
+trong 24 giờ. Tệp người dùng đã tải xuống/chia sẻ không thể bị thu hồi.
+
+### UC-07 — Báo cáo
+
+Người dùng mở trình đơn thao tác ở màn hình xem trước/thư viện, chọn lý do, thêm
+ghi chú tối đa 500 ký tự và gửi. Báo cáo vào hàng đợi duyệt; thao tác gỡ bỏ khiến
+ảnh không còn truy cập được.
+
+## 3. Yêu cầu chức năng
+
+### 3.1 Điểm vào, ảnh đầu vào và sự đồng ý
+
+| ID | Yêu cầu |
+| --- | --- |
+| FR-ENT-001 | Ứng dụng phải có điểm vào Tạo độc lập và giải thích định dạng, chất lượng, quy tắc đúng một người/thú cưng/vật thể và đúng một khuôn mặt đối với người. |
+| FR-INP-001 | Người dùng chọn đúng một ảnh bằng trình chọn ảnh của hệ thống; tắt chọn nhiều ảnh. |
+| FR-INP-002 | Người dùng chụp đúng một ảnh bằng máy ảnh. |
+| FR-INP-003 | Ứng dụng chỉ truy cập máy ảnh/thư viện trong phạm vi quyền hệ điều hành cấp và thực hiện khôi phục theo DEC-030. |
+| FR-INP-004 | Ảnh nguồn không được tự công khai, chia sẻ hoặc ghi vào dữ liệu phân tích/nhật ký. |
+| FR-CNS-001 | Ô xác nhận đồng ý chỉ xuất hiện sau khi có ảnh và được đặt lại khi ảnh thay đổi. |
+| FR-CNS-002 | Tải lên/tạo ảnh bị chặn nếu thiếu sự đồng ý cho ảnh nguồn hiện tại. |
+| FR-CNS-003 | Máy chủ lưu phiên bản nội dung đồng ý, chủ sở hữu, mã kiểm tra ảnh nguồn và `accepted_at` theo DEC-036. |
+
+### 3.2 Kiểm tra hợp lệ và an toàn đầu vào
+
+| ID | Yêu cầu |
+| --- | --- |
+| FR-VAL-001 | Máy chủ phải kiểm tra kích thước tệp, MIME, chữ ký tệp, khả năng giải mã, số khung hình, kích thước ảnh và tổng điểm ảnh; không tin phần mở rộng/siêu dữ liệu từ máy khách. |
+| FR-VAL-002 | Chỉ JPEG/PNG/WebP/HEIC/HEIF tĩnh được nhận; mọi định dạng hoặc ảnh nhiều khung hình khác bị từ chối. |
+| FR-VAL-003 | Máy chủ chuẩn hóa hướng ảnh, sRGB, RGBA/RGB; loại EXIF/XMP/GPS và tạo ảnh chuẩn dùng để đánh giá. |
+| FR-VAL-004 | Máy chủ kiểm tra độ mờ, ánh sáng, cháy sáng/tối và mức độ nhìn rõ theo Mục 8.2. |
+| FR-VAL-005 | Ảnh chỉ đạt khi có đúng một chủ thể chính thuộc loại người/thú cưng/vật thể. |
+| FR-VAL-006 | Ảnh người chỉ đạt khi có đúng một khuôn mặt rõ; nhiều người/khuôn mặt bị từ chối kèm hướng dẫn cắt/chọn lại ảnh. |
+| FR-VAL-007 | Trẻ vị thành niên, nhân vật công chúng, nhân vật có thương hiệu/bản quyền và nội dung đầu vào không an toàn bị chặn theo Mục 10. |
+| FR-VAL-008 | Ảnh nguồn chỉ chuyển sang `ready` khi kiểm tra kỹ thuật, chất lượng, chủ thể và kiểm duyệt đầu vào đều đạt. |
+| FR-VAL-009 | Khi thất bại, hệ thống trả mã ổn định và nội dung an toàn bằng Việt/Anh, giữ người dùng trong luồng và cho chọn ảnh khác. |
+
+### 3.3 Tạo ảnh và an toàn đầu ra
+
+| ID | Yêu cầu |
+| --- | --- |
+| FR-GEN-001 | Chỉ thao tác chủ động của người dùng sau khi ảnh nguồn sẵn sàng mới tạo tác vụ. |
+| FR-GEN-002 | Tiến trình xử lý dùng hợp đồng câu lệnh Chibi 3D cố định, không nhận câu lệnh/phong cách từ người dùng. |
+| FR-GEN-003 | Một bộ thành công có đúng 8 vị trí theo danh mục. |
+| FR-GEN-004 | Ảnh đầu ra dùng ngôn ngữ/phiên bản danh mục cố định tại lúc gửi yêu cầu. |
+| FR-GEN-005 | Giao diện hiển thị tiến độ/giai đoạn; chuyển màn hình hoặc khởi động lại ứng dụng không hủy/làm mất tác vụ. |
+| FR-GEN-006 | Mọi ảnh đầu ra phải đạt hợp đồng định dạng/số lượng/mã kiểm tra, kiểm duyệt ảnh và kiểm duyệt chữ trước khi công bố. |
+| FR-GEN-007 | Ảnh không hợp lệ/bị chặn được tạo bù tối đa 2 lần; sau đó toàn bộ tác vụ thất bại. |
+| FR-GEN-008 | Lỗi/quá thời gian có thao tác thử lại và không tạo bản xem trước/gói lưu chưa đầy đủ. |
+
+### 3.4 Xem trước, lưu, thư viện và tải xuống
+
+| ID | Yêu cầu |
+| --- | --- |
+| FR-PRV-001 | Ứng dụng hiển thị toàn bộ và cho xem kỹ từng sticker. |
+| FR-SEL-001 | Người dùng chọn/bỏ từng sticker; mặc định chọn cả 8; không cho lưu khi không chọn ảnh nào. |
+| FR-REG-001 | Tạo lại toàn bộ từ cùng ảnh nguồn/phong cách/ngôn ngữ; không tạo lại riêng từng ảnh. |
+| FR-SAV-001 | Lưu là thao tác của người dùng và chỉ lưu các ID đã chọn thuộc đúng bộ/chủ sở hữu. |
+| FR-SAV-002 | Gói đã lưu mặc định là riêng tư, tồn tại bền vững ở Supabase và chỉ truy cập qua FastAPI có kiểm tra chủ sở hữu. |
+| FR-SAV-003 | Lỗi lưu vẫn giữ bản xem trước để thử lại cho tới hết thời hạn 24 giờ. |
+| FR-SAV-004 | Thư viện phải liệt kê/hiển thị đúng phần đã lưu sau khi khởi động lại ứng dụng với cùng chủ sở hữu. |
+| FR-SAV-005 | Người dùng tải từng PNG đã lưu về album thiết bị; ảnh chỉ có ở bản xem trước không có nút Tải xuống. |
+| FR-SAV-006 | Tải xuống chỉ truyền ảnh đã qua kiểm duyệt và không thay đổi vòng đời bản trên đám mây. |
+| FR-DEL-001 | Người dùng xóa gói đã lưu theo DEC-026 và nhận kết quả rõ ràng. |
+
+### 3.5 Chia sẻ, báo cáo và phân tích sản phẩm
+
+| ID | Yêu cầu |
+| --- | --- |
+| FR-SHR-001 | Người dùng chia sẻ một sticker đã qua kiểm duyệt từ bản xem trước/thư viện qua bảng chia sẻ của hệ điều hành. |
+| FR-SHR-002 | Chia sẻ không cần lưu trước, không công khai bộ sticker và không phụ thuộc DUHAT. |
+| FR-SHR-003 | Ứng dụng dọn tệp tạm và không diễn giải kết quả bảng chia sẻ thành “đã gửi”. |
+| FR-REP-001 | Trình đơn thao tác ở bản xem trước/thư viện phải có các lý do báo cáo: `unauthorized_image`, `harassment`, `copyright`, `not_like_me`, `unsafe`, `other`. |
+| FR-REP-002 | Báo cáo lưu chủ sở hữu, ảnh đầu ra, lý do, ghi chú, trạng thái và dấu vết kiểm toán; ghi chú tối đa 500 ký tự và không chứa bản sao ảnh. |
+| FR-REP-003 | Đội vận hành duyệt, gỡ bỏ và xử lý khiếu nại theo DEC-024. |
+| FR-ANL-001 | Phân tích sản phẩm chỉ chạy sau khi người dùng đồng ý và chỉ nhận sự kiện/thuộc tính trong danh sách cho phép tại Mục 11. |
+| FR-ANL-002 | Dữ liệu phân tích/nhật ký không chứa byte ảnh, tên tệp, đường dẫn, khóa đối tượng, URL có chữ ký, câu lệnh thô hoặc dữ liệu thô từ nhà cung cấp. |
+
+## 4. Quy tắc nghiệp vụ và điều kiện bất biến
+
+| ID | Quy tắc |
+| --- | --- |
+| BR-001 | Một tác vụ tham chiếu đúng một ảnh nguồn `ready` thuộc chủ sở hữu. |
+| BR-002 | Một ảnh nguồn đạt yêu cầu có đúng một chủ thể chính: người, thú cưng hoặc vật thể. |
+| BR-003 | Ảnh người đạt yêu cầu có đúng một khuôn mặt rõ. |
+| BR-004 | Sự đồng ý gắn với mã kiểm tra ảnh nguồn hiện tại, không tái sử dụng khi đổi ảnh. |
+| BR-005 | Trạng thái `succeeded` luôn có 8 số thứ tự duy nhất từ 1 đến 8. |
+| BR-006 | Phong cách luôn là `chibi_3d`; không có câu lệnh tự do hoặc chỉnh sửa từng ảnh. |
+| BR-007 | Danh mục/ngôn ngữ không đổi sau khi gửi yêu cầu. |
+| BR-008 | Ảnh đầu ra chưa kiểm duyệt hoặc bị chặn không thể xem trước/lưu/tải xuống/chia sẻ. |
+| BR-009 | Phần lưu phải có ít nhất một ảnh, không trùng, cùng bộ và cùng chủ sở hữu. |
+| BR-010 | Một chủ sở hữu có tối đa một tác vụ đang hoạt động và 5 lượt tạo/tạo lại mỗi ngày UTC. |
+| BR-011 | Nhân vật công chúng, trẻ vị thành niên và nhân vật có thương hiệu/bản quyền nằm ngoài V1. |
+| BR-012 | Môi trường sản xuất không chạy quy trình mô phỏng, xác thực thiết bị cục bộ hoặc proxy OpenAI không chính thức. |
+
+## 5. Tác vụ, thử lại và hợp đồng lỗi
+
+### 5.1 Trạng thái tác vụ
+
+```text
+queued -> validating_input -> generating -> moderating_outputs -> succeeded
+   |            |                |                  |
+   +------------+----------------+------------------+-> failed
+                                       hạn chót cứng -> timed_out
+```
+
+Các trạng thái kết thúc: `succeeded`, `failed`, `timed_out`, `cancelled`. Tiến độ
+chỉ tăng từ 0–100; giai đoạn là giá trị máy đọc. Người dùng có thể hủy khi tác vụ
+ở `queued` hoặc `validating_input`; nếu yêu cầu tạo ảnh đã gửi tới nhà cung cấp,
+hệ thống chỉ ghi nhận ý định hủy và tiến trình xử lý không công bố kết quả nếu nhà
+cung cấp không hỗ trợ hủy.
+
+### 5.2 Hàng đợi, thăm dò và tiếp tục xử lý
+
+- FastAPI ghi tác vụ và thông điệp PGMQ trong cùng ranh giới giao dịch/lũy đẳng.
+- Thời gian ẩn thông điệp với tiến trình xử lý là 240 giây; tín hiệu sống mỗi 30 giây.
+- Ứng dụng di động thăm dò 2 giây khi ở tiền cảnh, chuyển thành 10 giây sau 30 giây và dừng khi tác vụ kết thúc.
+- ID tác vụ đang hoạt động lưu trong AsyncStorage; máy chủ là nguồn đúng sau khi khởi động lại.
+- Khi tiến trình xử lý/máy chủ khởi động lại, hệ thống đối soát tác vụ chưa kết thúc dựa trên mã tham chiếu của nhà cung cấp.
+
+### 5.3 Thử lại và tính lũy đẳng
+
+- `Idempotency-Key` gồm 8–128 ký tự an toàn, bắt buộc cho tải lên, tạo, tạo lại,
+  lưu, xóa và báo cáo; khóa/kết quả được giữ 24 giờ.
+- Cùng khóa và cùng mã băm yêu cầu trả kết quả cũ; cùng khóa nhưng khác mã băm trả 409.
+- Lỗi tạm thời từ nhà cung cấp được thử lại tối đa 3 lần với khoảng chờ 2/5/10 giây trong giới hạn cứng.
+- Người dùng thử lại sau lỗi sẽ tạo tác vụ mới nhưng giữ `retry_of_job_id`.
+
+### 5.4 Danh mục lỗi ổn định
+
+| Mã | HTTP | Có thể thử lại | Ý nghĩa an toàn |
+| --- | ---: | --- | --- |
+| `AUTH_REQUIRED` | 401 | Có | Phiên không hợp lệ; xác thực ẩn danh lại. |
+| `CONSENT_REQUIRED` | 400 | Không | Cần đồng ý xử lý ảnh hiện tại. |
+| `EMPTY_UPLOAD` | 400 | Không | Tệp rỗng. |
+| `IMAGE_TOO_LARGE` | 413 | Không | Vượt 10 MiB. |
+| `UNSUPPORTED_IMAGE_TYPE` | 415 | Không | Định dạng không hỗ trợ. |
+| `IMAGE_SIGNATURE_MISMATCH` | 400 | Không | Nội dung không khớp loại khai báo. |
+| `IMAGE_DECODE_FAILED` | 422 | Không | Tệp hỏng/không giải mã được toàn bộ. |
+| `MULTI_FRAME_IMAGE_UNSUPPORTED` | 422 | Không | Ảnh động/nhiều khung hình. |
+| `IMAGE_DIMENSIONS_UNSUPPORTED` | 422 | Không | Độ phân giải/số điểm ảnh/tỷ lệ không đạt. |
+| `IMAGE_TOO_BLURRY` | 422 | Không | Ảnh quá mờ. |
+| `IMAGE_TOO_DARK` / `IMAGE_TOO_BRIGHT` | 422 | Không | Ánh sáng không đạt. |
+| `SUBJECT_NOT_FOUND` | 422 | Không | Không thấy chủ thể được hỗ trợ. |
+| `MULTIPLE_SUBJECTS` | 422 | Không | Có nhiều chủ thể chính; cần cắt hoặc chọn lại ảnh. |
+| `FACE_REQUIRED` | 422 | Không | Ảnh người không có đúng một khuôn mặt rõ. |
+| `MULTIPLE_FACES` | 422 | Không | Có nhiều khuôn mặt/người. |
+| `FACE_NOT_CLEAR` | 422 | Không | Mặt quá nhỏ, mờ, bị che hoặc thiếu sáng. |
+| `MINOR_DETECTED` | 422 | Không | V1 không hỗ trợ ảnh có khả năng là trẻ vị thành niên. |
+| `PUBLIC_FIGURE_DETECTED` | 422 | Không | V1 không hỗ trợ nhân vật công chúng/người nổi tiếng. |
+| `BRANDED_CHARACTER_DETECTED` | 422 | Không | V1 không hỗ trợ nhân vật có thương hiệu/bản quyền. |
+| `INPUT_BLOCKED` / `OUTPUT_BLOCKED` | 422 | Không | Nội dung không phù hợp chính sách. |
+| `QUOTA_EXCEEDED` | 429 | Có | Đã hết hạn mức ngày; trả `retry_after`. |
+| `GENERATION_FAILED` | 502 | Có | Nhà cung cấp/tác vụ thất bại. |
+| `GENERATION_TIMEOUT` | 504 | Có | Quá 180 giây. |
+| `INVALID_OUTPUT_CONTRACT` | 502 | Có | Số lượng/định dạng/mã kiểm tra/ảnh đầu ra không hợp lệ. |
+| `SAVE_FAILED` / `DOWNLOAD_FAILED` | 503 | Có | Lỗi tạm thời; có thể thử lại. |
+
+Mọi lỗi dùng RFC 9457 Problem Details, có `request_id`, `code`, `retryable`
+và `retry_after_seconds` khi cần. Máy khách ánh xạ mã sang nội dung Việt/Anh;
+không hiển thị thông báo thô từ nhà cung cấp.
+
+## 6. Giao diện và hợp đồng API
+
+### 6.1 Ứng dụng di động/hệ điều hành
+
+- Expo ImagePicker: `mediaTypes=['images']`, `allowsMultipleSelection=false`,
+  không dựa vào cắt/nén để biến định dạng bị cấm thành định dạng hợp lệ.
+- Quyền máy ảnh/thư viện tuân theo hệ điều hành; máy khách không yêu cầu EXIF.
+- Expo MediaLibrary với quyền chỉ thêm lưu PNG vào album `Duhat Gen Sticker`.
+- Expo Sharing mở bảng chia sẻ của hệ điều hành với một tệp PNG tạm.
+
+### 6.2 REST API `/api/v1`
+
+| Phương thức | Đường dẫn | Hợp đồng chính |
+| --- | --- | --- |
+| `POST` | `/source-images` | Tệp đa phần + sự đồng ý; `Idempotency-Key`; kiểm tra hợp lệ có thẩm quyền. |
+| `GET` | `/source-images/{id}` | Tóm tắt kiểm tra theo chủ sở hữu. |
+| `POST` | `/generation-jobs` | Tạo tác vụ từ ảnh nguồn `ready`. |
+| `GET` | `/generation-jobs?active=true` | Tiếp tục/đối soát tác vụ đang hoạt động. |
+| `GET` | `/generation-jobs/{id}` | Trạng thái/giai đoạn/tiến độ/lỗi/ID bộ ảnh. |
+| `POST` | `/generation-jobs/{id}/regenerate` | Tác vụ tạo lại toàn bộ. |
+| `POST` | `/generation-jobs/{id}/cancel` | Ghi nhận ý định hủy. |
+| `GET` | `/sticker-sets/{id}` | Bản xem trước đúng 8 ảnh đã qua kiểm duyệt. |
+| `POST` | `/sticker-sets/{id}/save` | Lưu phần đã chọn, không rỗng và không trùng. |
+| `GET` | `/saved-packs` | Phân trang bằng con trỏ, 20 mục/trang, theo chủ sở hữu. |
+| `GET` | `/saved-packs/{id}` | Chi tiết phần đã lưu. |
+| `DELETE` | `/saved-packs/{id}` | Yêu cầu xóa cứng; trả 204. |
+| `GET` | `/stickers/{id}/asset` | Truyền PNG theo chủ sở hữu; riêng tư/không lưu đệm. |
+| `POST` | `/reports` | Gửi báo cáo cho ảnh đầu ra đang xem được. |
+| `GET` | `/reports/{id}` | Chủ sở hữu xem trạng thái báo cáo của mình. |
+| `POST` | `/analytics/events` | Nhận lô tối đa 20 sự kiện đã được cho phép sau khi người dùng đồng ý. |
+| `GET` | `/health/live` | Kiểm tra tiến trình còn sống. |
+| `GET` | `/health/ready` | Kiểm tra mức sẵn sàng của cấu hình CSDL/hàng đợi/kho lưu trữ/nhà cung cấp. |
+
+### 6.3 Cổng giao tiếp với nhà cung cấp
+
+```python
+class InputAssessmentPort(Protocol):
+    async def assess(self, request: InputAssessmentRequest) -> InputAssessment: ...
+
+class GenerationPort(Protocol):
+    async def start(self, request: GenerationRequest) -> ProviderJobRef: ...
+    async def get(self, ref: ProviderJobRef) -> ProviderJobSnapshot: ...
+
+class OutputAssessmentPort(Protocol):
+    async def assess(self, request: OutputAssessmentRequest) -> OutputAssessment: ...
+```
+
+Miền nghiệp vụ/API không được chứa kiểu phản hồi riêng của nhà cung cấp. Phản hồi
+thô chỉ tồn tại trong bộ nhớ khi xử lý yêu cầu/tác vụ và bị lược bỏ khỏi nhật ký.
+
+## 7. Dữ liệu, quyền sở hữu và vòng đời
+
+### 7.1 Thực thể lô-gic
+
+`source_images`, `consent_records`, `validation_results`, `generation_jobs`,
+`sticker_sets`, `sticker_variants`, `saved_packs`, `saved_pack_items`,
+`moderation_decisions`, `reports`, `analytics_events`, `idempotency_records`,
+`deletion_requests` và các thông điệp hàng đợi.
+
+Mọi thực thể người dùng có `owner_id`; mọi ảnh đầu ra có `moderation_status`,
+SHA-256, MIME, số byte, kích thước, phiên bản chính sách/mô hình/danh mục và dấu thời gian.
+
+### 7.2 Quyền sở hữu và truy cập
+
+- Chủ sở hữu ở môi trường sản xuất là `auth.users.id` của tài khoản Supabase ẩn danh lấy từ JWT đã xác minh.
+- Ứng dụng di động không truy cập trực tiếp Postgres/Storage cho dữ liệu nghiệp vụ; FastAPI dùng
+  khóa bí mật máy chủ, luôn thêm điều kiện chủ sở hữu và trả 404 khi truy vấn chéo chủ sở hữu.
+- Bật RLS cho mọi bảng được công bố; hai kho `source-images` và `generated-stickers` đều riêng tư.
+- Khóa dịch vụ/bí mật chỉ ở máy chủ/tiến trình xử lý; khóa công khai được phép có trong ứng dụng di động.
+- Cài lại/đăng xuất tài khoản ẩn danh làm mất quyền truy cập thư viện đám mây; giao diện phải
+  cảnh báo trước khi đăng xuất/xóa dữ liệu ứng dụng. Đây là giới hạn V1 đã chốt.
+
+### 7.3 Thời hạn lưu giữ
+
+| Dữ liệu | Thời hạn lưu giữ |
+| --- | --- |
+| Ảnh nguồn gốc | Xóa trong 24 giờ sau khi tác vụ cuối cùng kết thúc. |
+| Ảnh chuẩn/trung gian/tạm của nhà cung cấp | Xóa trong 1 giờ sau khi bước/tác vụ kết thúc. |
+| Ảnh ứng viên lỗi/bị chặn | Xóa trong 1 giờ. |
+| Bản xem trước/ảnh đầu ra chưa lưu | 24 giờ sau khi tác vụ kết thúc. |
+| PNG và siêu dữ liệu đã lưu | Tới khi người dùng xóa gói. |
+| Siêu dữ liệu tác vụ/kiểm tra/kiểm duyệt | 30 ngày; không chứa ảnh/tham chiếu nhạy cảm. |
+| Bằng chứng đồng ý | 365 ngày sau khi xóa ảnh nguồn. |
+| Báo cáo và bằng chứng kiểm toán tối thiểu | 180 ngày sau khi đóng báo cáo. |
+| Nhật ký ứng dụng/bảo mật | 30 ngày. |
+| Sự kiện phân tích thô | 90 ngày; bản tổng hợp theo ngày 13 tháng. |
+| Bản ghi lũy đẳng | 24 giờ. |
+| Yêu cầu xóa dữ liệu chính | Hoàn thành trong 24 giờ; bản sao lưu tự hết hạn tối đa 30 ngày. |
+
+Cấm huấn luyện, tinh chỉnh hoặc đánh giá mô hình bằng ảnh nguồn/đầu ra của người
+dùng. Đánh giá chuẩn chỉ dùng bộ dữ liệu có giấy phép/sự đồng ý riêng, không lấy
+từ môi trường sản xuất.
+
+## 8. Hợp đồng ảnh đầu vào, đầu ra và chất lượng
+
+### 8.1 Yêu cầu kỹ thuật đối với ảnh đầu vào
+
+| Thuộc tính | Giá trị bắt buộc |
+| --- | --- |
+| Số tệp | 1 |
+| Định dạng | JPEG, PNG, WebP, HEIC hoặc HEIF tĩnh |
+| Dung lượng tối đa | 10 MiB (10.485.760 byte) |
+| Kích thước tối thiểu | Cả chiều rộng và chiều cao ≥512 px |
+| Kích thước tối đa | Mỗi chiều ≤8192 px |
+| Tổng điểm ảnh tối đa | 40.000.000 |
+| Tỷ lệ khung hình | 1:4 đến 4:1 |
+| Khung hình | `n_frames == 1`, `is_animated == false`; từ chối MIME chuỗi HEIF |
+| Giải mã | Giải mã toàn bộ điểm ảnh, kiểm tra tính toàn vẹn và chặn bom giải nén |
+| Ảnh chuẩn | Xoay theo EXIF, sRGB, RGB/RGBA 8-bit; loại toàn bộ siêu dữ liệu |
+
+### 8.2 Ngưỡng chất lượng/chủ thể
+
+Các chỉ số được tính trên ảnh chuẩn có cạnh dài thu về 1024 px, không phóng lớn ảnh nhỏ:
+
+| Bước kiểm tra | Ngưỡng |
+| --- | --- |
+| Độ mờ | Phương sai Laplacian ≥100,0 trên độ chói. |
+| Ánh sáng | Trung vị độ chói 35–220; điểm ảnh tối `<10` ≤35%; điểm ảnh cháy sáng `>245` ≤35%. |
+| Chủ thể chính | Độ tin cậy ≥90%, diện tích hộp bao ≥15% ảnh. |
+| Nhiều chủ thể | Bất kỳ chủ thể thứ hai có độ tin cậy ≥85% và diện tích ≥10% đều làm ảnh bị từ chối. |
+| Khuôn mặt người | Đúng 1 khuôn mặt có độ tin cậy ≥99%, diện tích mặt ≥8%, độ nét/độ sáng ≥50, trị tuyệt đối góc quay/ngẩng ≤30°. |
+| Khuôn mặt bị che | Rekognition trả `FaceOccluded=true` với độ tin cậy ≥80% thì từ chối. |
+| Trẻ vị thành niên | Nếu khuôn mặt có `AgeRange.Low < 18` thì từ chối theo hướng thận trọng. |
+| Người nổi tiếng | Kết quả RecognizeCelebrities có độ tin cậy ≥90% thì từ chối. |
+| Thương hiệu/nhân vật | Custom Labels có độ tin cậy ≥90% thì từ chối. |
+| An toàn đầu vào | Nhãn cấm của Rekognition có độ tin cậy ≥80% hoặc OpenAI Moderation trả `flagged=true` thì từ chối. |
+
+Tổ hợp người và thú cưng, người và vật thể, hoặc nhiều thú cưng/vật thể đạt ngưỡng
+nhiều chủ thể đều bị từ chối. Thành phần hậu cảnh không được tính là chủ thể nếu
+không đạt cả ngưỡng độ tin cậy và diện tích.
+
+### 8.3 Danh mục cố định `catalog-chibi-v1`
+
+| Thứ tự | Khóa | Tiếng Việt | Tiếng Anh | Biểu cảm/hành động |
+| ---: | --- | --- | --- | --- |
+| 1 | `hello` | Xin chào! | Hi! | Vẫy tay/mỉm cười |
+| 2 | `yay` | Tuyệt quá! | Yay! | Ăn mừng |
+| 3 | `laugh` | Ha ha! | Haha! | Cười lớn |
+| 4 | `love` | Yêu quá! | Love it! | Mắt trái tim/cử chỉ trái tim |
+| 5 | `thanks` | Cảm ơn! | Thanks! | Cúi đầu/cử chỉ cảm ơn |
+| 6 | `sorry` | Xin lỗi! | Sorry! | Hối lỗi |
+| 7 | `wow` | Wow! | Wow! | Ngạc nhiên |
+| 8 | `bye` | Tạm biệt! | Bye! | Vẫy tay chào tạm biệt |
+
+Chữ dùng Noto Sans Bold, được kết xuất chính xác sau bước tạo ảnh nếu chữ do nhà
+cung cấp tạo không đạt. V1 không có sticker không chữ.
+
+### 8.4 Yêu cầu tạo ảnh
+
+- Điểm cuối: API chỉnh sửa ảnh chính thức của OpenAI Images.
+- Mô hình: `gpt-image-1.5`; `input_fidelity=high`, `quality=high`,
+  `size=1024x1024`, `background=transparent`, `output_format=png`.
+- Câu lệnh lấy từ cấu hình phía máy chủ `prompt-chibi-v1`, khóa phong cách/vị trí/an toàn;
+  không có câu lệnh người dùng và không ghi câu lệnh thô vào nhật ký.
+- Tối đa 2 lệnh gọi nhà cung cấp đồng thời cho mỗi tác vụ; ghép đúng 8 ảnh theo thứ tự.
+- Dự án OpenAI dùng điểm cuối lưu trú dữ liệu Singapore khi tài khoản đã được cấp
+  quyền kiểm soát dữ liệu nâng cao; bật ZDR. Không được phát hành nếu cơ chế này
+  chưa hoạt động.
+
+### 8.5 Ảnh đầu ra
+
+| Thuộc tính | Yêu cầu |
+| --- | --- |
+| Số lượng | Chính xác 8 số thứ tự duy nhất từ 1 đến 8 |
+| Phong cách | `chibi_3d`, không chân thực như ảnh chụp |
+| Định dạng | Chữ ký PNG hợp lệ, 1024×1024, RGBA 8-bit sRGB |
+| Nền | Trong suốt; có kênh alpha và ≥5% điểm ảnh có alpha <255 |
+| Dung lượng tối đa | 4 MiB/ảnh |
+| Chữ | Đúng câu chữ trong danh mục, đọc được khi kết xuất ở 128×128 |
+| Tính toàn vẹn | SHA-256 gồm 64 ký tự thập lục phân, được xác minh trước/sau khi tải lên Storage |
+| An toàn | Ảnh và chữ đã kết xuất đều đạt kiểm duyệt đầu ra |
+| Riêng tư | Đường dẫn đối tượng riêng tư `{owner_id}/outputs/{set_id}/{ordinal}-{id}.png` |
+
+### 8.6 Ngưỡng chất lượng để phát hành
+
+Trên bộ đánh giá có phiên bản gồm tối thiểu 300 ảnh nguồn có quyền sử dụng, cân
+bằng giữa người/thú cưng/vật thể và các nhóm màu da/giới/tuổi trưởng thành:
+
+- ≥85% sticker đạt điểm giữ đặc trưng chủ thể ≥4/5; không nhóm nào thấp hơn 80%.
+- ≥90% sticker đạt điểm tách nền ≥4/5; chữ chính xác và đọc được =100%.
+- Tỷ lệ chấp nhận sai đối với nhiều người/nhân vật công chúng/trẻ vị thành niên/
+  an toàn ≤1% trên bộ dữ liệu âm tính; độ bao phủ phát hiện nhiều người ≥99%, các nhóm chặn ≥95%.
+- Chênh lệch tỷ lệ đạt/giữ đặc trưng giữa các nhóm nhân khẩu học ≤5 điểm phần trăm.
+- 100% bộ thành công đúng 8 ảnh, đúng danh mục và đạt hợp đồng PNG/alpha/mã kiểm tra.
+
+## 9. Yêu cầu phi chức năng
+
+### 9.1 Bảo mật và quyền riêng tư
+
+| ID | Yêu cầu |
+| --- | --- |
+| NFR-SEC-001 | Dùng TLS 1.2+ khi truyền; dữ liệu tại nhà cung cấp/kho lưu trữ/cơ sở dữ liệu được mã hóa khi lưu. |
+| NFR-SEC-002 | Xác minh đơn vị phát hành, đối tượng, chữ ký và hạn JWT; cô lập chủ sở hữu và cấp quyền tối thiểu. |
+| NFR-SEC-003 | Chặn giả mạo MIME, bom giải nén, duyệt đường dẫn, phát lại yêu cầu, SVG/tệp đa nghĩa độc hại và dữ liệu quá cỡ. |
+| NFR-SEC-004 | Bí mật không được vào kho mã/ứng dụng di động/nhật ký; luân chuyển tối thiểu mỗi 90 ngày và khi có sự cố. |
+| NFR-PRI-001 | Không ghi byte ảnh nguồn/đầu ra hoặc tham chiếu nhạy cảm vào nhật ký/dữ liệu phân tích. |
+| NFR-PRI-002 | Không huấn luyện bằng nội dung người dùng; thông báo về nhà cung cấp có trong nội dung đồng ý. |
+| NFR-PRI-003 | Tự động thực thi thời hạn lưu giữ/xóa và có bằng chứng kiểm toán. |
+
+### 9.2 Hiệu năng
+
+| Chỉ số | Mục tiêu |
+| --- | --- |
+| API đọc p95 | ≤500 ms, không tính thời gian truyền ảnh/nhà cung cấp |
+| API ghi p95 | ≤1 giây trước khi đưa vào hàng đợi/gọi nhà cung cấp |
+| Kiểm tra ảnh có thẩm quyền p95 | ≤6 giây sau khi tải lên hoàn tất |
+| Tạo ảnh p50 / p95 | ≤60 giây / ≤120 giây |
+| Giới hạn cứng tạo ảnh | 180 giây |
+| Trang đầu thư viện p95 | ≤1 giây cho 20 gói |
+| Thời gian nhận byte đầu tiên của ảnh p95 | ≤1 giây trên mạng dịch vụ |
+| Phiên không gặp sự cố | ≥99,5% |
+
+### 9.3 Độ sẵn sàng, năng lực và khôi phục
+
+- Độ sẵn sàng API theo tháng ≥99,5%, không tính bảo trì có kế hoạch đã báo trước.
+- Năng lực cơ sở là 100 tác vụ đồng thời, 20 yêu cầu/phút; tiến trình xử lý tự co giãn từ 2–10 bản sao.
+- Cảnh báo nếu độ sâu hàng đợi >50 trong 10 phút, tỷ lệ lỗi tác vụ >5%/5 phút hoặc p95 >120 giây.
+- Supabase PITR/sao lưu hằng ngày: RPO 24 giờ; quy trình khôi phục có tài liệu: RTO 4 giờ.
+- Khi nhà cung cấp gián đoạn: đóng an toàn, giữ tác vụ ở trạng thái có thể thử lại,
+  không chuyển sang nhà cung cấp/proxy chưa được phê duyệt.
+
+### 9.4 Nền tảng, khả năng tiếp cận và bản địa hóa
+
+- Expo SDK 54, React Native 0.81, React 19.1; dùng Node 20.19+ để dựng ứng dụng.
+- Android 7/API 24+, SDK biên dịch/đích 36; kiểm thử API 24, 29, 33, 36.
+- iOS 15.1+; kiểm thử 15.1, 17.x, 18.x; điện thoại dọc và máy tính bảng có bố cục thích ứng.
+- WCAG 2.2 AA; VoiceOver/TalkBack; cỡ chữ động tới 200%; độ tương phản ≥4,5:1;
+  vùng chạm ≥44pt trên iOS/48dp trên Android; trình đọc màn hình phải thông báo tiến độ/lỗi.
+- Giao diện/nội dung/mã có tiếng Việt và tiếng Anh; phông dự phòng Noto Sans.
+
+### 9.5 Ngân sách tài nguyên/mạng của ứng dụng di động
+
+- Bộ nhớ thường trú cao nhất ≤350 MiB khi tải lên/tạo/xem trước.
+- Bộ nhớ đệm do ứng dụng quản lý ≤100 MiB và dọn ảnh nguồn/tệp chia sẻ/tệp tải xuống tạm trong 1 giờ.
+- Không giữ ảnh base64 trong trạng thái React/nhật ký; truyền tệp theo luồng khi tải lên/tải xuống.
+- Một ảnh nguồn tải lên tối đa 10 MiB; tải một bộ theo từng ảnh ≤4 MiB.
+- Dừng thăm dò nền khi tác vụ kết thúc/ngoại tuyến; luồng 3 phút tiêu thụ pin ≤3%
+  trên thiết bị đánh giá có pin 4000mAh.
+- Khi ngoại tuyến: hiển thị khung ứng dụng/siêu dữ liệu thư viện đã lưu đệm; thao tác thay đổi dữ liệu báo cần mạng
+  và chỉ thử lại khi người dùng chủ động, không tự xếp hàng dài hạn để tải ảnh lên.
+
+## 10. Tin cậy, an toàn và tuân thủ
+
+### 10.1 Nhà cung cấp dịch vụ đánh giá
+
+- AWS Rekognition Singapore: `DetectLabels`, `DetectFaces`,
+  `RecognizeCelebrities`, `DetectModerationLabels`, thuộc tính ảnh.
+- AWS Rekognition Custom Labels: mô hình danh sách chặn có phiên bản cho biểu trưng/
+  nhân vật có thương hiệu hoặc bản quyền; bộ dữ liệu huấn luyện có quyền sử dụng và được duyệt hằng quý.
+- OpenAI Moderations nhận ảnh chuẩn và ảnh/chữ đầu ra; giá trị `flagged` từ nhà
+  cung cấp hoặc ngưỡng nhóm nội bộ sẽ làm nội dung bị chặn.
+- Khi các nhà cung cấp không đồng thuận, hệ thống đóng an toàn. Lý do hiển thị cho
+  người dùng không tiết lộ độ tin cậy/phân loại chi tiết có thể giúp né kiểm duyệt.
+
+### 10.2 An toàn trẻ em
+
+V1 không xử lý ảnh người có khả năng dưới 18 tuổi. Bất kỳ khoảng tuổi nào chạm
+dưới 18 đều bị chặn. Tín hiệu tình dục/trẻ vị thành niên tạo cảnh báo bảo mật
+không chứa ảnh trong nhật ký ứng dụng; nghĩa vụ lưu nội dung nghi là CSAM của nhà
+cung cấp phải được nêu trong nội dung đồng ý/thông báo quyền riêng tư. Máy khách
+không có cơ chế ghi đè thủ công.
+
+### 10.3 Vận hành xử lý báo cáo
+
+- Báo cáo đi qua `submitted -> triaged -> actioned|closed -> appealed|final`.
+- Trường hợp khẩn cấp/trẻ em/mối đe dọa đáng tin cậy: phân loại ≤24 giờ; báo cáo khác ≤72 giờ.
+- Hành động gồm giữ nguyên, chặn ảnh, xóa gói/ảnh nguồn theo chính sách, đình chỉ
+  chủ sở hữu hoặc chuyển Pháp chế/cơ quan thực thi pháp luật khi bắt buộc.
+- Nhân sự vận hành dùng bảng điều khiển có quyền tối thiểu, mọi thao tác đọc/hành
+  động đều được kiểm toán; bằng chứng giữ 180 ngày. Người dùng xem trạng thái và
+  gửi một khiếu nại tối đa 500 ký tự trong 14 ngày.
+
+## 11. Phân tích sản phẩm và khả năng quan sát
+
+### 11.1 Danh sách sự kiện cho phép
+
+`sticker_screen_opened`, `consent_confirmed`, `photo_source_selected`,
+`validation_passed`, `validation_failed`, `generation_started`,
+`generation_completed`, `generation_failed`, `generation_timed_out`,
+`sticker_set_regenerated`, `sticker_selected`, `sticker_deselected`,
+`pack_saved`, `pack_save_failed`, `native_share_sheet_invoked`,
+`sticker_download_invoked`, `sticker_download_completed`,
+`sticker_download_failed`, `pack_deleted`, `sticker_reported`.
+
+Thuộc tính cho phép: `event_version`, `occurred_at`, `session_id` ngẫu nhiên,
+`locale`, `platform`, `app_version`, `reason_category` không nhạy cảm, nhóm thời
+lượng, số ảnh đã chọn và kết quả tác vụ. Không có định danh ảnh/tệp/nhà cung cấp.
+
+Sự kiện thô lưu 90 ngày; dữ liệu tổng hợp theo ngày lưu 13 tháng. Người dùng có
+nút bật/tắt phân tích; khi không đồng ý, hệ thống ngừng sự kiện sản phẩm mới nhưng
+không tắt nhật ký bảo mật/vận hành bắt buộc.
+
+### 11.2 KPI
+
+- Tỷ lệ hoàn tất tạo ảnh = tác vụ thành công / tác vụ đã gửi.
+- Tỷ lệ từ tạo đến lưu = tác vụ có gói được lưu / tác vụ thành công.
+- Tỷ lệ lỗi kiểm tra theo nhóm lý do an toàn / ảnh nguồn đã tải lên.
+- Tỷ lệ tạo lại = tác vụ tạo lại / tác vụ gốc thành công.
+- Tỷ lệ mở bảng chia sẻ = số bộ thành công duy nhất có mở bảng chia sẻ / số bộ thành công.
+- Tỷ lệ tải xuống hoàn tất = lượt hoàn tất / lượt bắt đầu tải xuống.
+- Tỷ lệ dùng lại trong 7 ngày = gói đã lưu được mở/chia sẻ/tải xuống trong ngày 2–7 / gói đã lưu.
+- Tỷ lệ chặn/báo cáo an toàn theo tổng lượt đánh giá/ảnh đầu ra có thể xem.
+
+Không dùng chỉ số “gửi trên mỗi cuộc trò chuyện” vì ứng dụng không có khung chat/cuộc trò chuyện.
+
+## 12. Chấp nhận, xác minh và điều kiện phát hành
+
+### 12.1 Tiêu chí chấp nhận
+
+| ID | Điều kiện / hành động | Kết quả mong đợi |
+| --- | --- | --- |
+| AC-001 | Người dùng mới mở màn hình Tạo | Hiển thị đúng phạm vi ảnh, nội dung đồng ý và thao tác máy ảnh/thư viện. |
+| AC-002 | Chưa đồng ý hoặc đổi ảnh | Không tải lên/tạo ảnh; trạng thái đồng ý cũ được đặt lại. |
+| AC-003 | JPEG/PNG/WebP/HEIC/HEIF tĩnh đạt mọi ngưỡng | Ảnh nguồn chuyển `ready`. |
+| AC-004 | Định dạng cấm, giả mạo, hỏng hoặc nhiều khung hình | Từ chối trước khi gọi nhà cung cấp và không lưu ảnh lâu dài. |
+| AC-005 | Đúng một người với một khuôn mặt trưởng thành, rõ và không phải người nổi tiếng | Có thể đạt bước kiểm tra chủ thể/an toàn. |
+| AC-006 | Đúng một thú cưng hoặc vật thể được hỗ trợ | Có thể đạt bước kiểm tra chủ thể/an toàn. |
+| AC-007 | Không có/nhiều hơn một chủ thể, nhiều khuôn mặt hoặc cảnh trộn đạt ngưỡng | Từ chối với nội dung an toàn, nêu rõ cách xử lý. |
+| AC-008 | Phát hiện trẻ vị thành niên/nhân vật công chúng/thương hiệu/nội dung không an toàn | Không tạo tác vụ. |
+| AC-009 | Ảnh nguồn sẵn sàng và người dùng bấm Tạo | Tác vụ bền vững được gửi; tiến độ và tiếp tục theo dõi hoạt động đúng. |
+| AC-010 | Tác vụ thành công | Bản xem trước có đúng 8 PNG Chibi theo danh mục/ngôn ngữ và đã qua kiểm duyệt. |
+| AC-011 | Một ảnh vẫn không hợp lệ/bị chặn sau 2 lần tạo bù | Toàn bộ tác vụ thất bại, không xem trước/lưu bộ chưa đầy đủ. |
+| AC-012 | Người dùng chọn ít nhất một ảnh và bấm Lưu | Chỉ phần đã chọn được lưu riêng tư; thử lại có tính lũy đẳng. |
+| AC-013 | Lưu lỗi | Bản xem trước còn tới hết 24 giờ và có thể thử lại. |
+| AC-014 | Khởi động lại ứng dụng với cùng chủ sở hữu ẩn danh | Khôi phục tác vụ đang hoạt động và thư viện đã lưu. |
+| AC-015 | Người dùng tải một ảnh đã lưu | PNG đúng MIME/mã kiểm tra vào album hệ điều hành; bản đám mây còn nguyên. |
+| AC-016 | Người dùng chia sẻ một ảnh đang xem được | Bảng chia sẻ hệ điều hành mở cho một PNG; gói không bị công khai. |
+| AC-017 | Người dùng xóa gói | Không còn liệt kê/đọc được gói; xóa dữ liệu chính hoàn tất ≤24 giờ. |
+| AC-018 | Đọc/liệt kê/truy cập ảnh/báo cáo chéo chủ sở hữu | Trả 404, không lộ sự tồn tại của tài nguyên. |
+| AC-019 | Người dùng báo cáo ảnh đầu ra | Báo cáo theo chủ sở hữu vào hàng đợi và có trạng thái/SLA. |
+| AC-020 | Người dùng không đồng ý phân tích hoặc dữ liệu chứa trường bị cấm | Không nhận sự kiện sản phẩm/dữ liệu bị từ chối. |
+| AC-021 | Bộ kiểm tra trước phát hành | Đạt các ngưỡng chất lượng, an toàn, độ trễ, bảo mật và nền tảng. |
+
+### 12.2 Các lớp xác minh
+
+- Đơn vị: bộ giải mã, ngưỡng, máy trạng thái, chính sách, mã băm và ánh xạ lỗi.
+- Hợp đồng: kho dữ liệu, bộ chuyển đổi AWS/OpenAI, lược đồ REST và dữ liệu mẫu nhà cung cấp.
+- Tích hợp: FastAPI, CSDL/Storage/Queues của Supabase và nhà cung cấp sandbox/mô phỏng.
+- E2E trên thiết bị: ma trận Android/iOS cho máy ảnh, trình chọn ảnh, tải xuống và chia sẻ.
+- Đánh giá chuẩn: bộ dữ liệu đại diện hợp pháp, thiên lệch, giữ đặc trưng, an toàn và độ trễ.
+- Bảo mật/quyền riêng tư: cô lập xác thực, RLS, quét bí mật/nhật ký, lạm dụng, phát lại và bom giải nén.
+
+Độ bao phủ máy chủ ≥85%, ứng dụng di động ≥80%; các nhánh quan trọng về đồng ý,
+chủ sở hữu, an toàn, công bố và xóa =100%. TDD là đặc tả kiểm thử chính.
+
+### 12.3 Điều kiện phát hành
+
+Không phát hành nếu bất kỳ điều kiện nào không đạt:
+
+1. Mã kiểm tra PRD không đổi và truy vết SRS/tài liệu kế tiếp đạt yêu cầu.
+2. Không còn mô phỏng/xác thực cục bộ/proxy trong môi trường tiền sản xuất/sản xuất.
+3. Dự án OpenAI chính thức có ZDR, quyền kiểm soát dữ liệu ảnh nâng cao và khu vực được phê duyệt.
+4. AWS/Supabase đặt tại Singapore; DPA, thông báo quyền riêng tư và nội dung đồng ý đã công bố.
+5. Kiểm thử ảnh đầu vào, an toàn, đúng 8 ảnh, kiểm duyệt đầu ra và cô lập chủ sở hữu đều đạt.
+6. Trực vận hành báo cáo/gỡ bỏ hoạt động và diễn tập SLA đạt yêu cầu.
+7. Tác vụ lưu giữ/xóa và thời hạn bản sao lưu đã được kiểm chứng.
+8. Ngưỡng chất lượng/thiên lệch/hiệu năng đạt trên bộ dữ liệu có phiên bản.
+9. Ma trận Android/iOS, khả năng tiếp cận và kiểm tra nhanh độ ổn định đạt yêu cầu.
+10. Giám sát, cảnh báo, diễn tập khôi phục RPO/RTO và quy trình quay lui đạt yêu cầu.
+
+## 13. Truy vết PRD → SRS
+
+| PRD | SRS |
+| --- | --- |
+| F1 | FR-INP-001..004, Mục 8.1 |
+| F2 | FR-VAL-001..009, Mục 8.1..8.2, Mục 10 |
+| F3 | FR-CNS-001..003, DEC-036 |
+| F4 | FR-GEN-002, Mục 8.4..8.5 |
+| F5 | FR-GEN-003..004, DEC-005, Mục 8.3 |
+| F6 | FR-VAL-007..008, FR-GEN-006..007, Mục 10 |
+| F7 | FR-PRV/SEL/REG/SAV, UC-02..04 |
+| F8 | DEC-010, FR-SAV-002..006; thư viện độc lập thay khay DUHAT |
+| F9 | DEC-003/019, FR-SHR-001..003; bảng chia sẻ hệ điều hành thay thao tác gửi trong khung chat |
+| F10 | FR-DEL-001, FR-REP-001..003 |
+| PRD §8 | Mục 7, 9.1, 10, 11 |
+| PRD §10 | Mục 8.6, 9 |
+| PRD §11 | Mục 11; loại chỉ số theo cuộc trò chuyện theo DEC-003 |
+| PRD §14.1..7 | DEC-004, DEC-006..007, DEC-012..018 |
+
+## 14. Nguồn kỹ thuật đã nghiên cứu
+
+- [Ma trận nền tảng/phiên bản Expo SDK 54](https://docs.expo.dev/versions/v54.0.0/)
+- [Expo ImagePicker SDK 54](https://docs.expo.dev/versions/v54.0.0/sdk/imagepicker/)
+- [Expo MediaLibrary SDK 54](https://docs.expo.dev/versions/v54.0.0/sdk/media-library/)
+- [Đăng nhập ẩn danh Supabase](https://supabase.com/docs/guides/auth/auth-anonymous)
+- [Bảo mật cấp hàng của Supabase](https://supabase.com/docs/guides/database/postgres/row-level-security)
+- [Truy cập Supabase Storage riêng tư](https://supabase.com/docs/guides/storage/buckets/fundamentals)
+- [Supabase Queues/PGMQ](https://supabase.com/docs/guides/queues)
+- [OpenAI Images API](https://developers.openai.com/api/reference/resources/images)
+- [OpenAI Moderations API](https://developers.openai.com/api/reference/resources/moderations)
+- [Kiểm soát và nơi lưu trú dữ liệu của OpenAI API](https://developers.openai.com/api/docs/guides/your-data)
+- [Khả năng của Amazon Rekognition](https://docs.aws.amazon.com/rekognition/)
+- [Điểm cuối/hạn mức Amazon Rekognition tại Singapore](https://docs.aws.amazon.com/general/latest/gr/rekognition.html)
+- [Amazon Rekognition Custom Labels](https://docs.aws.amazon.com/rekognition/latest/customlabels-dg/what-is.html)
+- [Hợp đồng ảnh/khung hình của Pillow](https://pillow.readthedocs.io/en/stable/reference/Image.html)
+- [Khả năng hỗ trợ phần bổ trợ/khung hình của pillow-heif](https://pillow-heif.readthedocs.io/en/stable/reference/HeifImagePlugin.html)
+
+## 15. Phê duyệt và thay đổi
+
+Phiên bản 1.0 đóng toàn bộ quyết định triển khai V1. Thay đổi yêu cầu hoặc ngưỡng
+sau mốc chuẩn phải có ID quyết định mới, phân tích tác động cho Kiến trúc, Bàn
+giao, Danh sách công việc và TDD, cùng kế hoạch chuyển đổi dữ liệu/kiểm thử. Không
+sửa PRD để hợp thức hóa thay đổi ở tài liệu kế tiếp.

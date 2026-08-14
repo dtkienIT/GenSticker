@@ -1,581 +1,386 @@
-# Bàn giao triển khai MVP — Duhat Gen Sticker
+# Bàn giao triển khai MVP — Duhat Gen Sticker V1
 
-> **Trạng thái:** Tài liệu bàn giao kỹ thuật cho bản MVP/prototype đã triển khai.  
-> **Nguồn yêu cầu:** `PRD_Sticker_Generation_V1_VI.md` và `SRS_Sticker_Generation_V1_VI.md`.  
-> **Lưu ý:** PRD và SRS vẫn đang ở trạng thái Draft. Các quyết định tạm trong tài liệu này nhằm giúp đội phát triển dựng và tích hợp MVP; chúng không tự động trở thành quyết định phát hành chính thức.
+## 0. Quy ước bàn giao
 
-## 1. Kết quả mong đợi
+| Trường | Giá trị |
+| --- | --- |
+| Phiên bản | 1.0 |
+| Ngày chốt chuẩn | 14/08/2026 |
+| Yêu cầu | `SRS_Sticker_Generation_V1_VI.md` v1.0 |
+| Kiến trúc | `Software_Architecture_Technical_Design.md` v1.0 |
+| Nguồn sản phẩm | PRD tiếng Việt, bất biến |
+| Trạng thái bàn giao | Bản mẫu hoạt động; Mục tiêu V1 chưa đạt điều kiện phát hành |
 
-MVP cần chứng minh được toàn bộ luồng sản phẩm bao quanh pipeline AI/image processing trên Android và iOS:
+Tài liệu này bàn giao mã nguồn hiện tại và đường triển khai đã chốt. Yêu cầu, nhà
+cung cấp, ngưỡng, thời hạn lưu giữ, nền tảng và chiến lược kiểm thử không còn là
+quyết định mở; phần chưa tồn tại trong mã nguồn được gọi rõ là **phần triển khai còn thiếu**.
 
-1. Người dùng chụp hoặc chọn đúng một ảnh.
-2. Người dùng xác nhận họ sở hữu hoặc có quyền sử dụng ảnh.
-3. Hệ thống kiểm tra ảnh đầu vào.
-4. Người dùng chủ động bắt đầu tạo.
-5. Ứng dụng theo dõi một generation job mà không làm mất job khi đổi màn hình.
-6. Job thành công trả đúng 8 sticker Chibi 3D.
-7. Người dùng xem trước, chọn/bỏ chọn, lưu và tạo lại toàn bộ bộ sticker.
-8. Người dùng chia sẻ sticker qua native share sheet của Android/iOS.
-9. Người dùng xem lại và xóa dữ liệu đã lưu.
+## 1. Kết quả cần đạt và điều kiện sản phẩm bất biến
 
-Trong giai đoạn hiện tại, AI và image processing được thay bằng mock adapter. Vì vậy MVP này chứng minh kiến trúc, API, state machine, persistence và UX; nó **không chứng minh** chất lượng sinh ảnh, độ giống, tách nền, nhận diện chủ thể, moderation, bias hoặc an toàn nội dung ở mức phát hành.
+Mục tiêu V1 phải chứng minh xuyên suốt toàn bộ luồng:
 
-## 2. Phạm vi sản phẩm áp dụng
+1. Chụp/chọn một ảnh tĩnh JPEG/PNG/WebP/HEIC/HEIF.
+2. Đồng ý theo `consent-v1.0` cho đúng ảnh nguồn hiện tại.
+3. Kiểm tra kỹ thuật/chất lượng/an toàn có thẩm quyền.
+4. Đúng một chủ thể chính thuộc loại người/thú cưng/vật thể; ảnh người có đúng
+   một khuôn mặt người lớn rõ, không phải người nổi tiếng; nhân vật có thương hiệu/bản quyền bị chặn.
+5. Người dùng chủ động gửi một tác vụ tạo ảnh bền vững.
+6. Khi thành công, trả đúng 8 PNG Chibi 3D theo `catalog-chibi-v1`.
+7. Ảnh đầu ra đạt hợp đồng định dạng/mã kiểm tra và kiểm duyệt ảnh/chữ trước khi xem trước.
+8. Người dùng xem kỹ/chọn/lưu một phần và tạo lại toàn bộ.
+9. Phần đã lưu nằm trong thư viện Supabase riêng tư và có thể mở lại theo chủ sở hữu.
+10. Người dùng tải từng PNG đã lưu hoặc chia sẻ một PNG qua bảng chia sẻ của hệ điều hành.
+11. Người dùng xóa gói và báo cáo ảnh đầu ra; thời hạn lưu giữ/gỡ bỏ chạy đúng SLA.
 
-### 2.1 Đã chốt từ SRS
+Không được phá các điều kiện bất biến: chưa đồng ý → không tải lên/tạo ảnh; chưa
+đạt toàn bộ bước kiểm tra đầu vào → không tạo tác vụ; chưa kiểm duyệt đầu ra/không
+đủ đúng 8 ảnh → không công bố; sai chủ sở hữu → 404; tác vụ lỗi → không có bộ/gói;
+thao tác lưu chỉ nhận phần đã chọn không rỗng.
 
-- Đây là ứng dụng mobile độc lập, không phải module bên trong DUHAT.
-- Nền tảng mục tiêu là Android và iOS.
-- Mỗi generation job dùng đúng một ảnh nguồn.
-- Ảnh có đúng một chủ thể chính: một người, một thú cưng hoặc một vật thể.
-- Ảnh người phải có đúng một khuôn mặt rõ ràng.
-- Một full-set success có đúng 8 sticker.
-- Style V1 duy nhất là Chibi 3D.
-- Biểu cảm/câu chữ lấy từ catalog cố định, hỗ trợ tiếng Việt và tiếng Anh.
-- Không có prompt tự do, style selector, chỉnh sửa hoặc regenerate riêng từng sticker.
-- Input và output phải qua các safety gate tương ứng trước khi được phép đi tiếp.
-- Chỉ sticker được người dùng chọn mới được lưu; dữ liệu riêng tư mặc định.
-- Chia sẻ/xuất dùng native share sheet, không dùng DUHAT chat hoặc sticker tray.
-- Job thất bại không được tạo saved partial set.
-- Save thất bại phải giữ preview để người dùng thử lại.
-- Nội dung ảnh và reference ảnh nhạy cảm không được xuất hiện trong analytics hoặc application log.
+## 2. Hiện trạng kho mã nguồn
 
-### 2.2 Ngoài phạm vi MVP
+### 2.1 Đã triển khai
 
-- Web app, chat, sticker tray hoặc account DUHAT.
-- Free-form prompt hoặc nhiều style.
-- Chỉnh sửa pose, expression, wording, trang phục, nền hoặc style của từng item.
-- Regenerate một item riêng lẻ.
-- Nhiều ảnh tham chiếu, ghép sticker hoặc deepfake/photorealistic output.
-- Marketplace, khám phá công khai hoặc thương mại hóa.
-- Tích hợp xuất trực tiếp dành riêng cho một ứng dụng bên thứ ba.
-- Tuyên bố production-ready khi pipeline thật, policy và release gate chưa hoàn tất.
+| Hạng mục | Hiện trạng triển khai | Vị trí bằng chứng |
+| --- | --- | --- |
+| Khung ứng dụng di động | Ứng dụng Expo Router, các màn hình Trang chủ/Tạo/Tác vụ/Xem trước/Thư viện/Gói | `mobile/src/app/` |
+| Trải nghiệm đầu vào | Máy ảnh/thư viện, một ảnh, đặt lại đồng ý, dọn bộ nhớ đệm ảnh nguồn | `mobile/src/app/create.tsx` |
+| Xác thực | Chế độ phát triển cục bộ bằng X-Device-ID hoặc phiên/JWT Supabase ẩn danh | `mobile/src/auth/`, `backend/app/security.py` |
+| API | Điểm cuối ảnh nguồn/tác vụ/tạo lại/bộ/lưu/danh sách/chi tiết/xóa/ảnh | `backend/app/api/routes.py` |
+| Kiểm tra sớm khi tải lên | Không rỗng, 10 MiB, MIME/chữ ký JPEG/PNG/WebP/HEIC/HEIF | `backend/app/api/routes.py` |
+| Trải nghiệm tác vụ | Thăm dò, tiến độ, ID tác vụ đang hoạt động, thử lại | mã tác vụ/nhà cung cấp phía di động |
+| Quy trình mô phỏng | Đúng 8 SVG xác định và các kịch bản thành công/lỗi/quá hạn/bị chặn | `backend/app/mock_pipeline.py` |
+| Lưu trữ bền vững | Bộ chuyển đổi SQLite/hệ tệp cục bộ và kho Supabase | `backend/app/adapters/` |
+| Thư viện | Lưu phần đã chọn, liệt kê/xem chi tiết/xóa liên kết | tuyến/kho dữ liệu máy chủ và thư viện di động |
+| Ảnh/chia sẻ | Truyền ảnh có kiểm tra chủ sở hữu/kiểm duyệt; tải tạm, chia sẻ qua hệ điều hành và dọn dẹp | tuyến ảnh máy chủ, `mobile/src/features/share.ts` |
+| Bảo mật cơ bản | Xác minh JWT, điều kiện chủ sở hữu, Problem Details, tính lũy đẳng cho tác vụ/lưu | bảo mật/kho dữ liệu/kiểm thử máy chủ |
+| Chốt chặn khi chạy | Môi trường sản xuất từ chối quy trình mô phỏng | `backend/app/config.py` |
 
-## 3. Kiến trúc mục tiêu
+### 2.2 Chưa triển khai nhưng đã đặc tả đầy đủ
+
+| Phần còn thiếu | Nội dung phải triển khai |
+| --- | --- |
+| Giải mã ảnh | Pillow/pillow-heif giải mã toàn bộ, một khung hình, kích thước/điểm ảnh, EXIF/sRGB/siêu dữ liệu. |
+| Chất lượng/chủ thể | Chỉ số OpenCV và ngưỡng chủ thể/mặt/tuổi/người nổi tiếng của AWS Rekognition. |
+| An toàn/sở hữu trí tuệ | Kiểm duyệt AWS/Custom Labels và kiểm duyệt ảnh/chữ OpenAI, đóng an toàn. |
+| Tạo ảnh thật | Cổng trung lập với nhà cung cấp, OpenAI `gpt-image-1.5`, ảnh PNG. |
+| Thực thi bền vững | Supabase Queue/PGMQ, tiến trình xử lý ECS riêng và cơ chế đối soát. |
+| Lược đồ mục tiêu | Kiểm duyệt, báo cáo, phân tích, xóa, phiên thuê/lần thử/tải lên lũy đẳng. |
+| Giao diện tải xuống | `expo-media-library`, nút chỉ có với ảnh đã lưu, quyền/lỗi/album/dọn dẹp. |
+| Báo cáo | API/bảng/trạng thái báo cáo và vận hành Tin cậy & An toàn. |
+| Phân tích sản phẩm | Nhận/lưu giữ sự kiện do hệ thống tự quản lý sau khi đồng ý; danh sách trường riêng tư được phép. |
+| Lưu giữ/xóa | Dọn dẹp theo lịch, xóa cứng Storage, bằng chứng sao lưu/SLA. |
+| Triển khai sản xuất | Docker/ECS/ALB/ECR/Secrets/CloudWatch/CI/CD. |
+
+## 3. Bản đồ mã nguồn và ngăn xếp công nghệ
+
+### 3.1 Hiện trạng ứng dụng di động
+
+- Expo `~54.0.0`, React Native `0.81.5`, React `19.1.0`.
+- Expo Router `~6.0.24`, TanStack Query `^5.101.4`, Zod `^4.4.3`.
+- Supabase JS `^2.112.3`, SecureStore, AsyncStorage.
+- ImagePicker/FileSystem/Sharing đã được cài đặt.
+- Bổ sung `expo-media-library ~18.2.1` để tải ảnh về thiết bị.
+
+Hành vi quan trọng:
+
+- `acceptAsset()` đặt lại sự đồng ý, kết quả kiểm tra, kết quả tạo và ý định lũy đẳng.
+- `SourceCacheLifecycle` chỉ xóa tệp đệm do ứng dụng sở hữu, không bao giờ xóa ảnh
+  gốc trong thư viện người dùng; không xóa khi ảnh đang được tải lên.
+- Hợp đồng truyền dữ liệu chủ động loại `asset_url` từ máy chủ và dựng lại URL API
+  ảnh có xác thực từ ID.
+- Tệp tạm chia sẻ hiện đang cố định phần mở rộng `.svg`; đổi thành `.png`, đồng
+  thời kiểm tra MIME/tên tệp phản hồi khi tích hợp ảnh đầu ra thật.
+- `IS_DEMO=true` hiện được chốt lúc biên dịch; bản phát hành phải suy ra năng lực
+  không mô phỏng đã được duyệt từ cấu hình dựng và không được che thông báo bản mẫu.
+
+### 3.2 Hiện trạng máy chủ
+
+- Python 3.11+, FastAPI/Pydantic Settings/Uvicorn.
+- Lớp trừu tượng `Repository` có bộ chuyển đổi cục bộ và Supabase.
+- Điểm nối `StickerPipeline` hiện công bố `snapshot()` và `render_placeholder()`
+  theo hình dạng mô phỏng; cần tái cấu trúc, không gắn trực tiếp nhà cung cấp vào các phương thức này.
+- Chỉ quy trình mô phỏng mới được hoàn tất đồng bộ trong tuyến/kho dữ liệu. Công
+  việc thật phải rời tiến trình xử lý yêu cầu và chạy trong tiến trình PGMQ.
+- `SUPPORTED_UPLOADS` chỉ là chốt kiểm tra sớm; không phải bước kiểm tra ảnh có
+  thẩm quyền và không được tự chuyển ảnh nguồn sang `ready`.
+
+### 3.3 Hiện trạng Supabase
+
+Tệp chuyển đổi `supabase/migrations/001_mvp.sql` tạo các bảng ảnh nguồn/sự đồng ý/
+kiểm tra/tác vụ/bộ/biến thể/gói lưu, các RPC và kho riêng tư. Cần thêm một tệp
+chuyển đổi tiến về trước, không sửa tệp đã chạy ở sản xuất, để bổ sung trường/bảng/
+ràng buộc Mục tiêu V1, PGMQ và hàm dọn dẹp/báo cáo/phân tích.
+
+Ứng dụng di động gọi FastAPI để lấy dữ liệu nghiệp vụ. Supabase JS chỉ dùng để
+lấy JWT ẩn danh; bí mật máy chủ chỉ tồn tại ở phía máy chủ.
+
+## 4. Luồng dữ liệu và nhà cung cấp mục tiêu
 
 ```text
-+--------------------------+
-| Expo / React Native      |
-| - camera, photo library  |
-| - consent và UI state    |
-| - job polling/resume     |
-| - preview/save/share     |
-+------------+-------------+
-             | HTTPS/JSON và upload được kiểm soát
-             v
-+--------------------------+
-| FastAPI                  |
-| - auth/ownership         |
-| - validation boundary    |
-| - job orchestration      |
-| - save/delete/share      |
-| - pipeline abstraction   |
-+------+-------------------+
-       |
-       +----------------------------+
-       |                            |
-       v                            v
-+----------------------+   +----------------------------+
-| Data/storage adapter |   | Sticker pipeline adapter   |
-| - Supabase target    |   | - Mock trong MVP           |
-| - local/dev fallback |   | - AI thật thay về sau      |
-+----------------------+   +----------------------------+
+Ảnh nguồn từ ứng dụng di động
+ -> FastAPI truyền theo luồng/mã băm/chốt kiểm tra sớm
+ -> Pillow+pillow-heif xác minh/giải mã toàn bộ/kiểm tra một khung hình
+ -> xoay EXIF/sRGB/loại siêu dữ liệu
+ -> OpenCV kiểm tra mờ/sáng
+ -> AWS Rekognition kiểm tra nhãn/mặt/tuổi/người nổi tiếng/kiểm duyệt/nhãn tùy chỉnh
+ -> OpenAI kiểm duyệt
+ -> ảnh nguồn Supabase riêng tư + các kết quả kiểm tra đạt
+ -> thông điệp tạo ảnh PGMQ
+ -> tiến trình xử lý ECS
+ -> OpenAI Images gpt-image-1.5, 8 vị trí cố định
+ -> kiểm tra PNG/alpha/dung lượng/chữ/mã kiểm tra
+ -> AWS + OpenAI kiểm duyệt đầu ra
+ -> công bố nguyên tử đúng 8 ảnh vào Supabase riêng tư
+ -> ranh giới FastAPI cho xem trước/lưu/truy cập ảnh
+ -> tải xuống qua MediaLibrary hoặc chia sẻ qua hệ điều hành
 ```
 
-### 3.1 Mobile Expo/React Native chịu trách nhiệm
-
-- Camera/library permission và chọn đúng một ảnh.
-- Hiển thị nội dung consent và gửi bằng chứng consent cần thiết.
-- Hiển thị các trạng thái validation, ready, progress, failure, timeout và retry.
-- Lưu định danh job đang hoạt động đủ để quay lại màn hình mà không mất tiến trình.
-- Preview đúng dữ liệu backend cho phép hiển thị; không tự suy diễn rằng artifact chưa moderation là an toàn.
-- Quản lý selection ở UI và gửi danh sách variant được chọn khi lưu.
-- Tải file được phép chia sẻ vào vùng tạm phù hợp rồi gọi native share sheet.
-- Không chứa Supabase service-role key hoặc credential của AI provider.
-
-### 3.2 FastAPI chịu trách nhiệm
-
-- Xác định owner và kiểm tra quyền đối với mọi source, job, set và variant.
-- Cấp quyền upload/download có thời hạn hoặc nhận upload qua boundary được kiểm soát.
-- Kiểm tra kỹ thuật phía server; không tin hoàn toàn metadata do mobile gửi.
-- Chặn submit nếu thiếu consent hoặc source chưa pass validation.
-- Điều phối state machine của job và bảo đảm output chưa moderation không bị phát hành.
-- Bảo đảm full-set success chỉ có khi nhận đúng 8 output hợp lệ.
-- Lưu selection, cung cấp dữ liệu đã lưu và thực hiện delete theo policy tạm.
-- Chuyển lỗi nội bộ/provider thành error code và user-safe message.
-- Redact log và chỉ phát analytics metadata được phép.
-- Gọi pipeline qua abstraction; route công khai không phụ thuộc implementation AI cụ thể.
-
-### 3.3 Supabase và local/dev
-
-- **Supabase target:** PostgreSQL lưu metadata/trạng thái; Storage bucket riêng tư lưu source và output; Supabase Auth hoặc owner model được duyệt dùng để cô lập dữ liệu.
-- **Local/dev fallback:** chỉ phục vụ phát triển và demo khi chưa cấu hình Supabase. Adapter local phải giữ cùng repository contract để không đổi business logic hoặc API công khai.
-- **Thiết bị:** chỉ giữ state cần thiết cho UX, ví dụ active job ID và selection chưa gửi. Backend vẫn là nguồn sự thật của job và dữ liệu đã lưu.
-- Local/dev fallback không phải bằng chứng rằng RLS, encryption-at-rest, backup, retention hoặc cross-device ownership đã đạt yêu cầu production.
-
-Implementation hiện có dùng `DATA_BACKEND=local|supabase`. Local mode lưu SQLite
-và asset riêng tư dưới `backend/data`/`backend/storage`; Supabase mode dùng adapter
-service-role ở FastAPI, bảng PostgreSQL và hai bucket riêng tư. Danh sách biến đầy
-đủ nằm trong một file `.env.example` ở root repository. Cả backend và mobile dùng
-root `.env`; chỉ biến `EXPO_PUBLIC_*` được Expo đưa vào bundle mobile.
-
-## 4. Luồng và state machine
-
-```text
-Chọn/chụp ảnh
-      |
-      v
-Consent -> validating --fail--> validation_failed -> chọn ảnh khác
-                 |
-                pass
-                 v
-               ready
-                 |
-          người dùng bấm Tạo
-                 v
-        queued/processing -> output_moderating
-              |                    |
-              |                    +--block--> failed theo policy tạm
-              |
-              +--failure/timeout--> failed/timed_out -> retry
-                                   
-output_moderating --pass--> succeeded -> preview 8 sticker
-                                        |      |        |
-                                        save   share    regenerate
-                                         |
-                                  saving -> saved
-                                     |
-                                  save_failed -> retry, vẫn giữ preview
-```
-
-Invariant cần được giữ ở application service, không chỉ ở UI:
-
-- Không tạo job nếu thiếu consent hoặc validation chưa pass.
-- Không public URL/output trước khi output moderation pass.
-- `succeeded` theo full-set contract luôn có đúng 8 variant.
-- Regenerate tạo job mới từ cùng source và cùng style, không sửa job cũ.
-- Job failure không tự tạo saved set.
-- Save chỉ nhận variant thuộc đúng set và owner hiện tại.
-- Không tự động public hoặc share output.
-
-## 5. Các giả định tạm để triển khai
-
-Mọi mục dưới đây phải được coi là quyết định có thể thay đổi. Khi Product/Privacy/Legal/Trust & Safety chốt TBD, cần cập nhật code, test và tài liệu cùng lúc.
-
-| SRS/TBD | Giả định tạm cho MVP/prototype | Hệ quả khi tích hợp hoặc phát hành |
-| --- | --- | --- |
-| `TBD-001`, `TBD-002` | Dùng 8 slot expression/wording fixture cố định; locale chọn một catalog Việt hoặc Anh. Không khẳng định đây là catalog cuối. | Thay catalog/version và golden reference mà không đổi API job cốt lõi. |
-| `TBD-003` | Mock không suy luận tuổi và không tuyên bố thực thi child-safety policy. | Là release blocker; Product và Legal phải quyết định policy. |
-| `TBD-004` | Dữ liệu development là tạm thời; chưa cam kết retention production hoặc training-use. Training mặc định không được phép. | Cần retention/cleanup/delete policy trước release. |
-| `TBD-005` | Không áp quota hoặc billing trong môi trường development; regenerate tạo job mới. | Phải thêm quota/cost policy trước khi mở rộng sử dụng. |
-| `TBD-006` | Để giữ invariant đúng 8, nếu một output bị block hoặc số output khác 8 thì toàn job không được chuyển thành full-set success. | Product có thể đổi sang generate bù hoặc partial-safe UX sau này. |
-| `TBD-007` | Mock mô phỏng progress/timeout; chưa có latency SLA. | Benchmark pipeline thật trước release. |
-| `TBD-008` | FastAPI thực hiện các kiểm tra kỹ thuật cơ bản có thể làm chắc chắn; subject/face/blur/light/safety do mock trả kết quả có kiểm soát. | Không coi validation mock là protection thật. |
-| `TBD-009` | Fixture output chỉ dùng để kiểm thử luồng; dimensions, MIME, alpha/background và quality threshold chưa phải baseline. | Chốt output contract trước khi tích hợp provider thật. |
-| `TBD-010`, `TBD-012` | Dữ liệu backend riêng tư theo một owner tạm; Supabase anonymous auth là hướng ưu tiên nếu phù hợp implementation. Local mode chỉ là fallback dev. | Cần quyết định account, recovery, cross-device và ownership chính thức. |
-| `TBD-011` | Hướng MVP là share một sticker được phép từ preview hoặc dữ liệu đã lưu, không tự share cả set. | Cần xác nhận có bắt buộc save trước và có hỗ trợ multi-item/pack hay không. |
-| `TBD-014` | Mobile poll trạng thái và persist active job ID. Create/regenerate/save giữ cùng idempotency key cho retry của cùng user intent; chọn ảnh/selection hoặc intent mới sẽ đổi key. Upload source hiện chưa có replay key xuyên request. | Cần chốt upload idempotency, backoff, app kill/restart, cancel và stale reconciliation. |
-| `TBD-016` | Report chỉ được scaffold/feature-flag; không giả lập một quy trình review/takedown đã hoàn chỉnh. | Workflow thật là release blocker. |
-| `TBD-017` | Chỉ ghi metadata tối thiểu; mở share sheet không đồng nghĩa share thành công. | Chốt schema, consent, retention và metric denominator. |
-| `TBD-018` | `DELETE` hiện xóa association `saved_pack` khỏi thư viện. Source, job, preview set và artifact vẫn theo retention chưa chốt; đây chưa phải privacy erasure hoàn chỉnh. | Chốt hard/soft delete, cascade storage/cache/backup và SLA trước release. |
-| `TBD-019` | Preview mặc định chọn cả 8; nút Save chỉ bật khi có ít nhất một item được chọn. | Có thể đổi khi Product chốt selection behavior. |
-| `TBD-020` | Preview còn truy cập được trong vòng đời job/set development để retry save; chưa cam kết TTL. | Chốt preview retention và cleanup. |
-| `TBD-021` | Dùng stable machine-readable error code và map sang copy an toàn tại boundary ứng dụng. | Catalog code/copy/localization cần được baseline. |
-| `TBD-022` | Tuân theo permission UI của hệ điều hành và cung cấp đường thử lại/mở Settings khi phù hợp. | Cần test deny/limited/revoked/cloud-only trên device matrix. |
-| `TBD-023` | Mock không phát hiện đáng tin cậy logo hoặc nhân vật có thương hiệu/bản quyền. | Cần policy, classifier/moderation và report flow thật. |
-| `TBD-024`, `TBD-025` | Generation qua backend yêu cầu mạng; chưa có SLA, throughput, RPO/RTO hoặc offline generation. | Chốt reliability/capacity/operations trước release. |
-| `TBD-026`, `TBD-027` | Chưa baseline accessibility, UI localization hoặc resource budget. | Bổ sung test matrix trước phát hành. |
-| `TBD-028` | MVP lưu consent accepted/version/timestamp ở mức đủ truy vết kỹ thuật; nội dung pháp lý chưa được phê duyệt. | Privacy/Legal phải duyệt notice, evidence và third-party disclosure. |
-| `TBD-029` | Test strategy hoàn chỉnh sẽ được bổ sung sau khi mobile/backend contract ổn định. | Không coi smoke test prototype là release verification. |
-
-## 6. Boundary cho AI và image processing
-
-### 6.1 Nguyên tắc
-
-Kiến trúc đích đặt pipeline sau một port ổn định. FastAPI sở hữu orchestration,
-ownership và publish gate; adapter sở hữu cách gọi model/provider. API mobile đã
-được thiết kế để giữ ổn định khi thay pipeline, nhưng boundary AI đầy đủ bên dưới
-vẫn là việc cần hoàn thiện cùng người phụ trách AI.
-
-Code MVP hiện có một seam nhỏ tại `backend/app/pipeline.py`: repository nhận
-`StickerPipeline` qua constructor, còn `MockStickerPipeline` hiện thực progress và
-render placeholder. Seam này vẫn mang hình dạng của mock (`snapshot` và
-`render_placeholder`), chưa bao phủ input assessment, provider job reference hay
-output moderation thật. Vì vậy không chỉ tạo class provider mới rồi bật config;
-cần refactor seam hiện tại theo port đích sau, bổ sung schema/state và contract test.
-
-Boundary logic đề xuất:
-
-```python
-class StickerPipelinePort(Protocol):
-    async def assess_input(self, request: InputAssessmentRequest) -> InputAssessment: ...
-    async def start_generation(self, request: GenerationRequest) -> ProviderJobRef: ...
-    async def get_generation(self, provider_job_id: str) -> ProviderJobSnapshot: ...
-    async def assess_outputs(self, request: OutputAssessmentRequest) -> OutputAssessment: ...
-```
-
-Đây là **interface logic mục tiêu**, không phải chữ ký Python hiện đã triển khai.
-Tên module/class cuối cùng có thể khác. Không để type của một vendor cụ thể xuất
-hiện trong API public hoặc domain entity.
-
-### 6.2 Input assessment contract
-
-Request tối thiểu:
-
-- `source_id` và reference riêng tư có thời hạn hoặc stream do backend kiểm soát.
-- MIME/type và metadata kỹ thuật đã được backend thu thập.
-- Policy/catalog version cần áp dụng.
-- Correlation ID không chứa tên file hoặc dữ liệu cá nhân.
-
-Response tối thiểu:
-
-- `passed: boolean`.
-- `subject_type: person | pet | object | unknown`.
-- `subject_count`, và `face_count` khi có năng lực phù hợp.
-- Danh sách check theo nhóm technical, quality, subject và safety.
-- `reason_code` an toàn để backend ánh xạ sang UI.
-- Model/provider/policy version dành cho audit nội bộ, không trả thẳng thông tin nhạy cảm cho client.
-
-Không mô tả face count là identity verification, liveness hoặc bằng chứng consent.
-
-### 6.3 Generation contract
-
-Request tối thiểu:
-
-- ID nội bộ của job và source.
-- `style_id = chibi_3d`.
-- `output_count = 8`.
-- Locale và catalog version.
-- Danh sách 8 slot expression/wording đã được backend khóa cho job.
-- Yêu cầu output phi thực tế và phù hợp với output contract đã chốt.
-
-Provider snapshot tối thiểu:
-
-- Provider job ID.
-- Trạng thái `queued`, `processing`, `succeeded`, `failed` hoặc `timed_out`.
-- Stage/progress nếu provider có thể cung cấp đáng tin cậy.
-- Error code nội bộ và khả năng retry.
-- Khi thành công: đúng 8 candidate artifact, mỗi item có slot, expression/wording ID, MIME, kích thước, checksum và artifact reference tạm.
-
-FastAPI phải kiểm tra count/slot/ownership, đưa artifact vào storage do hệ thống kiểm soát và chạy output assessment trước khi phát hành cho mobile. Không lưu signed URL dài hạn trong database.
-
-### 6.4 Output assessment contract
-
-- Quyết định cho từng output và quyết định cấp toàn set.
-- Nhóm safety reason theo taxonomy được duyệt.
-- Model/policy version cho audit.
-- Không trả raw evidence hoặc provider message nhạy cảm cho mobile.
-- Với policy tạm của MVP, chỉ chuyển job sang `succeeded` khi đủ 8 item đều được phép hiển thị.
-
-### 6.5 Mock adapter
-
-Mock adapter hiện tại:
-
-- Trả 8 fixture an toàn, cố định và có thứ tự ổn định.
-- Không giả vờ rằng fixture được sinh từ ảnh nguồn; UI nên ghi rõ đây là kết quả demo/mock.
-- Mô phỏng progress nhưng lưu job state qua repository, không chỉ giữ trong process memory.
-- Hỗ trợ scenario `success`, provider `failure`, `timeout` và output `blocked`.
-- Upload kỹ thuật sai MIME/signature/size có failure riêng; subject/face/quality,
-  unsafe input, output-count mismatch và partial moderation chưa được mô phỏng.
-- Chỉ cho phép ép scenario trong development/test.
-- Không upload ảnh nguồn sang dịch vụ AI bên ngoài.
-- Đi qua cùng publish gate, repository và API response như adapter thật.
-
-### 6.6 Cách thay bằng adapter thật
-
-1. Refactor seam `backend/app/pipeline.py` thành pipeline port/domain result mục
-   tiêu ở Mục 6.1; không trả type riêng của vendor ra ngoài adapter.
-2. Ánh xạ trạng thái/error vendor sang state và error taxonomy nội bộ.
-3. Dùng private, short-lived source access; xác thực callback/polling channel nếu có.
-4. Persist provider job ID để resume/reconcile; không giữ state quan trọng chỉ trong memory.
-5. Đưa mọi output qua count/format/slot validation và output moderation.
-6. Thêm contract test chạy chung cho mock và adapter thật.
-7. Mở rộng `PIPELINE_BACKEND` và dependency injection để chọn adapter; mobile
-   không cần đổi API.
-8. Giữ production startup guard: code hiện từ chối khởi động khi
-   `APP_ENV=production` và `PIPELINE_BACKEND=mock`.
-9. Benchmark quality, safety và latency trên dataset đã được duyệt trước khi coi là hoàn tất.
-
-## 7. API đã triển khai cho MVP
-
-Đây là contract kỹ thuật của MVP hiện tại, với prefix `/api/v1`. Nó chưa biến các
-quyết định sản phẩm `TBD` thành baseline phát hành.
-
-| Method | Endpoint logic | Mục đích |
-| --- | --- | --- |
-| `GET` | `/health/live`, `/health/ready` | Liveness/readiness không trả secret hoặc cấu hình nhạy cảm. |
-| `POST` | `/api/v1/source-images` | Multipart `file`, `consent_accepted`, `consent_version`; lưu source và trả validation mock. |
-| `GET` | `/api/v1/source-images/{source_id}` | Lấy metadata/validation của source thuộc owner. |
-| `POST` | `/api/v1/generation-jobs` | Body `source_image_id`; tạo job bất đồng bộ. `mock_scenario` chỉ dùng dev/test. |
-| `GET` | `/api/v1/generation-jobs`, `/api/v1/generation-jobs/{job_id}` | Liệt kê/poll state, stage, progress, safe error và result set ID. |
-| `POST` | `/api/v1/generation-jobs/{job_id}/regenerate` | Tạo job mới từ cùng source/style của job thành công. |
-| `GET` | `/api/v1/sticker-sets/{set_id}` | Lấy preview đúng 8 output mock đã qua publish gate. |
-| `POST` | `/api/v1/sticker-sets/{set_id}/save` | Body `sticker_ids`; lưu đúng subset đang chọn. |
-| `GET` | `/api/v1/saved-packs`, `/api/v1/saved-packs/{pack_id}` | Liệt kê/xem pack riêng tư đã lưu. |
-| `DELETE` | `/api/v1/saved-packs/{pack_id}` | Xóa association saved pack khỏi thư viện; chưa cascade source/output. |
-| `GET` | `/api/v1/stickers/{sticker_id}/asset` | Stream SVG mock đã owner-check để preview/native share. |
-
-Yêu cầu chung:
-
-- Endpoint tạo job nên trả semantics bất đồng bộ; mobile không giữ kết nối chờ toàn bộ generation.
-- Mutation cần chống submit trùng theo contract idempotency được chốt.
-- Mobile hiện giữ stable key theo cùng user intent cho create/regenerate/save;
-  source upload chưa idempotent xuyên lần retry nên response mất có thể tạo source
-  riêng tư trùng. Đây là gap thuộc `TBD-014`, không được suy diễn thành semantics
-  dùng lại ảnh theo checksum.
-- Mọi resource lookup phải kiểm tra owner, kể cả khi client đoán được ID.
-- Error response dùng code ổn định, `retryable` và safe message; không lộ stack trace, provider payload hoặc storage path.
-- MVP stream artifact qua endpoint owner-protected với `private, no-store`; nếu
-  adapter thật chuyển sang signed URL thì URL phải ngắn hạn. Client không được tự
-  ghi moderation status.
-
-Nhóm error code ban đầu có thể gồm:
-
-- `CONSENT_REQUIRED`
-- `SOURCE_NOT_READY`
-- `UNSUPPORTED_MEDIA`
-- `IMAGE_TOO_LARGE`
-- `LOW_RESOLUTION`
-- `BLURRY_IMAGE`
-- `POOR_LIGHTING`
-- `SUBJECT_COUNT_INVALID`
-- `FACE_COUNT_INVALID`
-- `INPUT_BLOCKED`
-- `GENERATION_FAILED`
-- `GENERATION_TIMEOUT`
-- `OUTPUT_COUNT_INVALID`
-- `OUTPUT_BLOCKED`
-- `SAVE_FAILED`
-- `RESOURCE_NOT_FOUND`
-- `RESOURCE_FORBIDDEN`
-
-Tên và semantics cuối cùng thuộc `TBD-021`.
-
-## 8. Data model và RLS đã triển khai
-
-### 8.1 Physical schema hiện có
-
-| Table | Nội dung hiện có | Ràng buộc chính |
-| --- | --- | --- |
-| `source_images` | owner, private object key, MIME/size/checksum, status, timestamp | Mỗi job tham chiếu đúng một source. |
-| `consent_records` | source, owner, consent version, accepted_at | Unique theo source; phải có trước submit. |
-| `validation_results` | source, kind, mock/pass/fail, safe reason, provider version | Chỉ backend service-role ghi; chưa có subject/face score thật. |
-| `generation_jobs` | owner, source, parent job, state/stage/progress, mock scenario, idempotency hash, safe error | Regenerate tạo row mới; terminal state rõ ràng. |
-| `sticker_sets` | owner, job, `chibi_3d`, preview/deleted, timestamp | Unique theo job. |
-| `sticker_variants` | owner, set, slot 1–8, expression key, object key, MIME, moderation state | Unique set/slot; exact-eight constraint khi job success. |
-| `saved_packs` | owner, source set, title, idempotency/selection hash, timestamp | Một record cho mỗi hành động lưu idempotent. |
-| `saved_pack_items` | pack, selected variant, ordinal | Chỉ subset đã chọn, unique trong pack. |
-
-Owner không có table riêng: Supabase mode dùng `auth.users`; local mode băm
-`X-Device-ID` thành UUID. Locale/catalog version, provider job reference,
-moderation evidence, abuse report và analytics table **chưa có**; đây là gap cần
-bổ sung sau khi các TBD tương ứng được chốt.
-
-Physical schema, constraint, index, RPC transaction, RLS và Storage policy hiện
-nằm tại `supabase/migrations/001_mvp.sql`. Khi retention/delete được chốt, cần tạo
-migration tiếp theo thay vì sửa migration đã áp dụng trên môi trường dùng chung.
-
-### 8.2 RLS/ownership
-
-Khi dùng Supabase:
-
-- Bật RLS cho mọi bảng chứa dữ liệu người dùng.
-- MVP dùng boundary API-only: migration revoke quyền `anon`/`authenticated` và
-  không tạo client policy; RLS mặc định từ chối truy cập trực tiếp.
-- Mobile xác thực với Supabase nhưng gửi Bearer token cho FastAPI; chỉ backend
-  service-role truy cập table/bucket và mọi repository lookup vẫn lọc `owner_id`.
-- Access/refresh session của Supabase và device ID được mobile giữ trong
-  SecureStore; AsyncStorage chỉ giữ `activeJobId` phục vụ khôi phục UI.
-- Không cho client đọc trực tiếp variant/object Storage để tránh bypass publish
-  gate hoặc moderation status.
-- Service role chỉ tồn tại ở FastAPI/worker được bảo vệ; không đưa vào Expo bundle.
-- Bucket source/output là private; object path được namespace theo owner và resource ID.
-- Asset được FastAPI stream sau owner/moderation check; hiện không cấp signed URL
-  trực tiếp cho mobile.
-
-Local/dev adapter phải mô phỏng ownership check ở repository layer, nhưng không được quảng bá là tương đương RLS production.
-
-## 9. Bảo mật và quyền riêng tư
-
-- Dùng mã hóa khi truyền và khả năng mã hóa at-rest của storage được phê duyệt.
-- Không ghi image bytes, base64, local URI, storage object key, signed URL hoặc raw provider request/response vào log/analytics.
-- ImagePicker tạo bản sao ảnh đã chọn/crop trong cache sandbox của ứng dụng;
-  mobile phải dọn bản cũ khi thay ảnh và dọn bản hiện tại theo best-effort sau
-  upload hoặc khi rời flow, không chỉ xóa React state. Việc OS có giữ bản sao
-  ngoài sandbox ứng dụng hay không vẫn thuộc lifecycle của nền tảng.
-- Không dùng ảnh nguồn/output để model training khi chưa có policy, notice và consent phù hợp.
-- Không tin MIME, file extension, dimensions hoặc size do client tự khai; kiểm tra lại tại boundary authoritative.
-- Giới hạn upload size/type theo contract khi `TBD-008` được chốt; từ chối file bất thường trước khi gọi pipeline.
-- Không dùng tên file gốc làm object path hoặc log field.
-- Xóa/chuẩn hóa metadata ảnh nếu output contract yêu cầu; không vô tình chia sẻ EXIF của source.
-- CORS, rate limit, idempotency và abuse protection phải được chốt trước môi trường public.
-- Kiểm tra ownership ở mọi endpoint read/write/delete/download.
-- Provider secret và Supabase service role phải được cấp qua secret management của môi trường, không commit hoặc nhúng vào app.
-- Error client-visible chỉ chứa lý do an toàn; diagnostic chi tiết phải được bảo vệ và có retention phù hợp.
-- Report evidence, nếu triển khai, cần quyền truy cập và retention riêng.
-- Bản sao đã đi qua native share sheet nằm ngoài khả năng thu hồi của ứng dụng; UX/policy cần nói rõ giới hạn này.
-
-## 10. Analytics tối thiểu
-
-Nếu instrumentation được bật, chỉ cân nhắc metadata cho:
-
-- mở flow;
-- consent accepted;
-- chọn camera/library;
-- validation pass/fail theo safe category;
-- generation started/completed/failed/timed out;
-- regenerate;
-- variant selected/deselected;
-- save succeeded/failed;
-- delete;
-- native share sheet invoked;
-- report sau khi flow được duyệt.
-
-Không coi việc mở/đóng native share sheet là bằng chứng rằng sticker đã được gửi thành công. Event schema, retention, consent và metric denominator vẫn thuộc `TBD-017`.
-
-## 11. Hạn chế hiện tại và release blocker
-
-MVP dùng mock không được phát hành như sản phẩm AI hoàn chỉnh vì:
-
-- Fixture không được sinh từ ảnh người dùng và không chứng minh Chibi 3D/identity fidelity.
-- Chưa có validation thật cho subject count, face count, blur, lighting hoặc visibility.
-- Chưa có input/output moderation thật.
-- Chưa có khả năng phát hiện người nổi tiếng, nội dung có thương hiệu/bản quyền hoặc abuse đáng tin cậy.
-- Chưa có child-safety policy đã được Legal/Product duyệt.
-- Catalog Việt/Anh và Chibi 3D golden specification chưa baseline.
-- Output format, alpha/background, dimensions, size và quality threshold chưa chốt.
-- Retention, delete cascade, training-use và third-party disclosure chưa chốt.
-- Account/anonymous ownership, recovery và cross-device behavior chưa chốt.
-- Partial moderation behavior, quota, timeout, retry và app-restart semantics chưa baseline.
-- Report/review/takedown workflow chưa sẵn sàng.
-- Chưa benchmark latency, fidelity, safety và bias trên dataset được duyệt.
-- Chưa có OS/device/accessibility/performance matrix và release verification đầy đủ.
-- Local/dev storage không thay thế security/privacy review của Supabase production.
-
-Không nên submit lên store hoặc mời người dùng thật xử lý ảnh nhạy cảm cho đến khi các release blocker tương ứng trong SRS Mục 13.4 và Mục 15 được giải quyết.
-
-## 12. Checklist tiếp quản cho người phụ trách AI/image processing
-
-### 12.1 Trước khi code
-
-- [ ] Đọc PRD, SRS và tài liệu này; ghi rõ các TBD mà implementation cần giả định.
-- [ ] Xác nhận pipeline chạy in-process, worker hay remote service và nơi dữ liệu được xử lý.
-- [ ] Xác nhận provider/data region/third-party disclosure với Product/Privacy/Legal.
-- [ ] Chốt input contract đủ cho MIME, size, resolution, subject, face, quality và moderation.
-- [ ] Chốt output contract: 8 slot, catalog mapping, MIME, dimensions, alpha/background và max bytes.
-- [ ] Chốt error/status mapping và cách timeout/retry/reconcile.
-- [ ] Chuẩn bị fixture/dataset hợp pháp, đại diện và không chứa dữ liệu cá nhân không được phép.
-
-### 12.2 Khi implement adapter thật
-
-- [ ] Implement đúng pipeline port và không làm rò rỉ type/vendor detail ra domain/API public.
-- [ ] Trả kết quả input assessment có subject/face/safety semantics chính xác với năng lực thật.
-- [ ] Không gọi generation nếu input moderation chưa pass.
-- [ ] Tạo đúng 8 candidate theo slot/catalog hoặc trả failure rõ ràng.
-- [ ] Persist provider job reference để có thể poll/resume/reconcile.
-- [ ] Xác thực callback hoặc response từ provider.
-- [ ] Kiểm tra format/count/checksum trước khi lưu artifact.
-- [ ] Chạy output moderation trước publish gate.
-- [ ] Không log ảnh, signed URL, raw prompt/provider payload hoặc reference nhạy cảm.
-- [ ] Xử lý timeout, retryable error và duplicate request an toàn.
-- [ ] Dọn artifact tạm theo retention policy được duyệt.
-- [ ] Thêm contract test dùng chung với mock adapter.
-
-### 12.3 Trước khi bật adapter thật
-
-- [ ] Happy path và toàn bộ failure scenario không yêu cầu thay đổi mobile API.
-- [ ] Full-set success luôn đúng 8 item; partial moderation theo policy đã duyệt.
-- [ ] Không có output chưa moderation truy cập được qua API/storage URL.
-- [ ] Ownership và short-lived URL được kiểm thử chéo user.
-- [ ] Quality/fidelity/cutout/text/bias đạt rubric và threshold được duyệt.
-- [ ] Safety benchmark và abuse test đạt yêu cầu.
-- [ ] Latency/timeout/retry đạt target sau benchmark.
-- [ ] Privacy, security, Legal và Trust & Safety review hoàn tất.
-- [ ] Mock override bị tắt trong môi trường phát hành.
-
-## 13. Cách chạy và kiểm thử
-
-### 13.1 Backend local với `.venv`
-
-Yêu cầu Python 3.11 trở lên. Từ root `GenSticker/`:
+### 4.1 Cấu hình nhà cung cấp
+
+| Nhà cung cấp | Cấu hình cố định |
+| --- | --- |
+| AWS Rekognition | Khu vực `ap-southeast-1`; áp dụng mọi ngưỡng SRS §8.2. |
+| AWS Custom Labels | ARN có phiên bản đã phê duyệt; độ tin cậy ≥90%. |
+| OpenAI Images | `/v1/images/edits` chính thức, `gpt-image-1.5`, mức giữ đặc trưng/chất lượng cao, 1024×1024, PNG trong suốt. |
+| OpenAI Moderation | `/v1/moderations` chính thức, `omni-moderation-latest`, kiểm duyệt ảnh/chữ. |
+| Supabase | Dự án Singapore, xác thực ẩn danh, kho riêng tư, hàng đợi PGMQ cơ bản. |
+
+Lưu trữ theo khu vực Singapore của OpenAI yêu cầu quyền kiểm soát dữ liệu nâng cao
+đã được phê duyệt; cơ chế này không cam kết suy luận chỉ diễn ra tại Singapore.
+Nội dung đồng ý/thông báo quyền riêng tư khi phát hành phải nêu việc chuyển dữ liệu
+cho nhà cung cấp. Cấm mọi proxy không chính thức ở tiền sản xuất và sản xuất.
+
+### 4.2 Hợp đồng trung lập với nhà cung cấp
+
+Kết quả đánh giá đầu vào trả về:
+
+- `passed`, `subject_type`, `subject_count`, `face_count`;
+- kết quả kiểm tra có phiên bản cho kỹ thuật, chất lượng, chủ thể, tuổi, người nổi tiếng, thương hiệu và an toàn;
+- mã lý do nội bộ ổn định; phiên bản nhà cung cấp/mô hình/chính sách;
+- không có phản hồi thô của nhà cung cấp trong lược đồ công khai.
+
+Yêu cầu tạo ảnh chứa ID tác vụ/ảnh nguồn, luồng ảnh chuẩn riêng tư, phong cách,
+ngôn ngữ, phiên bản danh mục/câu lệnh và tám vị trí cố định. Kết quả chứa số thứ
+tự, khóa biểu cảm, siêu dữ liệu ảnh nhị phân và ID yêu cầu nhà cung cấp. API công
+khai không bao giờ chứa kiểu riêng của nhà cung cấp hoặc câu lệnh.
+
+Đánh giá đầu ra trả quyết định cho từng ảnh và cho cả bộ. Chỉ được công bố bộ khi
+tám số thứ tự duy nhất đều đạt mọi bước kiểm tra.
+
+## 5. Bàn giao API
+
+### 5.1 Điểm cuối hiện có cần giữ
+
+`POST /source-images`, `GET /source-images/{id}`, `POST/GET /generation-jobs`,
+`GET /generation-jobs/{id}`, `POST /generation-jobs/{id}/regenerate`,
+`GET /sticker-sets/{id}`, `POST /sticker-sets/{id}/save`,
+`GET /saved-packs`, `GET/DELETE /saved-packs/{id}` và
+`GET /stickers/{id}/asset`.
+
+### 5.2 Điểm cuối cần bổ sung
+
+- `POST /generation-jobs/{id}/cancel`.
+- `POST /reports` và `GET /reports/{id}`.
+- `POST /analytics/events`.
+- Tách `/health/live` và `/health/ready`.
+
+### 5.3 Quy tắc tương thích
+
+- Tiền tố API giữ là `/api/v1` và các trường dùng `snake_case`.
+- Giữ bí danh trường hiện có của ứng dụng di động trong giai đoạn chuyển đổi; chỉ
+  xóa ở một phiên bản API riêng.
+- Mọi thao tác thay đổi dữ liệu cần `Idempotency-Key`; tải lên hiện còn thiếu khóa này.
+- Phát lại cùng khóa/nội dung trả phản hồi gốc; xung đột khóa/nội dung trả 409.
+- Chéo chủ sở hữu trả 404; lỗi dùng RFC 9457 và mã SRS §5.4.
+- Ảnh chuyển từ SVG trình diễn sang PNG theo hợp đồng; ứng dụng di động phải suy
+  ra phần mở rộng từ `Content-Type` đã xác minh, không dùng giá trị cố định cũ.
+
+## 6. Bàn giao chuyển đổi dữ liệu
+
+Tạo `002_target_v1.sql` với:
+
+1. Các trường kích thước/khung hình/định dạng/ảnh chuẩn/chính sách/hết hạn của ảnh nguồn.
+2. Các trường điểm/nhà cung cấp/mô hình/chính sách và các loại kết quả kiểm tra bắt buộc.
+3. Các trường ngôn ngữ/danh mục/câu lệnh/thời hạn/phiên thuê/lần thử/yêu cầu nhà cung cấp/thử lại/hủy của tác vụ.
+4. Ràng buộc đúng 8 ảnh và các trường PNG/chiều rộng/chiều cao/alpha/mã kiểm tra.
+5. `moderation_decisions`, `reports`, `analytics_events`, `deletion_requests`.
+6. Tính lũy đẳng và mã băm yêu cầu cho tải lên/xóa/báo cáo.
+7. Phần mở rộng PGMQ/hàng đợi cơ bản `sticker-generation`, ứng dụng di động không truy cập được.
+8. Cấu hình MIME/dung lượng kho riêng tư và RLS/quyền mục tiêu.
+9. RPC nguyên tử để xếp hàng, công bố đúng 8 ảnh, lưu phần đã chọn và yêu cầu xóa.
+10. Chỉ mục/hàm dọn dẹp theo `expires_at`, SLA báo cáo và giám sát hàng đợi.
+
+Tệp chuyển đổi chỉ được tiến về trước, dùng giao dịch khi được hỗ trợ, có tính lũy
+đẳng ở tiền sản xuất và kèm ghi chú quay lui/tương thích. Đối tượng Storage phải
+được xóa qua Storage API, không sửa trực tiếp `storage.objects`.
+
+## 7. Bàn giao ứng dụng di động
+
+### 7.1 Ảnh đầu vào
+
+- Giữ trình chọn/máy ảnh một ảnh và cơ chế đặt lại sự đồng ý.
+- Không dùng cắt/nén để lách kiểm tra; máy chủ là nơi quyết định có thẩm quyền.
+- Ánh xạ mọi mã lỗi SRS sang nội dung Việt/Anh an toàn và thao tác khôi phục.
+- Xử lý quyền `undetermined`, `denied`, `limited`, bị thu hồi, máy ảnh không sẵn
+  sàng và hoàn tất tải ảnh chỉ có trên đám mây.
+
+### 7.2 Tác vụ/xem trước/lưu
+
+- Khôi phục tác vụ đang hoạt động theo trạng thái máy chủ sau khi khởi động lại; thăm dò 2 giây rồi 10 giây.
+- Thêm hủy cho trạng thái đang xếp hàng/kiểm tra.
+- Xác nhận đúng tám số thứ tự duy nhất và hợp đồng PNG; phản hồi không hợp lệ phải
+  thành lỗi an toàn cho máy khách, không kết xuất một lưới thiếu ảnh.
+- Mặc định chọn cả tám; tắt nút Lưu khi không chọn ảnh; thử lại giữ khóa ý định.
+- Bản xem trước hết hạn sau 24 giờ; hiển thị hết hạn/lỗi thay vì âm thầm tạo lại.
+
+### 7.3 Tải xuống/chia sẻ
+
+- Cài/cấu hình Expo MediaLibrary với mô tả quyền chỉ thêm ảnh trên iOS.
+- Nút Tải xuống chỉ có trong chi tiết gói đã lưu; mỗi thao tác tải một ảnh.
+- Truyền PNG có xác thực vào bộ nhớ đệm ứng dụng, xác minh `image/png`, không rỗng
+  và ETag/mã kiểm tra nếu có; lưu vào album `Duhat Gen Sticker`, dọn trong `finally`.
+- Khi bị từ chối/hủy/đầy đĩa/lỗi ghi, không được báo thành công và phải cho thử lại.
+- Chia sẻ một PNG từ bản xem trước/đã lưu qua Expo Sharing; dọn trong `finally`.
+- Mở bảng chia sẻ của hệ điều hành chỉ phát sự kiện `native_share_sheet_invoked`.
+
+### 7.4 Khả năng tiếp cận/bản địa hóa
+
+Nhãn VoiceOver/TalkBack, vai trò/trạng thái ô chọn, vùng thông báo tiến độ, cỡ chữ
+động 200%, vùng chạm 44pt/48dp và đầy đủ khóa Việt/Anh là yêu cầu phát hành.
+
+## 8. Bàn giao bảo mật/quyền riêng tư
+
+- Dùng JWT Supabase ẩn danh ở sản xuất; X-Device-ID cục bộ chỉ dành cho phát triển.
+- Thêm Turnstile/CAPTCHA hoặc biện pháp chống lạm dụng được duyệt vào luồng đăng nhập ẩn danh.
+- Xác minh đơn vị phát hành/đối tượng/thuật toán/chữ ký/thời hạn JWT; không bao giờ nhận chủ sở hữu từ máy khách.
+- Điều kiện chủ sở hữu là bắt buộc trong mọi phương thức kho dữ liệu và kiểm thử chéo chủ sở hữu.
+- Loại EXIF/XMP/GPS trước khi gửi AWS/OpenAI và trước khi tạo ảnh đầu ra.
+- Không đưa ảnh thô, URI, tên tệp, đường dẫn đối tượng, URL có chữ ký, câu lệnh hoặc dữ liệu nhà cung cấp
+  vào nhật ký, dữ liệu phân tích hoặc Problem Details.
+- Bí mật đến từ Secrets Manager/vai trò tác vụ; luân chuyển mỗi 90 ngày.
+- Danh sách đích mạng ra ngoài chỉ gồm máy chủ Supabase/AWS/OpenAI chính thức.
+- Hiện thực tác vụ lưu giữ và xóa theo SRS; xóa dữ liệu chính ≤24 giờ, bản sao lưu ≤30 ngày.
+- Không bao giờ dùng nội dung sản xuất để huấn luyện/đánh giá mô hình.
+
+## 9. Bàn giao báo cáo và phân tích sản phẩm
+
+### 9.1 Báo cáo
+
+Lý do được cố định trong SRS. Ghi chú là tùy chọn, tối đa 500 ký tự. Báo cáo phải
+tham chiếu ảnh đầu ra mà chủ sở hữu gửi báo cáo nhìn thấy được. Máy trạng thái Tin
+cậy & An toàn là `submitted -> triaged -> actioned|closed -> appealed|final`.
+SLA khẩn cấp là 24 giờ, thông thường là 72 giờ. Gỡ bỏ làm mất quyền truy cập ảnh ngay.
+
+### 9.2 Phân tích sản phẩm
+
+Xây dựng luồng nhận sự kiện theo lô do hệ thống tự quản lý vào Supabase. Yêu cầu
+người dùng đồng ý, UUID sự kiện và phiên bản lược đồ; loại trùng theo UUID sự kiện.
+Từ chối sự kiện/thuộc tính không biết và mọi trường ảnh/tham chiếu bị cấm. Dữ liệu
+thô lưu 90 ngày, bản tổng hợp theo ngày lưu 13 tháng.
+
+Nhật ký bảo mật/vận hành tách khỏi dữ liệu phân tích sản phẩm và vẫn phải tuân thủ
+thời hạn 30 ngày/cơ chế lược bỏ dữ liệu nhạy cảm.
+
+## 10. Thứ tự triển khai
+
+1. Thêm bộ giải mã/chuẩn hóa và dữ liệu mẫu/kiểm thử ảnh đầu vào.
+2. Hiện thực cổng đánh giá và bộ chuyển đổi kiểm duyệt AWS/OpenAI.
+3. Thêm tệp chuyển đổi mục tiêu/PGMQ và tái cấu trúc cổng quy trình xử lý.
+4. Hiện thực tạo ảnh OpenAI và các chốt PNG/đầu ra/đúng 8 ảnh.
+5. Tích hợp phiên thuê, thử lại, đối soát và dọn dẹp của tiến trình xử lý.
+6. Hoàn thiện môi trường Supabase và kiểm thử chủ sở hữu/RLS/tải lên lũy đẳng.
+7. Hiện thực hợp đồng PNG/tải xuống trên di động và kiểm thử quyền thiết bị.
+8. Thêm luồng báo cáo/phân tích/xóa/lưu giữ.
+9. Thêm Docker/ECS/CI/CD/khả năng quan sát/diễn tập khôi phục.
+10. Chạy đầy đủ điều kiện TDD/thiết bị/đánh giá chuẩn/bảo mật trước phát hành.
+
+ID công việc và kế hoạch theo ngày nằm trong
+`IMPLEMENTATION_BACKLOG_SPRINT_PLAN.md`; TDD quy định chi tiết xác minh.
+
+## 11. Hướng dẫn chạy cục bộ
+
+### 11.1 Máy chủ
 
 ```bash
-cp .env.example .env
-python3 -m venv backend/.venv
-source backend/.venv/bin/activate
-python -m pip install -r backend/requirements-dev.txt
 cd backend
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+python3 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt
+.venv/bin/uvicorn app.main:app --reload
 ```
 
-Backend đọc `.env` dùng chung ở root repository. Local mode mặc định dùng SQLite
-và yêu cầu header `X-Device-ID`; mobile tự tạo ID theo lần cài app và giữ trong
-SecureStore.
+Giá trị `.env` cục bộ ở thư mục gốc: `APP_ENV=development`, `DATA_BACKEND=local`,
+`PIPELINE_BACKEND=mock`, `ALLOW_LOCAL_DEMO_AUTH=true`. Không dùng ảnh người dùng
+thật cho thử nghiệm proxy/nhà cung cấp.
 
-### 13.2 Mobile Expo
-
-Mobile dùng Expo SDK 54, React Native 0.81 và React 19.1. Yêu cầu Node.js tối
-thiểu 20.19 theo tài liệu Expo SDK 54.
+### 11.2 Ứng dụng di động
 
 ```bash
 cd mobile
-npm install
-npm start
+npm ci
+npm run start
 ```
 
-Đặt `EXPO_PUBLIC_API_URL` thành origin FastAPI mà thiết bị truy cập được. Android
-Emulator thường dùng `http://10.0.2.2:8000`; iOS Simulator dùng
-`http://127.0.0.1:8000`; điện thoại thật cần IP LAN của máy chạy backend. Không
-thêm `/api/v1` vào biến này vì mobile tự thêm prefix.
+Đặt `EXPO_PUBLIC_API_URL` thành địa chỉ FastAPI mà thiết bị truy cập được. URL và
+khóa công khai Supabase bật JWT ẩn danh; để trống sẽ dùng xác thực trình diễn cục bộ.
 
-### 13.3 Supabase mode
-
-1. Tạo project Supabase test riêng, sạch rồi áp dụng
-   `supabase/migrations/001_mvp.sql`. Migration fail nếu `storage.objects` đã có
-   policy để tránh một policy cũ bypass boundary FastAPI.
-2. Điền biến `SUPABASE_*` trong root `.env` và đặt `DATA_BACKEND=supabase`.
-3. Điền URL cùng anon/publishable key trong cùng root `.env`; không bao giờ đưa
-   service-role key vào mobile.
-4. Bật anonymous sign-in trong Supabase Auth nếu dùng owner tạm anonymous.
-
-### 13.4 Verification đã chạy
+### 11.3 Kiểm thử
 
 ```bash
 cd backend
-source .venv/bin/activate
-pytest
-ruff check app tests
+.venv/bin/pytest
+.venv/bin/ruff check .
 
 cd ../mobile
-npm run typecheck
-npm run lint
 npm test
-npx expo-doctor
-npx expo export --platform android --output-dir /tmp/gensticker-expo-export
+npm run lint
+npm run typecheck
 ```
 
-Kết quả tại thời điểm bàn giao: backend 26 test pass; mobile 19 test pass;
-Ruff, Python compile, TypeScript, ESLint, Expo Doctor (18/18) và Android
-bundle/export đều pass. Test mobile gồm contract exact-eight, MIME inference,
-idempotency intent, ánh xạ Problem Details an toàn, vòng đời file ảnh nguồn
-và hệ thống đa ngôn ngữ i18n (Tiếng Việt 🇻🇳 & Tiếng Anh 🇬🇧 với SecureStore persistence):
-chỉ xóa file con trong cache riêng của app, trì hoãn xóa khi upload còn đọc file,
-cleanup sau upload thành công, khi thay ảnh và khi rời màn hình. Cleanup là
-best-effort và không tác động ảnh gốc nằm ngoài cache của app.
-Camera, native share sheet và Supabase project thật vẫn cần smoke test trên thiết
-bị/simulator và môi trường test tương ứng. `npm audit` hiện báo advisory gián tiếp
-từ Expo/Metro; không dùng `npm audit fix --force` vì có thể đưa dependency ra
-ngoài compatibility matrix của SDK 54. Theo dõi bản vá SDK 54 và chỉ nâng package
-theo kết quả `npx expo install --check`/Expo Doctor.
+Hành vi máy ảnh/quyền/MediaLibrary/chia sẻ gốc cần bản dựng phát triển hoặc thiết
+bị đích; riêng kiểm thử đơn vị không đủ làm bằng chứng cho các điều kiện này.
 
-## 14. Nguyên tắc cập nhật tài liệu bàn giao
+### 11.4 Xác minh mốc hiện trạng ngày 14/08/2026
 
-Khi một TBD được chốt hoặc implementation thay đổi:
+- Máy chủ: `26 passed`; Ruff: `All checks passed`.
+- Ứng dụng di động: `4` tệp kiểm thử, `19 passed`; kiểm tra kiểu TypeScript và Expo lint đều đạt.
+- Máy chủ phát sinh cảnh báo tính năng sắp ngừng hỗ trợ từ phụ thuộc FastAPI/Python;
+  không làm bộ kiểm thử thất bại nhưng phải xử lý khi khóa phụ thuộc Mục tiêu V1.
+- Kết quả này chỉ chứng minh mốc bản mẫu/mô phỏng, không thay thế bằng chứng Mục
+  tiêu V1 về nhà cung cấp, thiết bị thật, đánh giá chuẩn, bảo mật hoặc vận hành.
 
-1. Cập nhật quyết định trong SRS theo quy trình phê duyệt.
-2. Cập nhật API/data/pipeline contract liên quan trong tài liệu này.
-3. Cập nhật migration, code và test tương ứng.
-4. Gỡ hoặc thay giả định prototype đã hết hiệu lực.
-5. Ghi rõ phần nào đã được kiểm chứng bằng mock, contract test, integration test hoặc benchmark thật.
+## 12. Danh sách kiểm tra hoàn tất bàn giao
 
-Không được biến một default kỹ thuật thuận tiện thành policy sản phẩm hoặc cam kết phát hành mà không có phê duyệt phù hợp.
+### Máy chủ/AI
+
+- [ ] Đã hiện thực giải mã toàn bộ ảnh tĩnh, chuẩn hóa và các chốt chất lượng/chủ thể/an toàn.
+- [ ] AWS Rekognition/Custom Labels và kiểm duyệt OpenAI đóng an toàn.
+- [ ] Cổng trung lập với nhà cung cấp và tiến trình PGMQ thay điểm nối theo mô phỏng.
+- [ ] OpenAI Images tạo đúng 8 PNG hợp lệ với chính sách tạo bù.
+- [ ] Lược đồ mục tiêu/RLS/kho riêng tư/tính lũy đẳng/lưu giữ/xóa đều đạt.
+- [ ] API báo cáo/phân tích và SLA vận hành đều đạt.
+- [ ] Không thể dùng mô phỏng/xác thực cục bộ/proxy ở tiền sản xuất/sản xuất.
+
+### Ứng dụng di động
+
+- [ ] Mọi lỗi ổn định và trạng thái quyền có nội dung Việt/Anh kèm thao tác xử lý.
+- [ ] Khởi động lại/đối soát/hủy tác vụ và hợp đồng đúng 8 ảnh phía máy khách đều đạt.
+- [ ] Lưu/thư viện/xóa tuân thủ ý nghĩa chủ sở hữu/thời hạn lưu giữ.
+- [ ] Tải xuống qua MediaLibrary đạt ma trận Android/iOS.
+- [ ] Chia sẻ PNG và dọn tệp tạm đạt; ý nghĩa dữ liệu phân tích chính xác.
+- [ ] Khả năng tiếp cận và ngân sách tài nguyên đạt.
+
+### Phát hành/vận hành
+
+- [ ] ECS/API/tiến trình xử lý/Secrets/CloudWatch/CI/CD và quay lui hoạt động.
+- [ ] Đã xác minh ZDR/nơi lưu trú dữ liệu/DPA/nội dung đồng ý/khai báo quyền riêng tư.
+- [ ] Trực báo cáo, SLA xóa và diễn tập khôi phục đạt.
+- [ ] Đầy đủ bằng chứng TDD tự động/thủ công/đánh giá chuẩn.
+- [ ] Mã kiểm tra PRD không đổi; kiểm tra truy vết tài liệu kế tiếp và quyết định đã đóng đạt.
+
+## 13. Quy tắc cập nhật
+
+SRS thay đổi trước, sau đó cập nhật Kiến trúc, tài liệu Bàn giao này, Danh sách
+công việc và TDD trong cùng một tập thay đổi. Trạng thái mã nguồn có thể chuyển từ
+chưa triển khai sang đã triển khai mà không đổi SRS. PRD luôn chỉ đọc; quyết định
+sản phẩm mới được ghi ở tài liệu kế tiếp kèm phân tích tác động, không viết lại PRD gốc.
