@@ -8,6 +8,7 @@
 | Ngày chốt chuẩn | 14/08/2026 |
 | Yêu cầu | `SRS_Sticker_Generation_V1_VI.md` v1.0 |
 | Kiến trúc | `Software_Architecture_Technical_Design.md` v1.0 |
+| Mức dịch vụ | `SLA_Duhat_Gen_Sticker_V1_VI.md` v1.0 |
 | Nguồn sản phẩm | PRD tiếng Việt, bất biến |
 | Trạng thái bàn giao | Bản mẫu hoạt động; Mục tiêu V1 chưa đạt điều kiện phát hành |
 
@@ -404,6 +405,7 @@ bị đích; riêng kiểm thử đơn vị không đủ làm bằng chứng cho
 ### Phát hành/vận hành
 
 - [ ] Docker Compose/API/worker/HTTPS/tệp bí mật/nhật ký/CI/CD và quay lui hoạt động trên máy chủ MVP.
+- [ ] Kiểm tra tổng hợp mỗi phút, cảnh báo, báo cáo SLA tháng và diễn tập SEV-1/RPO/RTO đạt `SLA_Duhat_Gen_Sticker_V1_VI.md`.
 - [ ] Đã xác minh DPA/không huấn luyện/lưu giữ tối đa 30 ngày và nội dung đồng ý/khai báo quyền riêng tư cho Gemini cùng dịch vụ tạo ảnh đang cấu hình.
 - [ ] Trực báo cáo, SLA xóa và diễn tập khôi phục đạt.
 - [ ] Đầy đủ bằng chứng TDD tự động/thủ công/đánh giá chuẩn.

@@ -8,6 +8,7 @@
 | Phiên bản | 1.0 |
 | Ngày chốt chuẩn | 14/08/2026 |
 | Nguồn yêu cầu | `SRS_Sticker_Generation_V1_VI.md` v1.0 |
+| Mức dịch vụ | `SLA_Duhat_Gen_Sticker_V1_VI.md` v1.0 |
 | Nguồn sản phẩm | Hai PRD bất biến; PRD tiếng Việt là nguồn chính |
 | Trạng thái | Kiến trúc mục tiêu đã chốt; các phần triển khai còn thiếu được ghi rõ |
 

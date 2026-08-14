@@ -9,7 +9,7 @@
 | Thời gian | 17/08/2026–28/08/2026 |
 | Mốc trạng thái | 14/08/2026 |
 | Yêu cầu | SRS v1.0 |
-| Kiến trúc/Bàn giao | v1.0 |
+| Kiến trúc/SLA/Bàn giao | v1.0 |
 | Nguồn sản phẩm | PRD bất biến |
 
 Mọi quyết định sản phẩm/kỹ thuật đã được chốt trong SRS DEC-001..039. Danh sách
@@ -57,7 +57,7 @@ cung cấp thật và vận hành sẽ chuyển sang chu kỳ sau.
 | DOC-02 | Chốt SRS và danh mục quyết định | P0 | Đầy đủ DEC-001..039, yêu cầu, ngưỡng, thời hạn lưu giữ và điều kiện phát hành | SRS v1.0 | D1 | `Hoàn thành` |
 | DOC-03 | Đồng bộ Kiến trúc | P0 | Hiện trạng/Mục tiêu, công nghệ, API, lược đồ, triển khai và bản đồ phần còn thiếu khớp SRS | SAD v1.0 | D1 | `Hoàn thành` |
 | DOC-04 | Đồng bộ Bàn giao | P0 | Hiện trạng mã nguồn, phần còn thiếu, hướng dẫn chạy và danh sách kiểm tra khớp Kiến trúc | Bàn giao v1.0 | D1 | `Hoàn thành` |
-| DOC-05 | Đồng bộ Danh sách công việc/TDD | P0 | Mọi yêu cầu có công việc triển khai, bằng chứng kiểm thử và người chịu trách nhiệm | SRS §12–13 | D1 | `Hoàn thành` |
+| DOC-05 | Đồng bộ SLA/Danh sách công việc/TDD | P0 | Mọi mục tiêu dịch vụ và yêu cầu có công việc triển khai, bằng chứng kiểm thử và người chịu trách nhiệm | SRS §12–13, SLA v1.0 | D1 | `Hoàn thành` |
 | DOC-06 | Kiểm tra tự động tính nhất quán tài liệu | P1 | Kiểm tra mã PRD, dấu hiệu quyết định chưa đóng, tham chiếu cục bộ hỏng và ID công việc/kiểm thử | SRS §12.3 | Sau chu kỳ | `Chưa thực hiện` |
 
 ### 2.2 Điểm vào, lấy ảnh đầu vào và sự đồng ý
@@ -187,8 +187,8 @@ cung cấp thật và vận hành sẽ chuyển sang chu kỳ sau.
 | OPS-01 | Ảnh Docker cho API/tiến trình xử lý | P0 | Không chạy bằng root, kiểm tra sức khỏe, khóa phụ thuộc, SBOM và quét lỗ hổng | SAD §8 | Sau chu kỳ | `Chưa thực hiện` |
 | OPS-02 | Triển khai Docker Compose trên máy chủ MVP | P0 | Một dịch vụ `api`, một dịch vụ `worker`, proxy HTTPS, kiểm tra sức khỏe, tự khởi động lại và quay lui bằng thẻ ảnh trước | DEC-033 | Sau chu kỳ | `Chưa thực hiện` |
 | OPS-03 | Bí mật và luồng mạng ra | P0 | Tệp môi trường quyền `0600`, không bí mật trong ảnh/kho mã; chỉ cho phép Supabase, API Gemini và máy chủ từ `OPENAI_BASE_URL` | NFR-SEC-004 | Sau chu kỳ | `Chưa thực hiện` |
-| OPS-04 | Nhật ký/chỉ số/cảnh báo MVP | P0 | Nhật ký JSON xoay vòng và kiểm tra Supabase Dashboard; cảnh báo SLO cho API/hàng đợi/tác vụ/kiểm duyệt/xóa/báo cáo và chi phí/bộ vượt 120% kỳ vọng trong 24 giờ | SAD §8.4 | Sau chu kỳ | `Chưa thực hiện` |
-| OPS-05 | Diễn tập sao lưu/khôi phục | P0 | Chứng minh RPO 24 giờ/RTO 8 giờ và lập tài liệu bằng chứng | DEC-033 | Sau chu kỳ | `Chưa thực hiện` |
+| OPS-04 | Nhật ký/chỉ số/cảnh báo và báo cáo SLA | P0 | Nhật ký JSON xoay vòng, kiểm tra tổng hợp mỗi phút, cảnh báo SLO cho API/hàng đợi/tác vụ/kiểm duyệt/xóa/báo cáo/chi phí và báo cáo SLA trước ngày làm việc thứ năm | SAD §8.4, SLA §3/9 | Sau chu kỳ | `Chưa thực hiện` |
+| OPS-05 | Diễn tập sao lưu/khôi phục | P0 | Chứng minh RPO 24 giờ/RTO 8 giờ trước phát hành và mỗi quý; lưu tài liệu bằng chứng | DEC-033, SLA §3.4 | Sau chu kỳ | `Chưa thực hiện` |
 | OPS-06 | Chốt cấu hình AI khi phát hành | P0 | Chỉ có bốn biến AI; mô hình Gemini ghim trong mã; URL/mô hình tạo ảnh đã ghim và có bằng chứng hợp đồng, chất lượng, SLO, chi phí, không huấn luyện, lưu giữ ≤30 ngày | DEC-021/038 | Sau chu kỳ | `Chưa thực hiện` |
 | OPS-07 | DPA/quyền riêng tư/sự đồng ý với dịch vụ AI | P0 | Luồng dữ liệu chỉ gồm Supabase lưu trữ, Google Gemini và dịch vụ tạo ảnh đang cấu hình; tên pháp lý khớp `consent-v1.1`/khai báo kho ứng dụng | DEC-036 | Sau chu kỳ | `Chưa thực hiện` |
 | OPS-08 | Vận hành Tin cậy & An toàn | P0 | Quyền nhân sự, SLA 24/72 giờ, gỡ bỏ/khiếu nại/diễn tập trực | DEC-024 | Sau chu kỳ | `Chưa thực hiện` |
@@ -212,7 +212,7 @@ cung cấp thật và vận hành sẽ chuyển sang chu kỳ sau.
 | QA-11 | Đánh giá chuẩn hiệu năng/năng lực | P0 | Độ trễ SRS §9.2/9.3, 2 tác vụ xử lý/50 tác vụ chờ, bằng chứng hàng đợi/quá thời gian | AC-021 | Sau chu kỳ | `Chưa thực hiện` |
 | QA-12 | Đánh giá bảo mật/quyền riêng tư | P0 | Duyệt OWASP/IDOR/phát lại/lạm dụng tải lên/bí mật/nhật ký/lưu giữ/xóa đạt | SRS §9.1 | Sau chu kỳ | `Chưa thực hiện` |
 | QA-13 | Kiểm tra khả năng tiếp cận/bản địa hóa | P0 | Hoàn tất ma trận WCAG/nền tảng/Việt-Anh | DEC-034 | Sau chu kỳ | `Chưa thực hiện` |
-| QA-14 | Bộ bằng chứng phát hành | P0 | Liên kết mã kiểm tra, cấu hình, kiểm thử, đánh giá chuẩn, duyệt, diễn tập và phê duyệt | SRS §12.3 | Sau chu kỳ | `Chưa thực hiện` |
+| QA-14 | Bộ bằng chứng phát hành và kích hoạt SLA | P0 | Liên kết mã kiểm tra, cấu hình, kiểm thử, đánh giá chuẩn, cảnh báo, diễn tập SEV-1/khôi phục, duyệt và phê duyệt kích hoạt SLA | SRS §12.3, SLA §12 | Sau chu kỳ | `Chưa thực hiện` |
 
 ## 3. Phạm vi cam kết của Chu kỳ 01
 

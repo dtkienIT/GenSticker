@@ -18,9 +18,10 @@
 2. SRS ghi lại cách áp dụng PRD cho ứng dụng Duhat Gen Sticker độc lập và các
    quyết định sản phẩm/kỹ thuật đã được người yêu cầu chốt.
 3. Tài liệu Thiết kế kiến trúc và kỹ thuật hiện thực hóa SRS.
-4. Tài liệu Bàn giao triển khai MVP mô tả trạng thái mã nguồn và khoảng cách tới SRS.
-5. Tài liệu Danh sách công việc và kế hoạch chu kỳ lập thứ tự thực hiện.
-6. TDD quy định bằng chứng kiểm thử cho SRS và kiến trúc.
+4. SLA quy định cách đo mức dịch vụ và phản ứng vận hành từ các mục tiêu của SRS.
+5. Tài liệu Bàn giao triển khai MVP mô tả trạng thái mã nguồn và khoảng cách tới SRS.
+6. Tài liệu Danh sách công việc và kế hoạch chu kỳ lập thứ tự thực hiện.
+7. TDD quy định bằng chứng kiểm thử cho SRS, kiến trúc và SLA.
 
 Nếu mã nguồn hoặc tài liệu kế tiếp khác SRS, mã nguồn/tài liệu kế tiếp phải được
 sửa. Nếu SRS khác mục tiêu PRD mà không có quyết định điều chỉnh được liệt kê tại

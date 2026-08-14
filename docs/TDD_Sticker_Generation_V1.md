@@ -9,6 +9,7 @@
 | Nguồn sản phẩm | PRD tiếng Việt, bất biến |
 | Yêu cầu | SRS v1.0 |
 | Kiến trúc | SAD v1.0 |
+| Mức dịch vụ | SLA v1.0 |
 | Phạm vi | Đơn vị, hợp đồng, tích hợp, E2E trên thiết bị, đánh giá chuẩn, bảo mật và vận hành |
 
 TDD này là đặc tả có thể thực thi. Kiểm thử mới phải thất bại trước khi thêm phần
@@ -72,7 +73,7 @@ chịu trách nhiệm rủi ro, ngày hết hạn và biện pháp bù trong b�
 | DOC-01 | Băm hai tệp PRD trước/sau thay đổi tài liệu | Mã kiểm tra giống mốc chuẩn | CI | `Dự kiến tự động hóa` |
 | DOC-02 | Quét tài liệu kế tiếp để tìm dấu hiệu quyết định chưa đóng | Không có kết quả | CI | `Dự kiến tự động hóa` |
 | DOC-03 | Trích tham chiếu DEC/FR/BR/AC/công việc/kiểm thử | Không thiếu, trùng hoặc có tham chiếu sai | CI | `Dự kiến tự động hóa` |
-| DOC-04 | So sánh hằng số SRS giữa Kiến trúc/Bàn giao/Danh sách công việc/TDD | Giá trị định dạng/số lượng/phong cách/ngưỡng/lưu giữ/nền tảng giống nhau; Supabase chỉ lưu trữ; AI chỉ có Gemini và API tạo ảnh tương thích OpenAI với đúng bốn biến môi trường | CI | `Dự kiến tự động hóa` |
+| DOC-04 | So sánh hằng số SRS giữa Kiến trúc/SLA/Bàn giao/Danh sách công việc/TDD | Giá trị định dạng/số lượng/phong cách/ngưỡng/lưu giữ/nền tảng/SLO giống nhau; Supabase chỉ lưu trữ; AI chỉ có Gemini và API tạo ảnh tương thích OpenAI với đúng bốn biến môi trường | CI | `Dự kiến tự động hóa` |
 | DOC-05 | Kiểm tra cấu trúc Markdown | Bảng/tiêu đề/liên kết hiển thị không lỗi cấu trúc | CI | `Dự kiến tự động hóa` |
 
 ## 3. Kiểm tra kỹ thuật ảnh đầu vào
@@ -320,7 +321,7 @@ chịu trách nhiệm rủi ro, ngày hết hạn và biện pháp bù trong b�
 | P-05 | Truyền ảnh | TTFB p95 ≤1 giây | Tải | `Đánh giá trước phát hành` |
 | P-06 | 2 tác vụ đang xử lý, 50 tác vụ chờ và 20 yêu cầu mỗi phút | Không mất điều kiện bất biến; yêu cầu vượt ngưỡng trả 429, hàng đợi không mất tác vụ | Tải | `Đánh giá trước phát hành` |
 | P-07 | Độ sâu hàng đợi >20 trong 10 phút/lỗi tác vụ >5% | Phát đúng cảnh báo mà không có PII | Vận hành | `Đánh giá trước phát hành` |
-| P-08 | Kiểm tra tổng hợp độ sẵn sàng API | Đo được mục tiêu tháng ≥99,0% | Vận hành | `Đánh giá trước phát hành` |
+| P-08 | Kiểm tra tổng hợp độ sẵn sàng API | Chạy mỗi phút theo SLA §3.1; tính đúng bảo trì/gián đoạn và đo được mục tiêu tháng ≥99,0% | Vận hành | `Đánh giá trước phát hành` |
 | P-09 | Diễn tập khôi phục sao lưu | RPO ≤24 giờ, RTO ≤8 giờ | Vận hành | `Đánh giá trước phát hành` |
 | P-10 | Bộ 300 ảnh nguồn về giữ đặc trưng/tách nền/chữ | Đạt mọi ngưỡng SRS §8.6 | Đánh giá chuẩn | `Đánh giá trước phát hành` |
 | P-11 | So sánh nhóm nhân khẩu học | Nhóm thấp nhất ≥80%, chênh lệch ≤5 điểm phần trăm | Đánh giá chuẩn | `Đánh giá trước phát hành` |
@@ -332,7 +333,7 @@ chịu trách nhiệm rủi ro, ngày hết hạn và biện pháp bù trong b�
 | P-17 | Luồng di động ở mức tải cao nhất | Bộ nhớ ≤350 MiB, bộ đệm ≤100 MiB | Hồ sơ thiết bị | `Đánh giá trước phát hành` |
 | P-18 | Luồng ba phút | Pin ≤3% trên thiết bị đánh giá 4000mAh | Hồ sơ thiết bị | `Đánh giá trước phát hành` |
 | P-19 | Ngoại tuyến/mạng yếu/chuyển mạng | Khung đã lưu đệm hoạt động; thao tác lỗi/thử lại an toàn; không trùng tác vụ | Thiết bị | `Dự kiến kiểm thử thiết bị` |
-| P-20 | Quay lui Docker Compose | Khôi phục thẻ ảnh API/tiến trình xử lý trước mà không vỡ lược đồ hoặc mất phiên thuê/tác vụ trong PostgreSQL | Vận hành | `Đánh giá trước phát hành` |
+| P-20 | Diễn tập SEV-1 và quay lui Docker Compose | Cảnh báo/phân loại/cập nhật đúng SLA §5; khôi phục thẻ ảnh API/tiến trình xử lý trước mà không vỡ lược đồ hoặc mất phiên thuê/tác vụ trong PostgreSQL | Vận hành | `Đánh giá trước phát hành` |
 
 ## 13. Truy vết
 
