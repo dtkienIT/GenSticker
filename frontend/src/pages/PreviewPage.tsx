@@ -4,7 +4,6 @@ import { useLanguage, t } from '../i18n/i18n';
 import { AppStep, Sticker, EXPRESSIONS, ReportCategory } from '../types';
 import { StickerCard } from '../components/StickerCard';
 import { ReportModal } from '../components/ReportModal';
-import { compositeTextOnSticker } from '../services/textCompositor';
 import { savePack } from '../services/storage';
 import { trackEvent } from '../services/analytics';
 
@@ -23,29 +22,9 @@ export const PreviewPage: React.FC<PreviewPageProps> = ({ initialStickers, regen
   const [reportStickerId, setReportStickerId] = useState<string | null>(null);
 
   useEffect(() => {
-    const applyText = async () => {
-      try {
-        const composited = await Promise.all(initialStickers.map(async (stk) => {
-          const config = EXPRESSIONS.find(e => e.id === stk.expressionId);
-          if (!config) return stk;
-          const text = language === 'en' ? config.nameEn : config.nameVi;
-          try {
-            const newImage = await compositeTextOnSticker(stk.imageBase64, text, config.color);
-            return { ...stk, imageBase64: newImage };
-          } catch (err) {
-            console.error('Text composite failed for', stk.expressionId, err);
-            return stk; // Use original image if compositing fails
-          }
-        }));
-        setStickers(composited);
-      } catch (err) {
-        console.error('Text compositing failed:', err);
-        setStickers(initialStickers); // Fallback to originals
-      } finally {
-        setIsCompositing(false);
-      }
-    };
-    applyText();
+    // Simply set the initial stickers directly since we no longer composite text banners
+    setStickers(initialStickers);
+    setIsCompositing(false);
   }, [initialStickers, language]);
 
   const toggleSelect = useCallback((id: string) => {

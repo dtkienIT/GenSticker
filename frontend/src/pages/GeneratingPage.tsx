@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+
 import './GeneratingPage.css';
 import { useLanguage, t } from '../i18n/i18n';
 import { AppStep, GenerateResult, Sticker, EXPRESSIONS, ExpressionId } from '../types';
@@ -29,6 +30,7 @@ export const GeneratingPage: React.FC<GeneratingPageProps> = ({ imageBase64, mim
   useEffect(() => {
     let currentStickers: Sticker[] = [];
     const failed = new Set<ExpressionId>();
+    let hasNavigated = false;
     
     trackEvent('generation_started');
     
@@ -54,6 +56,9 @@ export const GeneratingPage: React.FC<GeneratingPageProps> = ({ imageBase64, mim
         }
       },
       () => {
+        if (hasNavigated) return;
+        hasNavigated = true;
+        console.log('[GeneratingPage] onDone fired, stickers count:', currentStickers.length);
         setIsDone(true);
         trackEvent('generation_completed', { count: currentStickers.length });
         onDoneRef.current(currentStickers);

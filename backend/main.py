@@ -166,14 +166,23 @@ async def generate_single_sticker(image_base64: str, mime_type: str, expression:
                 GEMINI_API_KEY
             )
         
-        # Remove background to get transparent PNG
-        clean_bg_base64 = await asyncio.to_thread(
-            remove_bg_base64, raw_result_base64
-        )
+        logger.info(f"[{expression.id}] Raw image base64 length: {len(raw_result_base64)}")
+        
+        # Background removal toggle
+        enable_bg = os.getenv("ENABLE_BG_REMOVAL", "true").lower() == "true"
+        
+        if enable_bg:
+            final_base64 = await asyncio.to_thread(
+                remove_bg_base64, raw_result_base64
+            )
+            logger.info(f"[{expression.id}] After bg removal base64 length: {len(final_base64)}")
+        else:
+            final_base64 = raw_result_base64
+            logger.info(f"[{expression.id}] BG removal DISABLED, returning raw image")
         
         return GenerateResult(
             expression_id=expression.id,
-            image_base64=clean_bg_base64,
+            image_base64=final_base64,
             success=True
         )
     except Exception as e:

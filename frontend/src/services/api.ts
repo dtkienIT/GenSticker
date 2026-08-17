@@ -26,6 +26,13 @@ export const generatePack = (
   onError: (error: string) => void
 ): (() => void) => {
   const controller = new AbortController();
+  let doneEmitted = false;
+  
+  const emitDone = () => {
+    if (doneEmitted) return;
+    doneEmitted = true;
+    onDone();
+  };
   
   fetch(`${API_BASE}/api/generate-pack`, {
     method: 'POST',
@@ -57,7 +64,7 @@ export const generatePack = (
             const data = JSON.parse(trimmed.substring(6));
             // Backend sends {"done": true} as the final event
             if (data.done === true) {
-              onDone();
+              emitDone();
             } else if (data.success === false && !data.filtered) {
               // Non-filtered failure — report as error
               onError(data.error || 'Generation failed');
@@ -72,10 +79,11 @@ export const generatePack = (
       }
     }
     // If stream ends without a done event, trigger done
-    onDone();
+    emitDone();
   }).catch(e => {
     if (e.name !== 'AbortError') onError(e.message);
   });
 
   return () => controller.abort();
 };
+

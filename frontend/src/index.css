@@ -1,27 +1,48 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap');
 
 :root {
-  --color-primary: #FF69B4;
-  --color-primary-light: #FFB6C1;
-  --color-secondary: #87CEEB;
-  --color-accent: #FFD700;
-  --color-mint: #98FB98;
-  --color-bg: #FFF5F9;
-  --color-surface: #FFFFFF;
-  --color-text: #2D2D2D;
-  --color-text-light: #666666;
-  --color-error: #E74C3C;
-  --color-success: #2ECC71;
+  /* DUHAT Primary & Brand Colors */
+  --duhat-yellow: #FFC800;
+  --duhat-yellow-light: #FFE580;
+  --duhat-yellow-soft: #FFF8D6;
+  --duhat-black: #111111;
+  --duhat-grey-muted: #7E7E82;
+  --duhat-white: #FFFFFF;
+  --duhat-surface-grey: #F2F3F5;
+
+  /* Functional & Security Colors */
+  --duhat-green: #34C759;
+  --duhat-red: #FF3B30;
+  --duhat-red-dark: #4A0E0E;
+  --duhat-buzz-red: #E63946;
+
+  /* Geometry & Radius Tokens */
+  --duhat-radius-card: 16px;
+  --duhat-radius-bubble: 18px;
+  --duhat-radius-dock: 28px;
+  --duhat-radius-pill: 9999px;
+
+  /* Legacy Mapping for compatibility */
+  --color-primary: var(--duhat-yellow);
+  --color-primary-light: var(--duhat-yellow-light);
+  --color-secondary: var(--duhat-black);
+  --color-accent: var(--duhat-yellow);
+  --color-mint: var(--duhat-green);
+  --color-bg: #FAF9F6;
+  --color-surface: var(--duhat-white);
+  --color-text: var(--duhat-black);
+  --color-text-light: var(--duhat-grey-muted);
+  --color-error: var(--duhat-red);
+  --color-success: var(--duhat-green);
   --radius-sm: 8px;
-  --radius-md: 16px;
+  --radius-md: var(--duhat-radius-card);
   --radius-lg: 24px;
-  --radius-pill: 999px;
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.16);
-  --font-ui: 'Nunito', sans-serif;
-  --font-sticker: 'Fredoka One', cursive;
+  --radius-pill: var(--duhat-radius-pill);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Outfit", sans-serif;
+  --font-sticker: "Outfit", "Inter", sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -40,60 +61,79 @@ button {
   outline: none;
 }
 
+/* DUHAT Primary & Secondary Button System */
 .btn-primary, .btn-secondary {
   padding: 12px 24px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--duhat-radius-pill);
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
   border: none;
-  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  color: white;
-  box-shadow: var(--shadow-md);
+  background-color: var(--duhat-yellow);
+  color: var(--duhat-black);
+  box-shadow: 0 4px 12px rgba(255, 200, 0, 0.3);
 }
 
 .btn-secondary {
-  background: var(--color-surface);
-  color: var(--color-primary);
-  border: 2px solid var(--color-primary-light);
+  background-color: var(--duhat-white);
+  color: var(--duhat-black);
+  border: 1px solid #E5E5EA;
   box-shadow: var(--shadow-sm);
 }
 
-.btn-primary:hover, .btn-secondary:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
+.btn-primary:hover {
+  background-color: #FFD21A;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 200, 0, 0.4);
+}
+
+.btn-secondary:hover {
+  background-color: var(--duhat-surface-grey);
+  border-color: #D1D1D6;
+  transform: translateY(-1px);
+}
+
+.btn-primary:active, .btn-secondary:active {
+  transform: scale(0.97);
 }
 
 .btn-primary:disabled {
-  background: #ccc;
+  background: #E5E5EA;
+  color: #A1A1A6;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
 .btn-large {
-  font-size: 1.2rem;
-  padding: 16px 32px;
+  font-size: 1.1rem;
+  padding: 16px 36px;
+  border-radius: var(--duhat-radius-pill);
 }
 
 .btn-sm {
-  padding: 8px 16px;
-  font-size: 0.9rem;
+  padding: 8px 18px;
+  font-size: 0.85rem;
 }
 
 .wiggle-hover:hover {
-  animation: wiggle 0.5s ease-in-out infinite;
+  animation: wiggle 0.4s ease-in-out infinite;
 }
 
 @keyframes wiggle {
-  0% { transform: rotate(0deg) scale(1.05); }
-  25% { transform: rotate(-5deg) scale(1.05); }
-  50% { transform: rotate(0deg) scale(1.05); }
-  75% { transform: rotate(5deg) scale(1.05); }
-  100% { transform: rotate(0deg) scale(1.05); }
+  0% { transform: rotate(0deg) scale(1.03); }
+  25% { transform: rotate(-3deg) scale(1.03); }
+  50% { transform: rotate(0deg) scale(1.03); }
+  75% { transform: rotate(3deg) scale(1.03); }
+  100% { transform: rotate(0deg) scale(1.03); }
 }
 
 .app-container {
@@ -105,3 +145,27 @@ button {
 .main-content {
   flex: 1;
 }
+
+/* Security Pill Component */
+.security-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: var(--duhat-radius-pill);
+  color: var(--duhat-white);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.security-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--duhat-green);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--duhat-green);
+}
+

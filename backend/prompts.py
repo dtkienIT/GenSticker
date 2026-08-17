@@ -68,17 +68,16 @@ EXPRESSIONS = [
 ]
 
 def get_sticker_prompt(expression: ExpressionConfig) -> str:
-    return f"""Create a cute chibi/kawaii cartoon sticker character based EXACTLY on the person in the provided photo.
+    return f"""Create a cute 2D vector chibi/kawaii cartoon character based EXACTLY on the person in the provided photo.
 Maintain the person's key identifying features (hair color, hair style, skin tone, glasses, and facial structure).
 
 Style requirements:
-- Cute chibi/kawaii cartoon style
+- Cute chibi/kawaii cartoon style with crisp clean line art
 - Big round head (about 50% of total body height)
-- Small stubby body
+- Small stubby body with round proportions
 - Very large, expressive eyes
-- Round proportions
-- Bright, saturated colors
-- Thick, clean outlines suitable for a sticker
+- Bright, vibrant saturated colors
+- Solid dark character outlines suitable for a sticker design
 
 Pose and Expression:
 - {expression.prompt_modifier}
@@ -86,9 +85,9 @@ Pose and Expression:
 Composition:
 - The character MUST be perfectly centered
 - Full-body visible
-- Solid white or completely transparent background
+- Render directly on a solid plain white background
+- DO NOT draw any white die-cut sticker borders or drop shadows
 - NO text, NO words, NO letters in the image
-- Clean sticker-ready composition
 """
 
 VALIDATION_PROMPT = """Analyze the provided photo and return a JSON object with the following fields:

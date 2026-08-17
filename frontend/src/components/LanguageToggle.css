@@ -1,23 +1,23 @@
 .lang-toggle {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: var(--color-surface);
-  border: 2px solid var(--color-primary-light);
-  border-radius: var(--radius-pill);
-  padding: 4px 12px;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: var(--duhat-radius-pill);
+  padding: 5px 12px;
   cursor: pointer;
   font-weight: 700;
-  color: var(--color-text);
-  transition: all 0.3s ease;
-  box-shadow: var(--shadow-sm);
+  font-size: 0.85rem;
+  color: var(--duhat-black);
+  transition: all 0.2s ease;
 }
 
 .lang-toggle:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-primary);
+  background: rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
 }
 
-.lang-icon { font-size: 1.2rem; }
-.lang-label { font-size: 0.9rem; }
+.lang-icon { font-size: 1.1rem; }
+.lang-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.02em; }
+

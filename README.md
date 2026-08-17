@@ -293,12 +293,13 @@ Upon completion, the generated APK file is located at:
 Make sure the FastAPI backend server is active so the Android app can generate stickers:
 ```bash
 cd backend
-./venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000
+./start_server.sh
 ```
+*(Or manually run `./venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000`)*
 
 > 💡 **Backend Network Address Configuration**:
-> - **Android Emulator**: The app connects to `http://10.0.2.2:8000` by default (the standard Android Emulator alias for host `localhost`).
-> - **Physical Android Phone**: Update `serverUrl` in [ApiService.kt](file:///home/quanld5/Documents/duhat_stickergen/android_app/app/src/main/java/com/example/duhatstickerai/data/ApiService.kt#L16) to your computer's local Wi-Fi IP address (e.g., `http://192.168.1.X:8000`).
+> - **Android Emulator**: The app connects to `http://10.0.2.2:8000` by default.
+> - **Physical Android Phone**: Tap **⚙️ Server** in the top right header badge (or tap **⚙️ Change Server URL** on the error banner) inside the Android app to enter your computer's LAN IP address (e.g. `http://192.168.1.X:8000`), test the connection, and save! No app re-compilation required.
 
 ---
 

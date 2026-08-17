@@ -4,6 +4,7 @@ import { useLanguage, t } from '../i18n/i18n';
 import { AppStep } from '../types';
 import { validateImage } from '../services/api';
 import { ConsentModal } from '../components/ConsentModal';
+import { CameraModal } from '../components/CameraModal';
 
 interface UploadPageProps {
   onNavigate: (step: AppStep) => void;
@@ -18,8 +19,9 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate, onImageReady
   const [error, setError] = useState<string | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [showConsent, setShowConsent] = useState(false);
+  const [showCameraModal, setShowCameraModal] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
     setError(null);
@@ -71,7 +73,7 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate, onImageReady
               <button className="btn-secondary" onClick={() => fileInputRef.current?.click()}>
                 {t('upload_btn_file', language)}
               </button>
-              <button className="btn-secondary" onClick={() => cameraInputRef.current?.click()}>
+              <button className="btn-secondary" onClick={() => setShowCameraModal(true)}>
                 {t('upload_btn_camera', language)}
               </button>
             </div>
@@ -80,7 +82,6 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate, onImageReady
       </div>
 
       <input type="file" ref={fileInputRef} hidden accept="image/jpeg, image/png, image/webp" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
-      <input type="file" ref={cameraInputRef} hidden accept="image/*" capture="user" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
 
       {error && <div className="error-card">{error}</div>}
       
@@ -91,6 +92,12 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onNavigate, onImageReady
           {t('upload_generate', language)}
         </button>
       )}
+
+      <CameraModal
+        isOpen={showCameraModal}
+        onClose={() => setShowCameraModal(false)}
+        onCapture={(file) => handleFile(file)}
+      />
 
       <ConsentModal 
         isOpen={showConsent} 
