@@ -31,7 +31,25 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*.local
+.env
+.env.*
+!.env.example
+
+# Python virtual environment
+.venv/
+venv/
+backend/.venv
+
+# Vite
+.vite/
+
+# Database & runtime data
+backend/data/
+*.sqlite3
+*.db
+
+# PRD and documentation patterns
+*[Pp][Rr][Dd]*
 
 # typescript
 *.tsbuildinfo
