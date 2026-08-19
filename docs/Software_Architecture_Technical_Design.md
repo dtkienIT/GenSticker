@@ -20,33 +20,52 @@ Tài liệu phân biệt:
 
 ### 1.1 Bối cảnh hệ thống
 
-```text
-+---------------------------+  HTTP/JSON     +---------------------------+
-| Frontend                  | ------------> | Backend (FastAPI)          |
-| Vite + React + TypeScript | <------------ | Python 3.11+               |
-| Browser (Mobile-First)    |   SSE Stream  | Port 8000                  |
-+---------------------------+               +-----+------------+--------+
-                                                  |            |
-                                                  v            v
-                                          +-----------+  +----------+
-                                          | rembg     |  | AI       |
-                                          | U-2-Net   |  | Provider |
-                                          | BG Remove |  | (switch) |
-                                          +-----------+  +-----+----+
-                                                               |
-                                          +--------------------+----+
-                                          |                         |
-                                    +-----v------+  +---------v---------+  +------v----------+
-                                    | Gemini API |  | OpenAI API        |  | Cloudflare      |
-                                    | Vision +   |  | dall-e-3 /        |  | Workers AI      |
-                                    | Image Gen  |  | gpt-4o-mini       |  | flux-1-schnell  |
-                                    +------------+  +-------------------+  +-----------------+
+```mermaid
+flowchart TB
+    %% Class Definitions for High Contrast & Clean Aesthetics
+    classDef clientStyle fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef backendStyle fill:#1e1e2e,stroke:#a855f7,stroke-width:2px,color:#ffffff;
+    classDef procStyle fill:#1c1917,stroke:#f59e0b,stroke-width:2px,color:#ffffff;
+    classDef aiStyle fill:#0f172a,stroke:#ec4899,stroke-width:2px,color:#ffffff;
+    classDef storageStyle fill:#022c22,stroke:#10b981,stroke-width:2px,color:#ffffff;
 
-+---------------------------+
-| Client Storage (Browser)  |
-| IndexedDB: duhat_stickers |
-| localStorage: packs meta  |
-+---------------------------+
+    subgraph CLIENT_BOX ["📱 Lớp Khách (Client Layer)"]
+        FE["🎨 Frontend (Vite + React + TS)\nBrowser / Android WebShell"]:::clientStyle
+        subgraph LOCAL_STORE ["💾 Client Storage (Local-Only)"]
+            IDB[("IndexedDB\nduhat_stickers\n(Ảnh hoàn thiện)")]:::storageStyle
+            LS[("localStorage\nduhat_sticker_packs\n(Metadata gói)")]:::storageStyle
+        end
+        FE <--> LOCAL_STORE
+    end
+
+    subgraph SERVER_BOX ["⚙️ Lớp Máy chủ (Backend Layer - FastAPI Port 8000)"]
+        GATEWAY["🚪 API Gateway & SSE Router\n(main.py)"]:::backendStyle
+        DISPATCH["🔀 Multi-Provider Dispatcher\n(Cấu hình qua AI_PROVIDER)"]:::backendStyle
+        BG_REMOVER["✂️ Pipeline Tách nền & Viền trắng\n(rembg U-2-Net + PIL)"]:::procStyle
+        
+        GATEWAY --> DISPATCH
+        GATEWAY --> BG_REMOVER
+    end
+
+    subgraph AI_BOX ["☁️ Nhà cung cấp AI (AI Cloud Providers)"]
+        GEMINI["🌟 Gemini API\nVision (3.6) + Gen (3.1)"]:::aiStyle
+        CF["⚡ Cloudflare Workers AI\nLLaMA 3.2 + FLUX.1"]:::aiStyle
+        OAI["🤖 OpenAI API\nGPT-4o-mini + DALL-E 3"]:::aiStyle
+    end
+
+    %% Tương tác liên tầng
+    FE -->|"1. POST /api/validate (Base64)"| GATEWAY
+    FE -->|"2. POST /api/generate-pack (Base64)"| GATEWAY
+    GATEWAY -.->|"3. Real-time SSE Stream (Từng sticker)"| FE
+
+    DISPATCH --> GEMINI
+    DISPATCH --> CF
+    DISPATCH --> OAI
+
+    style CLIENT_BOX fill:#090d16,stroke:#38bdf8,stroke-width:1px,stroke-dasharray: 4 4;
+    style LOCAL_STORE fill:#061b14,stroke:#10b981,stroke-width:1px;
+    style SERVER_BOX fill:#13111c,stroke:#a855f7,stroke-width:1px,stroke-dasharray: 4 4;
+    style AI_BOX fill:#1a0b16,stroke:#ec4899,stroke-width:1px,stroke-dasharray: 4 4;
 ```
 
 ### 1.2 Nguyên tắc kiến trúc
@@ -156,19 +175,19 @@ AI_PROVIDER env variable → "gemini" | "cloudflare" | "openai"
 
 ### 3.2 Luồng xử lý theo provider
 
-```text
-Request
-  ├── AI_PROVIDER = "gemini"
-  │   ├── Validation: gemini-3.6-flash (Vision)
-  │   └── Generation: gemini-3.1-flash-image (Interactions API)
-  │
-  ├── AI_PROVIDER = "cloudflare"
-  │   ├── Validation: @cf/meta/llama-3.2-11b-vision-instruct
-  │   └── Generation: @cf/black-forest-labs/flux-1-schnell
-  │
-  └── AI_PROVIDER = "openai"
-      ├── Validation: gpt-4o-mini (Vision)
-      └── Generation: dall-e-3
+```mermaid
+flowchart LR
+    classDef req fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef switch fill:#1e1e2e,stroke:#a855f7,stroke-width:2px,color:#ffffff;
+    classDef gemini fill:#042f2e,stroke:#14b8a6,stroke-width:1.5px,color:#ffffff;
+    classDef cf fill:#431407,stroke:#f97316,stroke-width:1.5px,color:#ffffff;
+    classDef oai fill:#022c22,stroke:#10b981,stroke-width:1.5px,color:#ffffff;
+
+    REQ["📥 Yêu cầu từ Client\n(Validate / Generate)"]:::req --> SWITCH{"🔀 AI_PROVIDER?"}:::switch
+
+    SWITCH -- "gemini" --> G_VAL["👁️ Vision: gemini-3.6-flash\n🎨 Gen: gemini-3.1-flash-image"]:::gemini
+    SWITCH -- "cloudflare" --> CF_VAL["👁️ Vision: @cf/meta/llama-3.2-11b\n🎨 Gen: @cf/flux-1-schnell"]:::cf
+    SWITCH -- "openai" --> OAI_VAL["👁️ Vision: gpt-4o-mini\n🎨 Gen: dall-e-3"]:::oai
 ```
 
 ### 3.3 Interface thống nhất
@@ -183,59 +202,144 @@ Backend `main.py` dispatch dựa trên `AI_PROVIDER` — frontend hoàn toàn kh
 
 ### 4.1 Luồng dữ liệu chi tiết
 
+#### 4.1.1 Luồng tuần tự Xác thực ảnh Selfie (`/api/validate`)
+
 ```mermaid
-graph TB
-    subgraph Frontend
-        UP[Upload Page] --> |Base64 + MIME| VAL_REQ[POST /api/validate]
-        GEN_PAGE[Generating Page] --> |Base64 + MIME| GEN_REQ[POST /api/generate-pack]
+sequenceDiagram
+    autonumber
+    actor User as 👤 Người dùng
+    participant FE as 📱 Frontend (UploadPage)
+    participant BE as ⚙️ FastAPI Gateway
+    participant AI as 🧠 AI Provider (Gemini / CF / OpenAI)
+
+    User->>FE: Tải lên hoặc chụp ảnh selfie
+    FE->>FE: Kiểm tra sơ bộ client (Kích thước <= 10MB, định dạng ảnh)
+    FE->>BE: POST /api/validate { image_base64, mime_type }
+    activate BE
+    BE->>BE: Đọc cấu hình biến môi trường AI_PROVIDER
+    BE->>AI: Gửi ảnh + System Prompt kiểm tra khuôn mặt (Vision Model)
+    activate AI
+    AI-->>BE: Trả về JSON { is_valid, reason, face_count, ... }
+    deactivate AI
+    BE-->>FE: HTTP 200 OK (ValidationResult)
+    deactivate BE
+    
+    alt Ảnh hợp lệ (is_valid = true)
+        FE->>User: ✅ Hiển thị trạng thái sẵn sàng -> Kích hoạt nút "Tạo Sticker"
+    else Ảnh không hợp lệ (is_valid = false)
+        FE->>User: ⚠️ Hiển thị lý do từ chối (Không rõ mặt / Nhiều người / Quá mờ)
+    end
+```
+
+#### 4.1.2 Luồng Tạo 8 Sticker song song & SSE Streaming (`/api/generate-pack`)
+
+```mermaid
+flowchart TD
+    %% Styling tokens
+    classDef client fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef server fill:#1e1e2e,stroke:#a855f7,stroke-width:2px,color:#ffffff;
+    classDef task fill:#18181b,stroke:#818cf8,stroke-width:1.5px,color:#ffffff;
+    classDef ai fill:#27272a,stroke:#ec4899,stroke-width:1.5px,color:#ffffff;
+    classDef post fill:#1c1917,stroke:#f59e0b,stroke-width:2px,color:#ffffff;
+    classDef sse fill:#022c22,stroke:#10b981,stroke-width:2px,color:#ffffff;
+
+    subgraph CLIENT_VIEW ["📱 Frontend (GeneratingPage)"]
+        START_REQ["🚀 Gửi yêu cầu:\nPOST /api/generate-pack\n{ image_base64, mime_type }"]:::client
+        STREAM_IN["✨ Nhận SSE Event\n(Render sticker ngay lập tức vào từng slot)"]:::client
     end
 
-    subgraph Backend
-        VAL_REQ --> DISPATCH_VAL{AI_PROVIDER?}
-        DISPATCH_VAL --> |gemini| GEMINI_VAL[Gemini Vision Validate]
-        DISPATCH_VAL --> |cloudflare| CF_VAL[Cloudflare Vision Validate]
-        DISPATCH_VAL --> |openai| OAI_VAL[OpenAI Vision Validate]
-        GEMINI_VAL --> VAL_RESULT[ValidationResult]
-        CF_VAL --> VAL_RESULT
-        OAI_VAL --> VAL_RESULT
+    subgraph SERVER_PIPELINE ["⚙️ Backend Processing (FastAPI)"]
+        DISPATCH_TASKS["⚡ Khởi tạo 8 asyncio Tasks song song\n(1 task cho mỗi biểu cảm)"]:::server
 
-        GEN_REQ --> PARALLEL[8 Parallel asyncio Tasks]
-        PARALLEL --> |per expression| DISPATCH_GEN{AI_PROVIDER?}
-        DISPATCH_GEN --> |gemini| GEMINI_GEN[Gemini Image Generation]
-        DISPATCH_GEN --> |cloudflare| CF_GEN[Cloudflare Image Generation]
-        DISPATCH_GEN --> |openai| OAI_GEN[OpenAI Image Generation]
-        GEMINI_GEN --> RAW_IMG[Raw Image Base64]
-        CF_GEN --> RAW_IMG
-        OAI_GEN --> RAW_IMG
-        RAW_IMG --> BG_REMOVE[rembg Background Removal]
-        BG_REMOVE --> DIE_CUT[White Die-Cut Border]
-        DIE_CUT --> SSE_EVENT[SSE Event]
+        subgraph PARALLEL_TASKS ["🔀 8 Tác vụ sinh ảnh độc lập (asyncio.as_completed)"]
+            direction LR
+            T1["Slot 1:\nVui vẻ"]:::task
+            T2["Slot 2:\nCười to"]:::task
+            T3["Slot 3:\nThả tim"]:::task
+            TDOTS["... 4 Slots\nkhác ..."]:::task
+            T8["Slot 8:\nNgạc nhiên"]:::task
+        end
+
+        subgraph AI_ROUTER ["🤖 Multi-Provider Image Generation (AI_PROVIDER)"]
+            AI_CALL["Sinh ảnh Chibi Sticker\n(Gemini 3.1 / FLUX.1 / DALL-E 3)"]:::ai
+        end
+
+        subgraph POST_PROCESS ["✂️ Pipeline Hậu kỳ ảnh (bg_remover.py)"]
+            direction TB
+            RAW["1. Nhận ảnh thô từ AI (Raw Base64)"]
+            CUTOUT["2. Tách nền AI (rembg U-2-Net / Fallback)"]
+            BORDER["3. Phủ viền trắng sắc nét (Die-Cut Border)"]
+            RAW --> CUTOUT --> BORDER
+        end
+
+        SSE_GEN["📡 Đóng gói SSE Event:\n{ slot_index, expression, sticker_base64, status: 'done' }"]:::sse
     end
 
-    SSE_EVENT --> |stream| GEN_PAGE
+    %% Luồng liên kết
+    START_REQ --> DISPATCH_TASKS
+    DISPATCH_TASKS --> T1 & T2 & T3 & TDOTS & T8
+    T1 & T2 & T3 & TDOTS & T8 --> AI_CALL
+    AI_CALL --> RAW
+    BORDER --> SSE_GEN
+    SSE_GEN -.->|"Stream realtime từng slot về client"| STREAM_IN
+
+    class RAW,CUTOUT,BORDER post;
+    style CLIENT_VIEW fill:#090d16,stroke:#38bdf8,stroke-width:1px,stroke-dasharray: 4 4;
+    style SERVER_PIPELINE fill:#13111c,stroke:#a855f7,stroke-width:1px,stroke-dasharray: 4 4;
+    style PARALLEL_TASKS fill:#181824,stroke:#818cf8,stroke-width:1px;
+    style AI_ROUTER fill:#1f1322,stroke:#ec4899,stroke-width:1px;
+    style POST_PROCESS fill:#241a10,stroke:#f59e0b,stroke-width:1px;
 ```
 
 ### 4.2 Background Removal Pipeline (bg_remover.py)
 
-```text
-Ảnh đầu vào (base64)
-  │
-  ├─ Stage 1: rembg U-2-Net AI cutout
-  │    ├─ Tách nền AI
-  │    ├─ _preserve_interior_alpha() → Bảo toàn mắt/răng/chi tiết bên trong
-  │    └─ _check_cutout_validity() → Kiểm tra 5%–92% opaque pixels
-  │
-  ├─ Stage 2: Edge-connected flood fill (fallback)
-  │    ├─ Lấy mẫu màu 4 góc ảnh
-  │    ├─ Connected-component labeling
-  │    └─ Chỉ xóa component nối tới viền ngoài
-  │
-  ├─ Stage 3: Fail-safe (giữ ảnh gốc nếu cả 2 stage thất bại)
-  │
-  └─ Stage 4: add_uniform_sticker_border()
-       ├─ Dilate mask outwards (MaxFilter)
-       ├─ Anti-alias edge (GaussianBlur)
-       └─ Alpha composite character over white border canvas
+```mermaid
+flowchart TD
+    classDef input fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef stage1 fill:#1e1e2e,stroke:#a855f7,stroke-width:1.5px,color:#ffffff;
+    classDef decision fill:#312e81,stroke:#818cf8,stroke-width:2px,color:#ffffff;
+    classDef fallback fill:#451a03,stroke:#f59e0b,stroke-width:1.5px,color:#ffffff;
+    classDef stage4 fill:#1c1917,stroke:#fbbf24,stroke-width:1.5px,color:#ffffff;
+    classDef output fill:#022c22,stroke:#10b981,stroke-width:2px,color:#ffffff;
+
+    IN(["📥 Ảnh Raw từ AI Provider (Base64)"]):::input
+
+    subgraph S1 ["Stage 1: rembg U-2-Net AI Cutout"]
+        S1_RUN["Tách nền bằng mô hình U-2-Net"]:::stage1
+        S1_PRESERVE["_preserve_interior_alpha()\nBảo toàn mắt, răng và chi tiết trắng bên trong"]:::stage1
+        S1_CHECK{"_check_cutout_validity()\nOpaque pixels nằm trong [5% - 92%]?"}:::decision
+        S1_RUN --> S1_PRESERVE --> S1_CHECK
+    end
+
+    subgraph S2 ["Stage 2: Edge-Connected Flood Fill (Fallback)"]
+        S2_RUN["Lấy mẫu 4 góc ảnh\nConnected-component labeling\nChỉ xóa vùng nền thông với viền ngoài"]:::fallback
+    end
+
+    subgraph S3 ["Stage 3: Fail-Safe"]
+        S3_RUN["Giữ nguyên ảnh gốc nếu cả 2 stage lỗi"]:::fallback
+    end
+
+    subgraph S4 ["Stage 4: Thêm viền trắng Sticker (Die-Cut Border)"]
+        S4_DILATE["1. Nở rộng mặt nạ viền ngoài (MaxFilter)"]:::stage4
+        S4_BLUR["2. Khử răng cưa viền (GaussianBlur)"]:::stage4
+        S4_COMPOSITE["3. Ghép nhân vật lên nền viền trắng"]:::stage4
+        S4_DILATE --> S4_BLUR --> S4_COMPOSITE
+    end
+
+    OUT(["🎉 Sticker PNG hoàn chỉnh\n(Nền trong suốt + Viền trắng sắc nét)"]):::output
+
+    IN --> S1_RUN
+    S1_CHECK -- "✅ Đạt chuẩn" --> S4_DILATE
+    S1_CHECK -- "❌ Mất hình / Quá mờ" --> S2_RUN
+    S2_RUN -- "Thành công" --> S4_DILATE
+    S2_RUN -- "Thất bại" --> S3_RUN
+    S3_RUN --> S4_DILATE
+    S4_COMPOSITE --> OUT
+
+    style S1 fill:#13111c,stroke:#a855f7,stroke-width:1px;
+    style S2 fill:#1f1309,stroke:#f59e0b,stroke-width:1px;
+    style S3 fill:#1f1309,stroke:#f59e0b,stroke-width:1px;
+    style S4 fill:#241a10,stroke:#fbbf24,stroke-width:1px;
 ```
 
 ## 5. Lưu trữ Client-Side
